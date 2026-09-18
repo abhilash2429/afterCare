@@ -36,9 +36,13 @@ def spoken_schedule(plan):
         meds = [m for m in plan.medicines if slot in m.slots]
         if not meds:
             continue
-        names = ", ".join(m.brand or (m.molecules[0].name if m.molecules else "") for m in meds)
-        food = FOOD_WORDS.get(meds[0].foodRelation, "")
-        lines.append("In the %s: %s. %s." % (word, names, food))
+        # Each food relation is its own sentence: one slot can mix before- and after-food.
+        for food in ("before food", "after food", None):
+            group = [m for m in meds if FOOD_WORDS.get(m.foodRelation) == food]
+            if not group:
+                continue
+            names = ", ".join(m.brand or (m.molecules[0].name if m.molecules else "") for m in group)
+            lines.append("In the %s%s: %s." % (word, ", " + food if food else "", names))
     return " ".join(lines)
 
 

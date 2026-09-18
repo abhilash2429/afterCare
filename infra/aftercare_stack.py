@@ -94,14 +94,6 @@ class AftercareStack(Stack):
                          "translate:TranslateText", "polly:SynthesizeSpeech",
                          "ses:SendEmail", "social-messaging:SendWhatsAppMessage"],
                 resources=["*"]))
-            # docs.grant_read_write() adds no KMS permissions here: KMS_MANAGED encryption
-            # has no CDK Key construct to grant on. A presigned GET is authorized against the
-            # signing role though (not the eventual caller), so the role needs Decrypt to read
-            # audio/* back; PutObject on a new object needs GenerateDataKey.
-            fn.add_to_role_policy(iam.PolicyStatement(
-                actions=["kms:Decrypt", "kms:GenerateDataKey"],
-                resources=[self.format_arn(service="kms", resource="alias",
-                                           resource_name="aws/s3")]))
 
         circle_secret.grant_read(api)
 

@@ -33,8 +33,18 @@ def test_spoken_schedule_groups_by_slot():
                            _med("m2", ["morning"], "Pan"),
                            _med("m3", ["night"], "Atorva")])
     text = spoken_schedule(plan)
-    assert "In the morning: Ecosprin, Pan" in text
-    assert "In the night: Atorva" in text
+    assert "In the morning, after food: Ecosprin, Pan." in text
+    assert "In the night, after food: Atorva." in text
+
+
+def test_mixed_food_relations_in_one_slot_are_spoken_separately():
+    plan = Plan(planId="pl_1", circleId="ci_1",
+                medicines=[_med("m1", ["morning"], "Ecosprin", food="after"),
+                           _med("m2", ["morning"], "Pan", food="before"),
+                           _med("m3", ["morning"], "Thyronorm", food="unspecified")])
+    assert spoken_schedule(plan) == ("In the morning, before food: Pan. "
+                                     "In the morning, after food: Ecosprin. "
+                                     "In the morning: Thyronorm.")
 
 
 def test_prn_medicine_is_not_spoken_in_any_slot():
