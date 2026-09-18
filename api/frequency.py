@@ -8,7 +8,9 @@ _WORD = {
     "hs": ["bedtime"], "nocte": ["bedtime"], "at bedtime": ["bedtime"],
 }
 _PRN = ("sos", "prn", "as needed", "if needed", "when required")
-_POSITIONAL_3 = ["morning", "noon", "night"]
+# "3.5 ml BD", "2 puffs BD": the dose amount written in front of the frequency.
+_DOSE_PREFIX = r"^\d+(?:\.\d+)?\s*(?:ml|tabs?|tablets?|caps?|capsules?|puffs?|drops?)\s+"
+_POSITIONAL_3 =["morning", "noon", "night"]
 _POSITIONAL_4 = ["morning", "noon", "night", "bedtime"]
 
 
@@ -16,7 +18,8 @@ def parse_frequency(text):
     """Return (slots, is_prn). Unknown input returns ([], False) - never guessed."""
     if not text:
         return [], False
-    t = re.sub(r"[.\s]+", " ", str(text).strip().lower()).strip()
+    t = re.sub(_DOSE_PREFIX, "", str(text).strip().lower())
+    t = re.sub(r"[.\s]+", " ", t).strip()
     if any(p in t for p in _PRN):
         return [], True
     squashed = t.replace(" ", "")
