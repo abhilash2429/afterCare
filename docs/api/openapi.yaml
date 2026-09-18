@@ -1,0 +1,498 @@
+openapi: 3.1.0
+info:
+  title: AfterCare API
+  version: 1.0.0
+  description: >
+    Frozen contract between the Next.js PWA and the Lambda Function URL backend.
+    The frontend is developed against a Prism mock of this file:
+      npx @stoplight/prism-cli mock docs/api/openapi.yaml -p 4010
+    Breaking changes require agreement from both frontend and backend owners.
+
+servers:
+  - url: https://{functionUrlId}.lambda-url.ap-south-1.on.aws
+    description: Lambda Function URL
+    variables:
+      functionUrlId:
+        default: replace-me
+  - url: http://127.0.0.1:4010
+    description: Prism mock
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Cognito ID token (owner) or AfterCare circle token (caregiver).
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum: [unauthorized, forbidden, not_found, validation_failed, extraction_failed, conflict]
+        message: { type: string }
+        details: { type: object, additionalProperties: true }
+
+    Molecule:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, example: Aspirin }
+        strengthMg:
+          type: [number, "null"]
+          example: 75
+
+    Medicine:
+      type: object
+      required: [lineId, rawText, molecules, slots, prn, confidence, sourceBlockIds, needsConfirmation]
+      properties:
+        lineId: { type: string, example: m1 }
+        rawText: { type: string, example: "T. Ecosprin 75 OD after food x 30 days" }
+        brand: { type: [string, "null"], example: Ecosprin }
+        molecules:
+          type: array
+          items: { $ref: '#/components/schemas/Molecule' }
+        form:
+          type: [string, "null"]
+          enum: [tablet, capsule, syrup, injection, drops, inhaler, ointment, null]
+        frequency:
+          type: [string, "null"]
+          description: Verbatim from the document (OD, BD, TDS, HS, SOS, 1-0-1...). null means not stated.
+        slots:
+          type: array
+          description: Empty for PRN medicines. Never inferred when frequency is null.
+          items: { type: string, enum: [morning, noon, night, bedtime] }
+        foodRelation:
+          type: string
+          enum: [before, after, unspecified]
+        durationDays: { type: [integer, "null"] }
+        prn: { type: boolean }
+        prnCondition: { type: [string, "null"], example: "for fever" }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        sourceBlockIds:
+          type: array
+          items: { type: string }
+          description: Textract WORD block ids. Empty only when source is vision_only.
+        source:
+          type: string
+          enum: [textract, vision_only]
+          default: textract
+        needsConfirmation:
+          type: boolean
+          description: True when confidence < 0.85 or any required field is null.
+
+    RedFlags:
+      type: object
+      required: [source, text]
+      properties:
+        source:
+          type: string
+          enum: [document, generic]
+          description: generic text is a fixed constant and is never model-generated.
+        text: { type: string }
+        sourceBlockIds:
+          type: array
+          items: { type: string }
+          description: Required and non-empty when source is document.
+
+    Plan:
+      type: object
+      required: [planId, circleId, medicines, redFlags, status]
+      properties:
+        planId: { type: string, example: pl_01JABCDEF }
+        circleId: { type: string, example: ci_01JABCDEF }
+        patientName: { type: [string, "null"] }
+        sourceDocumentIds:
+          type: array
+          items: { type: string }
+        medicines:
+          type: array
+          items: { $ref: '#/components/schemas/Medicine' }
+        redFlags: { $ref: '#/components/schemas/RedFlags' }
+        followUp:
+          type: [object, "null"]
+          properties:
+            date: { type: [string, "null"], format: date }
+            with: { type: [string, "null"] }
+            confidence: { type: number }
+        slotTimes:
+          type: object
+          description: IST 24h times for this circle.
+          properties:
+            morning: { type: string, example: "08:00" }
+            noon: { type: string, example: "14:00" }
+            night: { type: string, example: "20:00" }
+            bedtime: { type: string, example: "22:00" }
+        language:
+          type: string
+          enum: [kn, hi, en]
+        status:
+          type: string
+          enum: [draft, active, archived]
+
+    Dose:
+      type: object
+      required: [doseId, date, slot, status, medicineLineIds]
+      properties:
+        doseId: { type: string, example: "ci_01J#2026-09-20#morning" }
+        date: { type: string, format: date }
+        slot: { type: string, enum: [morning, noon, night, bedtime] }
+        status: { type: string, enum: [pending, given, missed] }
+        givenAt: { type: [string, "null"], format: date-time }
+        givenBy: { type: [string, "null"] }
+        medicineLineIds:
+          type: array
+          items: { type: string }
+
+    BoxCheckItem:
+      type: object
+      required: [verdict, reason]
+      properties:
+        verdict: { type: string, enum: [matched, check, do_not_take] }
+        reason:
+          type: string
+          enum: [exact_match, strength_mismatch, combination_extra, brand_unreadable, missing_from_box, not_prescribed, duplicate_molecule]
+        message: { type: string, description: Localised copy for display. }
+        prescribedLineId: { type: [string, "null"] }
+        stripBrandText: { type: [string, "null"] }
+        stripMolecules:
+          type: array
+          items: { $ref: '#/components/schemas/Molecule' }
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid token
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Role not permitted (caregivers cannot edit plans)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+paths:
+  /health:
+    get:
+      summary: Liveness
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean }
+                  commit: { type: string }
+
+  /documents:
+    post:
+      summary: Create a document and get a presigned S3 PUT URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [circleId, pageCount, contentType]
+              properties:
+                circleId: { type: string }
+                pageCount: { type: integer, minimum: 1, maximum: 10 }
+                contentType: { type: string, enum: [image/jpeg, image/png, application/pdf] }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [documentId, uploads]
+                properties:
+                  documentId: { type: string }
+                  uploads:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        page: { type: integer }
+                        uploadUrl: { type: string, format: uri }
+                        key: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /documents/{documentId}/extract:
+    post:
+      summary: Run Textract + Bedrock and return a draft plan
+      description: Long-running, up to 120 seconds. Not idempotent-safe to call twice concurrently.
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [circleId]
+              properties:
+                circleId: { type: string }
+      responses:
+        '200':
+          description: Draft plan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Plan' }
+        '422':
+          description: Extraction produced nothing usable
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /plans/{planId}:
+    get:
+      summary: Get a plan
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Plan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Plan' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      summary: Apply user corrections to a draft plan (owner only)
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [medicines, userEdited]
+              properties:
+                userEdited:
+                  type: boolean
+                  description: Must be true when a strength or frequency differs from the extracted value.
+                medicines:
+                  type: array
+                  items: { $ref: '#/components/schemas/Medicine' }
+                language: { type: string, enum: [kn, hi, en] }
+                slotTimes: { type: object, additionalProperties: { type: string } }
+      responses:
+        '200':
+          description: Updated plan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Plan' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422':
+          description: Safety validation failed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /plans/{planId}/activate:
+    post:
+      summary: Activate a plan, create dose records and reminder schedules (owner only)
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Activated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [planId, status, dosesCreated, firstDoseAt]
+                properties:
+                  planId: { type: string }
+                  status: { type: string, enum: [active] }
+                  dosesCreated: { type: integer }
+                  firstDoseAt: { type: string, format: date-time }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422':
+          description: Plan still has fields needing confirmation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /doses/{doseId}/given:
+    post:
+      summary: Mark a slot given
+      parameters:
+        - name: doseId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Updated dose
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dose' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /plans/{planId}/adherence:
+    get:
+      summary: Dose log for the plan
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: days
+          in: query
+          schema: { type: integer, default: 7, maximum: 30 }
+      responses:
+        '200':
+          description: Doses, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [doses]
+                properties:
+                  doses:
+                    type: array
+                    items: { $ref: '#/components/schemas/Dose' }
+                  givenPct: { type: number }
+
+  /boxcheck:
+    post:
+      summary: Check photographed strips against the active plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, documentId]
+              properties:
+                planId: { type: string }
+                documentId:
+                  type: string
+                  description: A document whose pages are strip photos, uploaded via /documents.
+      responses:
+        '200':
+          description: Verdicts, one per prescribed medicine plus one per unmatched strip
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/BoxCheckItem' }
+
+  /circles/{circleId}/invite:
+    post:
+      summary: Create a single-use caregiver invite (owner only)
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '201':
+          description: Invite created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, url, expiresAt]
+                properties:
+                  token: { type: string }
+                  url: { type: string, format: uri }
+                  expiresAt: { type: string, format: date-time }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /circles/{circleId}/join:
+    post:
+      summary: Exchange an invite token for a 90-day caregiver session token
+      security: []
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        '200':
+          description: Session token
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sessionToken, role, circleId]
+                properties:
+                  sessionToken: { type: string }
+                  role: { type: string, enum: [caregiver] }
+                  circleId: { type: string }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /circles/{circleId}/push:
+    post:
+      summary: Register a Web Push subscription for the current principal
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subscription]
+              properties:
+                subscription:
+                  type: object
+                  description: The browser PushSubscription JSON.
+                  required: [endpoint, keys]
+                  properties:
+                    endpoint: { type: string, format: uri }
+                    keys:
+                      type: object
+                      properties:
+                        p256dh: { type: string }
+                        auth: { type: string }
+      responses:
+        '204':
+          description: Registered
