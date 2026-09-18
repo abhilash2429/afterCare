@@ -132,12 +132,25 @@ class AftercareStack(Stack):
             actions=["lambda:InvokeFunction"], resources=[reminder.function_arn]))
         api.add_environment("REMINDER_ARN", reminder.function_arn)
         api.add_environment("SCHEDULER_ROLE_ARN", scheduler_role.role_arn)
+        # A3: the reminder never reads its own ARN from env (circular
+        # dependency); it uses context.invoked_function_arn as the
+        # check-schedule target. It only needs the scheduler role ARN.
+        reminder.add_environment("SCHEDULER_ROLE_ARN", scheduler_role.role_arn)
 
         api.add_to_role_policy(iam.PolicyStatement(
             actions=["scheduler:CreateSchedule", "scheduler:DeleteSchedule"],
             resources=["arn:aws:scheduler:%s:%s:schedule/aftercare/*" % (
                 config.REGION, config.ACCOUNT)]))
         api.add_to_role_policy(iam.PolicyStatement(
+            actions=["iam:PassRole"],
+            resources=[scheduler_role.role_arn],
+            conditions={"StringEquals": {"iam:PassedToService": "scheduler.amazonaws.com"}}))
+        # Task 12 (A5): the reminder creates its own follow-up check schedules.
+        reminder.add_to_role_policy(iam.PolicyStatement(
+            actions=["scheduler:CreateSchedule"],
+            resources=["arn:aws:scheduler:%s:%s:schedule/aftercare/*" % (
+                config.REGION, config.ACCOUNT)]))
+        reminder.add_to_role_policy(iam.PolicyStatement(
             actions=["iam:PassRole"],
             resources=[scheduler_role.role_arn],
             conditions={"StringEquals": {"iam:PassedToService": "scheduler.amazonaws.com"}}))
