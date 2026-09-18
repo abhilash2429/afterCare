@@ -10,22 +10,29 @@ _MATCH_FLOOR = 0.88
 _EACH_CLAUSE = r"^\s*each\b.*?\bcontains?\b\s*:?"
 _EQ_TO = r"\b(?:eq\b\.?|equivalent)\s*to\b"
 _THOUSANDS = r"(?<=\d),(?=(?:\d{2},)*\d{3}(?!\d))"  # 60,000 and Indian 6,00,000
-_STRENGTH = r"(\d+(?:\.\d+)?)\s*(mcg|mg|g|ml|iu)\b"
+_STRENGTH = r"(\d+(?:\.\d+)?)\s*(mcg|mg|g|ml|iu|i\.?u\.?)(?![a-zA-Z])"
 _PER_VOLUME = r"(?:\s*/\s*\d*(?:\.\d+)?\s*(?:ml|mg|g)\b)?"
-_PHARMACOPOEIA = r"\b(?:ip|bp|usp)\b"
-_RELEASE_FORMS = r"\b(?:tablets?|capsules?|film[\s-]*coated|sr|er|xr|cr|mr|dt)\b"
+# Undotted (ip, bp, usp) and dotted (i.p., b.p., u.s.p.) pharmacopoeia tags. \b fails
+# after a trailing period, so this uses lookaround instead.
+_PHARMACOPOEIA = r"(?<![a-z])(?:i\.?p\.?|b\.?p\.?|u\.?s\.?p\.?)(?![a-z])"
+_RELEASE_FORMS = (
+    r"\b(?:tablets?|tabs?|capsules?|caps?|film[\s-]*coated|sr|er|xr|cr|mr|dt|"
+    r"gastro[\s-]*resistant|enteric[\s-]*coated|"
+    r"(?:prolonged|extended|modified|sustained|controlled)[\s-]*release|"
+    r"oral[\s-]+suspension|suspension|syrup|syp|injection|inj|drops)\b"
+)
 _SALT_SUFFIX = r"\s+(?:hydrochloride|hcl|sodium|potassium)$"
 
 # Only spellings of the same active drug. Every entry here merges two names into one
 # match, so keep it tiny: a wrong entry would green-light a different medicine.
+# Ferrous salts (ascorbate/fumarate/sulphate/sulfate) are deliberately NOT merged:
+# they are different compounds a doctor can prescribe by design (R28).
 MOLECULE_SYNONYMS = {
     "amoxicillin": "amoxycillin",
     "acetaminophen": "paracetamol",
-    "ferrous ascorbate": "iron",
-    "ferrous fumarate": "iron",
-    "ferrous sulphate": "iron",
-    "ferrous sulfate": "iron",
     "elemental iron": "iron",
+    "potassium clavulanate": "clavulanic acid",
+    "clavulanate": "clavulanic acid",
 }
 
 
@@ -75,7 +82,7 @@ def parse_composition(text):
         strength = None
         unit = "mg"
         if m:
-            value, raw_unit = float(m.group(1)), m.group(2).lower()
+            value, raw_unit = float(m.group(1)), m.group(2).lower().replace(".", "")
             if raw_unit in ("iu", "ml"):
                 strength, unit = value, raw_unit
             else:

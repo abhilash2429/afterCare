@@ -86,7 +86,7 @@ def _medicine(d):
     for x in m.molecules:
         x.strengthMg = _opt(float, x.strengthMg)
     m.confidence = _opt(float, m.confidence)
-    m.durationDays = _opt(int, m.durationDays)
+    m.durationDays = _opt(lambda v: int(float(v)), m.durationDays)
     if m.crop:
         m.crop = {k: (_opt(float, v) if k in ("x", "y", "w", "h") else v)
                   for k, v in m.crop.items()}

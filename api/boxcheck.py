@@ -159,12 +159,28 @@ def check_box(medicines, strips):
             if (i not in used or i in combos) and _contains_more(med, strip):
                 used.add(i)
                 combos.add(i)
-                if _covers(prescribed, strip.molecules):
-                    reason = "combination_strip"
+                # A combo strip's extra molecule (not this line's own) may already
+                # have its own exact-matched strip on another line - that's double
+                # dosing, not a combination to check with the chemist.
+                own_names = _names(med.molecules)
+                extras = [m for m in strip.molecules if normalise_molecule(m.name) not in own_names]
+                dup = False
+                for other_id, other_strip in satisfied.items():
+                    if other_strip is strip:
+                        continue
+                    other_med = next(o for o in medicines if o.lineId == other_id)
+                    if any(molecules_equal(om, em) for om in other_med.molecules for em in extras):
+                        dup = True
+                        break
+                if dup:
+                    primary[med.lineId] = _item("do_not_take", "duplicate_molecule", med.lineId, strip)
                 else:
-                    reason = "combination_extra"
-                primary[med.lineId] = _item("check", reason, med.lineId, strip)
-                satisfied[med.lineId] = strip
+                    if _covers(prescribed, strip.molecules):
+                        reason = "combination_strip"
+                    else:
+                        reason = "combination_extra"
+                    primary[med.lineId] = _item("check", reason, med.lineId, strip)
+                    satisfied[med.lineId] = strip
                 break
 
     for med in normal:

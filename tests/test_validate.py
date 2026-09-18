@@ -204,6 +204,15 @@ def _stringify(value):
     return value
 
 
+# --- fix pass 2: R28 ferrous salt change is a real dose change (finding 3) ---
+
+def test_ferrous_salt_change_without_user_edited_is_rejected():
+    original = _plan(medicines=[_med(molecules=[Molecule(name="Ferrous Sulphate", strengthMg=200)])])
+    edited = _plan(medicines=[_med(molecules=[Molecule(name="Ferrous Ascorbate", strengthMg=200)])])
+    assert validate_edit(original, edited, user_edited=False) != []
+    assert validate_edit(original, edited, user_edited=True) == []
+
+
 def test_dynamodb_round_trip_with_string_numbers_and_unknown_keys():
     original = _plan(medicines=[
         _med(durationDays=30, crop={"x": 0.1, "y": 0.2, "w": 0.3, "h": 0.05}),

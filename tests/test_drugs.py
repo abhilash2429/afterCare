@@ -83,7 +83,7 @@ def test_normalise_molecule_resolves_each_contains_and_eq_to():
 def test_normalise_molecule_synonyms():
     assert normalise_molecule("Amoxicillin") == "amoxycillin"
     assert normalise_molecule("Acetaminophen") == "paracetamol"
-    assert normalise_molecule("Ferrous Sulfate") == "iron"
+    assert normalise_molecule("Elemental Iron") == "iron"
 
 
 def test_parse_composition_realistic_strip_text():
@@ -123,3 +123,64 @@ def test_molecules_equal_uses_normalised_names():
 def test_molecules_equal_requires_known_strength():
     assert not molecules_equal(Molecule("multivitamin", None), Molecule("multivitamin", None))
     assert not molecules_equal(Molecule("aspirin", None), Molecule("aspirin", 75))
+
+
+# --- fix pass 2: R27 normaliser coverage (finding 2) ---
+
+def test_normalise_molecule_handles_dotted_pharmacopoeia():
+    assert normalise_molecule("Aspirin I.P.") == "aspirin"
+    assert normalise_molecule("Metformin B.P.") == "metformin"
+    assert normalise_molecule("Losartan U.S.P.") == "losartan"
+
+
+def test_normalise_molecule_strips_release_and_form_words():
+    assert normalise_molecule("Aspirin Gastro-resistant") == "aspirin"
+    assert normalise_molecule("Aspirin Gastro resistant") == "aspirin"
+    assert normalise_molecule("Amoxycillin Enteric Coated") == "amoxycillin"
+    assert normalise_molecule("Metformin Prolonged-release") == "metformin"
+    assert normalise_molecule("Metformin Prolonged release") == "metformin"
+    assert normalise_molecule("Metformin Extended-release") == "metformin"
+    assert normalise_molecule("Metformin Modified release") == "metformin"
+    assert normalise_molecule("Metformin Sustained-release") == "metformin"
+    assert normalise_molecule("Metformin Controlled-release") == "metformin"
+    assert normalise_molecule("Paracetamol Tab") == "paracetamol"
+    assert normalise_molecule("Paracetamol Tabs") == "paracetamol"
+    assert normalise_molecule("Amoxycillin Cap") == "amoxycillin"
+    assert normalise_molecule("Amoxycillin Caps") == "amoxycillin"
+    assert normalise_molecule("Paracetamol Syrup") == "paracetamol"
+    assert normalise_molecule("Paracetamol Syp") == "paracetamol"
+    assert normalise_molecule("Paracetamol Suspension") == "paracetamol"
+    assert normalise_molecule("Paracetamol Oral Suspension") == "paracetamol"
+    assert normalise_molecule("Ceftriaxone Injection") == "ceftriaxone"
+    assert normalise_molecule("Ceftriaxone Inj") == "ceftriaxone"
+    assert normalise_molecule("Atropine Drops") == "atropine"
+
+
+def test_parse_composition_dotted_pharmacopoeia_and_release_words():
+    assert parse_composition("Aspirin Gastro-resistant Tablets I.P. 75 mg") == [
+        Molecule("aspirin", 75.0, "mg")]
+    assert parse_composition("Metformin Hydrochloride Prolonged-release Tablets IP 500 mg") == [
+        Molecule("metformin", 500.0, "mg")]
+    assert parse_composition("Paracetamol Tab IP 650 mg") == [Molecule("paracetamol", 650.0, "mg")]
+
+
+def test_parse_composition_dotted_iu_unit():
+    assert parse_composition("Vitamin D3 60,000 I.U.") == [Molecule("vitamin d3", 60000.0, "iu")]
+
+
+def test_parse_composition_clavulanate_potassium_synonym():
+    got = parse_composition("Amoxycillin 500mg + Potassium Clavulanate 125mg")
+    assert got == [Molecule("amoxycillin", 500.0, "mg"), Molecule("clavulanic acid", 125.0, "mg")]
+
+
+def test_normalise_molecule_sodium_and_potassium_chloride_stay_distinct():
+    assert normalise_molecule("sodium chloride") != normalise_molecule("potassium chloride")
+
+
+# --- fix pass 2: R28 ferrous salts are no longer merged as synonyms (finding 3) ---
+
+def test_normalise_molecule_no_longer_merges_ferrous_salts():
+    assert normalise_molecule("Ferrous Sulphate") != "iron"
+    assert normalise_molecule("Ferrous Ascorbate") != "iron"
+    assert normalise_molecule("Ferrous Fumarate") != "iron"
+    assert normalise_molecule("Ferrous Sulfate") != "iron"

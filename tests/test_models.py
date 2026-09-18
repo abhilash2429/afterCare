@@ -25,3 +25,13 @@ def test_plan_round_trip_preserves_molecule_unit():
                                  molecules=[Molecule(name="Vitamin D3", strengthMg=60000, unit="iu")])])
     back = Plan.from_dict(p.to_dict())
     assert back.medicines[0].molecules[0].unit == "iu"
+
+
+# --- fix pass 2: durationDays coercion (finding 4) ---
+
+def test_plan_round_trip_coerces_string_float_duration_days():
+    d = Plan(planId="pl_1", circleId="ci_1",
+             medicines=[Medicine(lineId="m1", rawText="T. Ecosprin 75 OD")]).to_dict()
+    d["medicines"][0]["durationDays"] = "30.0"
+    back = Plan.from_dict(d)
+    assert back.medicines[0].durationDays == 30

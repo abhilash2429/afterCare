@@ -293,6 +293,34 @@ def test_unreadable_strip_strength_is_strength_unreadable():
     assert by_line(items) == {"m1": [("check", "strength_unreadable")]}
 
 
+# --- fix pass 2: R combination-pass double-dosing (finding 1) ---
+
+def test_combination_molecule_already_matched_elsewhere_is_duplicate_not_combination():
+    items = check_box([med("m1", "metformin", 500), med("m2", "glimepiride", 1)],
+                      [Strip("Glycomet 500", [Molecule("metformin", 500)]),
+                       Strip("Glycomet GP1", [Molecule("metformin", 500), Molecule("glimepiride", 1)])])
+    assert by_line(items) == {"m1": [("matched", "exact_match")],
+                              "m2": [("do_not_take", "duplicate_molecule")]}
+    assert items[1]["stripBrandText"] == "Glycomet GP1"
+
+
+# --- fix pass 2: R27 normaliser coverage end-to-end (finding 2) ---
+
+def test_gastro_resistant_ip_dotted_strip_matches_line():
+    items = check_box([med("m1", "aspirin", 75)],
+                      [Strip("Ecosprin 75",
+                             parse_composition("Aspirin Gastro-resistant Tablets I.P. 75 mg"))])
+    assert by_line(items) == {"m1": [("matched", "exact_match")]}
+
+
+# --- fix pass 2: R28 ferrous salts are no longer treated as interchangeable (finding 3) ---
+
+def test_ferrous_sulphate_line_does_not_match_ferrous_ascorbate_strip():
+    items = check_box([med("m1", "ferrous sulphate", 200)],
+                      [Strip("Ferrous Ascorbate", [Molecule("ferrous ascorbate", 200)])])
+    assert items[0]["verdict"] != "matched"
+
+
 def test_new_reasons_carry_tier_phrase():
     scenarios = [
         ([med("m1", "aspirin", 75)], [Strip(None, []), Strip("Ecosprin 75", [Molecule("aspirin", 75)])]),
