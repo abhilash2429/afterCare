@@ -5,7 +5,7 @@
   "patient": {"name": "Suresh Angadi", "age": 44, "sex": "M", "uhid": "MBJ-26-03317"},
   "admitted": "2026-09-10", "discharged": "2026-09-13",
   "diagnosis": "Closed fracture distal end right radius, ORIF with volar locking plate done on 2026-09-11",
-  "doctor": "Dr. Prakash Hiremath, MS (Ortho)<br>Reg. No. KMC/61742",
+  "doctor": "Dr. Prakash Hiremath, MS (Ortho)<br>Reg. No. KMC/DEMO-61742",
   "medicines": [
     {"raw": "Tab. Zerodol-P (Aceclofenac 100 mg + Paracetamol 325 mg) one tablet twice daily after food for 5 days",
      "brand": "Zerodol-P", "molecules": [{"name": "aceclofenac", "strengthMg": 100},

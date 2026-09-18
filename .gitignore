@@ -9,3 +9,4 @@ node_modules/
 data/drugs_raw/
 data/photos/
 .superpowers/
+data/out/

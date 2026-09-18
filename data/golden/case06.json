@@ -78,7 +78,7 @@
       "prn": false,
       "prnCondition": null,
       "foodRelation": "after",
-      "durationDays": 10
+      "durationDays": 5
     },
     {
       "lineId": "m5",

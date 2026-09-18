@@ -13,13 +13,14 @@ Optional fixture fields (unknown fields such as printNote are ignored):
 import glob
 import json
 import os
+from html import escape
 
 from api.frequency import parse_frequency
 
 HERE = os.path.dirname(__file__)
 OUT = os.path.join(HERE, "out")
 GOLDEN = os.path.join(HERE, "golden")
-DEFAULT_DOCTOR = "Dr. S. Patil, MD DM (Cardiology)<br>Reg. No. KMC/48213"
+DEFAULT_DOCTOR = "Dr. S. Patil, MD DM (Cardiology)<br>Reg. No. KMC/DEMO-48213"
 
 HTML = """<!doctype html><meta charset="utf-8"><title>{caseId}</title>
 <style>
@@ -81,7 +82,7 @@ def expected(fixture):
 
 
 def med_block(fx):
-    raws = [m["raw"] for m in fx["medicines"]]
+    raws = [escape(m["raw"]) for m in fx["medicines"]]
     layout = fx.get("layout", "table")
     if layout == "opd":
         return "".join("<li>%s</li>" % r for r in raws)
@@ -98,22 +99,26 @@ def med_block(fx):
     return html
 
 
+def render(fx):
+    """Fixture -> HTML. `doctor` is trusted HTML (contains <br>); text fields are escaped."""
+    local = fx.get("hospitalLocal")
+    return (OPD if fx.get("layout") == "opd" else HTML).format(
+        caseId=fx["caseId"], hospital=escape(fx["hospital"]),
+        local='<h1>%s</h1>\n' % escape(local) if local else "",
+        name=fx["patient"]["name"], age=fx["patient"]["age"],
+        sex=fx["patient"]["sex"], uhid=fx["patient"]["uhid"],
+        admitted=fx.get("admitted"), discharged=fx.get("discharged"),
+        visitDate=fx.get("visitDate"), diagnosis=escape(fx["diagnosis"]), meds=med_block(fx),
+        redflags=escape(fx["redFlags"]), doctor=fx.get("doctor", DEFAULT_DOCTOR),
+        followup=escape("%s with %s" % (fx["followUp"]["date"], fx["followUp"]["with"])))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(GOLDEN, exist_ok=True)
     for path in sorted(glob.glob(os.path.join(HERE, "fixtures", "*.json"))):
         fx = json.load(open(path, encoding="utf-8"))
-        local = fx.get("hospitalLocal")
-        html = (OPD if fx.get("layout") == "opd" else HTML).format(
-            caseId=fx["caseId"], hospital=fx["hospital"],
-            local='<h1>%s</h1>\n' % local if local else "",
-            name=fx["patient"]["name"], age=fx["patient"]["age"],
-            sex=fx["patient"]["sex"], uhid=fx["patient"]["uhid"],
-            admitted=fx.get("admitted"), discharged=fx.get("discharged"),
-            visitDate=fx.get("visitDate"), diagnosis=fx["diagnosis"], meds=med_block(fx),
-            redflags=fx["redFlags"], doctor=fx.get("doctor", DEFAULT_DOCTOR),
-            followup="%s with %s" % (fx["followUp"]["date"], fx["followUp"]["with"]))
-        open(os.path.join(OUT, fx["caseId"] + ".html"), "w", encoding="utf-8").write(html)
+        open(os.path.join(OUT, fx["caseId"] + ".html"), "w", encoding="utf-8").write(render(fx))
         json.dump(expected(fx), open(os.path.join(GOLDEN, fx["caseId"] + ".json"), "w",
                                      encoding="utf-8"), indent=2, ensure_ascii=False)
         print("wrote", fx["caseId"])

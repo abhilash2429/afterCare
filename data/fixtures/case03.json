@@ -4,7 +4,7 @@
   "patient": {"name": "Shantamma Patil", "age": 59, "sex": "F", "uhid": "VDE/2026/08861"},
   "admitted": "2026-09-08", "discharged": "2026-09-12",
   "diagnosis": "Type 2 diabetes mellitus with uncontrolled hyperglycaemia, acute cystitis, systemic hypertension, dyslipidaemia",
-  "doctor": "Dr. Kavitha Rao, MD, DM (Endocrinology)<br>Reg. No. KMC/57209",
+  "doctor": "Dr. Kavitha Rao, MD, DM (Endocrinology)<br>Reg. No. KMC/DEMO-57209",
   "medicines": [
     {"raw": "T. Glycomet 500 mg  1-0-1  after food  x 30 days",
      "brand": "Glycomet", "molecules": [{"name": "metformin", "strengthMg": 500}],

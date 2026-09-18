@@ -5,7 +5,7 @@
   "patient": {"name": "Girish Naik", "age": 38, "sex": "M", "uhid": "SSH-26-0931"},
   "admitted": "2026-09-12", "discharged": "2026-09-14",
   "diagnosis": "Symptomatic cholelithiasis, laparoscopic cholecystectomy done on 2026-09-13",
-  "doctor": "Dr. Harish Shetty, MS (General Surgery)<br>Reg. No. KMC/68204",
+  "doctor": "Dr. Harish Shetty, MS (General Surgery)<br>Reg. No. KMC/DEMO-68204",
   "medicines": [
     {"raw": "T. Taxim-O 200 mg  BD  after food  x 5 days",
      "brand": "Taxim-O", "molecules": [{"name": "cefixime", "strengthMg": 200}],

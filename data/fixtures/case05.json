@@ -5,7 +5,7 @@
   "patient": {"name": "Lakshmi Badiger", "age": 26, "sex": "F", "uhid": "SAM-2026-4471"},
   "admitted": "2026-09-10", "discharged": "2026-09-14",
   "diagnosis": "G2P2L2, term pregnancy, elective lower segment caesarean section on 2026-09-11 for previous LSCS. Mild anaemia (Hb 9.8 g/dl)",
-  "doctor": "Dr. Sunanda Kattimani, MS (OBG)<br>Reg. No. KMC/59836",
+  "doctor": "Dr. Sunanda Kattimani, MS (OBG)<br>Reg. No. KMC/DEMO-59836",
   "medicines": [
     {"raw": "T. Orofer XT (Ferrous ascorbate eq. to elemental iron 100 mg + Folic acid 1.5 mg)  OD  after food  x 3 months",
      "brand": "Orofer XT", "molecules": [{"name": "ferrous ascorbate", "strengthMg": 100},

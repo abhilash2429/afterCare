@@ -4,7 +4,7 @@
   "patient": {"name": "Baby Ananya Gowda", "age": 2, "sex": "F", "uhid": "NCC-26-1904"},
   "admitted": "2026-09-11", "discharged": "2026-09-15",
   "diagnosis": "Community acquired pneumonia (right lower lobe) with wheeze. Weight 12 kg",
-  "doctor": "Dr. Nagaraj Bhat, MD (Paediatrics)<br>Reg. No. KMC/66318",
+  "doctor": "Dr. Nagaraj Bhat, MD (Paediatrics)<br>Reg. No. KMC/DEMO-66318",
   "medicines": [
     {"raw": "Syp. Augmentin Duo (400 mg + 57 mg per 5 ml)  3.5 ml BD (45 mg/kg/day)  after food  x 7 days",
      "brand": "Augmentin Duo", "molecules": [{"name": "amoxycillin", "strengthMg": 400},

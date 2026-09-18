@@ -5,7 +5,7 @@
   "patient": {"name": "Abdul Rasheed", "age": 63, "sex": "M", "uhid": "KHM-2026-15530"},
   "admitted": "2026-09-05", "discharged": "2026-09-13",
   "diagnosis": "Acute decompensated heart failure with reduced ejection fraction (LVEF 30%), ischaemic cardiomyopathy, old anterior wall MI, type 2 diabetes mellitus. Course: IV diuretics, decongested, weight on discharge 68 kg",
-  "doctor": "Dr. Vinay Kumar Reddy, MD DM (Cardiology)<br>Reg. No. KMC/55971",
+  "doctor": "Dr. Vinay Kumar Reddy, MD DM (Cardiology)<br>Reg. No. KMC/DEMO-55971",
   "medicines": [
     {"raw": "T. Lasix 40 mg  1-0-0  x 30 days",
      "brand": "Lasix", "molecules": [{"name": "furosemide", "strengthMg": 40}],

@@ -4,7 +4,7 @@
   "patient": {"name": "Sarojamma Gowda", "age": 72, "sex": "F", "uhid": "YMC-26-6620"},
   "admitted": "2026-09-11", "discharged": "2026-09-14",
   "diagnosis": "Acute gastritis with vomiting and mild dehydration (corrected), systemic hypertension, postmenopausal osteoporosis",
-  "doctor": "Dr. Mahesh Kadur, MD (General Medicine)<br>Reg. No. KMC/64417",
+  "doctor": "Dr. Mahesh Kadur, MD (General Medicine)<br>Reg. No. KMC/DEMO-64417",
   "medicines": [
     {"raw": "T. Amlodipine  OD  x 30 days",
      "brand": "Amlodipine", "molecules": [{"name": "amlodipine", "strengthMg": null}],
@@ -15,7 +15,7 @@
     {"raw": "T. Pantocid 40 mg  OD  before breakfast  x 14 days",
      "brand": "Pantocid", "molecules": [{"name": "pantoprazole", "strengthMg": 40}],
      "frequency": "OD", "foodRelation": "before", "durationDays": 14, "prn": false},
-    {"raw": "T. Osteofos 70 mg  once a week, empty stomach with a full glass of water, stay upright 30 min  x 3 months",
+    {"raw": "T. Osteofos 70 mg  once a week, empty stomach with a full glass of water, stay upright 30 min  x 3 months, start after 2 weeks",
      "brand": "Osteofos", "molecules": [{"name": "alendronate", "strengthMg": 70}],
      "frequency": "once a week", "foodRelation": "before", "durationDays": 90, "prn": false},
     {"raw": "T. Dolo 650 mg  SOS for body ache or fever",

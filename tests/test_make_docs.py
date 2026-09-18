@@ -53,3 +53,11 @@ def test_case10_missing_duration_and_strength():
     meds = _golden("case10")["medicines"]
     assert any(m["durationDays"] is None for m in meds)
     assert any(mol["strengthMg"] is None for m in meds for mol in m["molecules"])
+
+
+def test_render_escapes_html():
+    fx = _load(os.path.join(DATA, "fixtures", "case01.json"))
+    fx["medicines"][0]["raw"] = "T. X <5 mg> & more"
+    html = make_docs.render(fx)
+    assert "T. X &lt;5 mg&gt; &amp; more" in html
+    assert "<5 mg>" not in html

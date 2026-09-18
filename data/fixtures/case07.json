@@ -2,7 +2,7 @@
   "caseId": "case07",
   "layout": "opd",
   "hospital": "Anugraha Family Clinic, Station Road, Vijayapura. Timings 9 am to 1 pm, 5 pm to 9 pm",
-  "doctor": "Dr. Meera Hegde, MBBS, MD (General Medicine)<br>Reg. No. KMC/70125",
+  "doctor": "Dr. Meera Hegde, MBBS, MD (General Medicine)<br>Reg. No. KMC/DEMO-70125",
   "patient": {"name": "Vidya Kulkarni", "age": 47, "sex": "F", "uhid": "OP-26-1187"},
   "visitDate": "2026-09-16",
   "diagnosis": "Hypothyroidism (TSH 9.2), essential hypertension, allergic rhinitis",
@@ -23,5 +23,5 @@
      "prn": true, "prnCondition": "for headache or fever"}
   ],
   "redFlags": "Severe headache, chest pain, palpitations, sudden weakness of face, arm or leg, or BP above 180/110 at home.",
-  "followUp": {"date": "2026-12-16", "with": "Dr. Meera Hegde with repeat TSH report"}
+  "followUp": {"date": "2026-12-16", "with": "Dr. Meera Hegde (bring repeat TSH report)"}
 }
