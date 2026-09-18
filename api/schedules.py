@@ -19,14 +19,19 @@ def schedule_name_for_dose(plan, dose):
     return _UNSAFE.sub("-", raw)[:64]
 
 
+def dose_at(plan, dose):
+    """UTC instant of a dose: its date at the plan's IST slot time."""
+    hhmm = plan.slotTimes.get(dose.slot, "08:00")
+    local = datetime.fromisoformat("%sT%s:00" % (dose.date, hhmm)).replace(tzinfo=IST)
+    return local.astimezone(timezone.utc)
+
+
 def create_dose_schedules(plan, doses):
     target_arn = os.environ["REMINDER_ARN"]
     role_arn = os.environ["SCHEDULER_ROLE_ARN"]
     created = 0
     for dose in doses[:MAX_SCHEDULES]:
-        hhmm = plan.slotTimes.get(dose.slot, "08:00")
-        local = datetime.fromisoformat("%sT%s:00" % (dose.date, hhmm)).replace(tzinfo=IST)
-        at = local.astimezone(timezone.utc).strftime("at(%Y-%m-%dT%H:%M:%S)")
+        at = dose_at(plan, dose).strftime("at(%Y-%m-%dT%H:%M:%S)")
         try:
             _scheduler.create_schedule(
                 Name=schedule_name_for_dose(plan, dose),

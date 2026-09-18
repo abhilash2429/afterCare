@@ -14,6 +14,7 @@ import api.auth as auth
 import api.plans as plans
 import api.schedules as schedules
 from api.handler import lambda_handler
+from api.common import IST
 from api.models import Medicine, Molecule, Plan, RedFlags
 
 SECRET = "test-secret-that-is-at-least-32-bytes-long"
@@ -24,6 +25,8 @@ def env(monkeypatch):
     monkeypatch.setattr(auth, "_secret", lambda: SECRET)
     monkeypatch.setenv("REMINDER_ARN", "arn:aws:lambda:ap-south-1:123456789012:function:reminder")
     monkeypatch.setenv("SCHEDULER_ROLE_ARN", "arn:aws:iam::123456789012:role/aftercare-scheduler")
+    # Pin "now" to 07:00 IST so today's 08:00 morning slot is still ahead.
+    monkeypatch.setattr(plans, "now_ist", lambda: datetime(2026, 9, 20, 7, 0, tzinfo=IST))
 
 
 @pytest.fixture
@@ -396,3 +399,37 @@ def test_create_schedules_uses_group_utc_and_target(monkeypatch):
     payload = json.loads(captured["Target"]["Input"])
     assert payload == {"doseId": "ci_1#2026-09-20#morning", "circleId": "ci_1",
                        "planId": "pl_1", "phase": "remind"}
+
+
+def test_activate_skips_slots_already_past_today(table, monkeypatch):
+    _stub_owner(monkeypatch)
+    _stub_scheduler(monkeypatch)
+    monkeypatch.setattr(plans, "now_ist", lambda: datetime(2026, 9, 20, 9, 0, tzinfo=IST))
+    _store_plan(table, _plan())
+    res = lambda_handler(_event("POST", "/plans/pl_1/activate", {"circleId": "ci_1"}), None)
+    body = json.loads(res["body"])
+    assert body["dosesCreated"] == 6  # today's 08:00 morning dose is already past
+    assert body["firstDoseAt"] == "2026-09-21T02:30:00+00:00"
+
+
+def test_scheduler_failure_leaves_plan_draft(table, monkeypatch):
+    _stub_owner(monkeypatch)
+    _store_plan(table, _plan())
+
+    def boom(plan, doses):
+        raise RuntimeError("scheduler down")
+
+    monkeypatch.setattr(plans, "create_dose_schedules", boom)
+    with pytest.raises(RuntimeError):
+        plans.activate_plan(_event("POST", "/plans/pl_1/activate", {"circleId": "ci_1"}),
+                            {"planId": "pl_1"})
+    plan = table.get_item(Key={"PK": "CIRCLE#ci_1", "SK": "PLAN#pl_1"})["Item"]
+    assert plan.get("status", "draft") == "draft"
+
+
+def test_patch_without_medicines_keeps_them(table, monkeypatch):
+    _stub_owner(monkeypatch)
+    _store_plan(table, _plan())
+    res = lambda_handler(_event("PATCH", "/plans/pl_1", {"circleId": "ci_1", "language": "kn"}), None)
+    assert res["statusCode"] == 200
+    assert len(json.loads(res["body"])["medicines"]) == 1

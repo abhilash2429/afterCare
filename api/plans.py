@@ -6,11 +6,11 @@ import boto3
 from botocore.exceptions import ClientError
 
 from api.auth import principal_from_event, require
-from api.common import IST, REGION, TABLE, now_ist
+from api.common import REGION, TABLE, now_ist
 from api.doses import build_doses
 from api.handler import respond, route
 from api.models import Plan
-from api.schedules import create_dose_schedules
+from api.schedules import create_dose_schedules, dose_at
 from api.validate import can_activate, validate_edit
 
 _ddb = boto3.resource("dynamodb", region_name=REGION)
@@ -84,7 +84,7 @@ def patch_plan(event, params):
         return respond(404, {"code": "not_found", "message": "plan not found"})
 
     edited = Plan.from_dict({**original.to_dict(),
-                             "medicines": body.get("medicines", []),
+                             "medicines": body.get("medicines", original.to_dict()["medicines"]),
                              "language": body.get("language", original.language),
                              "slotTimes": body.get("slotTimes", original.slotTimes)})
     user_edited = bool(body.get("userEdited"))
@@ -113,7 +113,10 @@ def activate_plan(event, params):
     if errors:
         return respond(422, {"code": "validation_failed", "message": "; ".join(errors)})
 
-    doses = build_doses(plan, now_ist().date(), days=30)
+    now = now_ist()
+    # A slot whose time has already passed today is not a dose: it would fire a
+    # reminder in the past and count as missed before anyone could give it.
+    doses = [d for d in build_doses(plan, now.date(), days=30) if dose_at(plan, d) > now]
     table = _ddb.Table(TABLE)
     for dose in doses:
         try:
@@ -127,15 +130,12 @@ def activate_plan(event, params):
         except ClientError as exc:
             if exc.response["Error"]["Code"] != "ConditionalCheckFailedException":
                 raise
+    # Schedules before the status flip: if the scheduler fails, the plan stays draft and
+    # activate can be retried (dose writes above are idempotent).
+    create_dose_schedules(plan, doses)
     plan.status = "active"
     _save(plan)
-    create_dose_schedules(plan, doses)
-    if doses:
-        first = min(doses, key=lambda d: (d.date, d.slot))
-        hhmm = plan.slotTimes.get(first.slot, "08:00")
-        local = datetime.fromisoformat("%sT%s:00" % (first.date, hhmm)).replace(tzinfo=IST)
-        first_at = local.astimezone(timezone.utc).isoformat()
-    else:
-        first_at = None
+    first_at = min((dose_at(plan, d) for d in doses), default=None)
+    first_at = first_at.isoformat() if first_at else None
     return respond(200, {"planId": plan.planId, "status": "active",
                          "dosesCreated": len(doses), "firstDoseAt": first_at})
