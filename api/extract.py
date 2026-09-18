@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import boto3
 
@@ -137,6 +138,12 @@ def _medicine(m, words, source, key):
     mols = [x for x in mols if x.name]
     duration = _float(m.get("durationDays"))
     block_ids = _valid_ids(m.get("sourceBlockIds"), words)
+    cited = " ".join(w["text"] for w in words if w["id"] in block_ids).replace(",", "")
+    printed = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", cited)}
+    # A strength the model states must be a number on the cited words, else it was inferred.
+    unprinted = any(_float(x.get("strengthMg")) not in printed
+                    for x in (m.get("molecules") or [])
+                    if x.get("name") and _float(x.get("strengthMg")) is not None)
     confidence = _float(m.get("confidence")) or 0.0
     food = m.get("foodRelation")
     crop = crop_for(block_ids, words)
@@ -151,7 +158,7 @@ def _medicine(m, words, source, key):
         sourceBlockIds=block_ids, source=source, crop=crop,
         needsConfirmation=(confidence < CONFIDENCE_FLOOR or not mols or frequency is None
                            or (not slots and not prn) or source == "vision_only"
-                           or not block_ids))
+                           or not block_ids or unprinted))
 
 
 def extract_plan(s3_keys, circle_id, model_id=None):

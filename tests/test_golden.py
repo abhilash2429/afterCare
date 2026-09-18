@@ -71,7 +71,8 @@ def run_gate(prefix, model_id=None):
 
 
 def test_extraction_meets_the_gate():
-    acc, rows = run_gate(os.environ["GOLDEN_S3_PREFIX"])
+    from infra.config import BEDROCK_MODEL_ID
+    acc, rows = run_gate(os.environ["GOLDEN_S3_PREFIX"], model_id=BEDROCK_MODEL_ID)
     for case_id, hits, total in rows:
         print(case_id, {f: "%d/%d" % (hits[f], total) for f in FIELDS})
     failures = []

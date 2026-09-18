@@ -12,6 +12,7 @@ def _box(left, top, width=0.1, height=0.02):
 
 WORDS = [{"id": "w%d" % i, "text": "word%d" % i, "box": _box(0.1, 0.1 + i * 0.03)}
          for i in range(1, 26)]
+WORDS[0]["text"], WORDS[1]["text"] = "Ecosprin", "75"
 
 
 def test_crop_for_is_the_padded_union_of_the_cited_words():
@@ -110,6 +111,21 @@ def test_missing_frequency_needs_confirmation(monkeypatch):
     m = plan.medicines[0]
     assert (m.slots, m.needsConfirmation) == ([], True)
     assert validate_plan(plan) == []
+
+
+def test_strength_not_printed_in_the_cited_words_needs_confirmation(monkeypatch):
+    words = [dict(w) for w in WORDS]
+    words[0]["text"], words[1]["text"] = "Amlodipine", "OD"
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        molecules=[{"name": "Amlodipine", "strengthMg": 5, "unit": "mg"}])]}, words=words)
+    assert plan.medicines[0].needsConfirmation is True
+
+
+def test_strength_printed_in_the_cited_words_is_accepted(monkeypatch):
+    words = [dict(w) for w in WORDS]
+    words[0]["text"], words[1]["text"] = "Ecosprin", "75mg"
+    plan, _ = _run(monkeypatch, {"medicines": [_med()]}, words=words)
+    assert plan.medicines[0].needsConfirmation is False
 
 
 def test_low_confidence_needs_confirmation(monkeypatch):
