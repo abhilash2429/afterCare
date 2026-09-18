@@ -1,278 +1,243 @@
 # AfterCare frontend handoff
 
-This document is the working brief for the frontend owner and frontend coding agents.
+The working brief for the frontend owner and any frontend coding agent. Updated 2026-09-18 evening.
+Freeze: **Sun 2026-09-20 14:00 IST**.
 
-## Verified repository state
+## 1. Where the codebase is
 
-Checked on September 18, 2026:
+The backend is complete, deployed to `ap-south-1`, and tested live. There is no frontend in the repo yet.
 
-- The repository is on main with a clean working tree.
-- web/ contains only the frontend agent instructions. No Next.js frontend has been committed yet.
-- The intended frontend is Next.js 15, TypeScript, App Router, Tailwind, and static export.
-- The backend test suite passes with 205 passed using .venv/Scripts/python.exe -m pytest -q.
-- The current main Lambda router registers only these routes:
-  - GET /health
-  - POST /circles
-  - POST /circles/{circleId}/invite
-  - POST /circles/{circleId}/join
-- The document, extraction, plan, dose, Box Check, push, and audio routes described in the product contract are not present on main yet.
+- Backend: one Python 3.12 Lambda behind a Lambda Function URL (`api/`), plus a reminder Lambda.
+- Test suite: 402 passing (`.venv\Scripts\python -m pytest -q`).
+- Contract: `docs/api/openapi.yaml`. **This file is the source of truth for every request and response shape.** If this doc and the OpenAPI file disagree, the OpenAPI file wins; tell the backend owner.
+- Product and safety rules: `docs/spec.md`.
 
-The frontend must therefore be built against the Prism mock first. A live backend integration should happen only as each route is merged and deployed.
+Live checks already passed:
+- caregiver invite and join (single use)
+- get plan
+- adherence
+- mark given
+- audio
+- presigned upload
+- reminder with a follow-up check schedule
+- cross-circle 403
+- caregiver blocked from owner actions
 
-## Files to give the frontend owner
+Owner-only flows (extract, patch, activate) need a real Cognito login, so the frontend is their first live test.
 
-Give the teammate the repository, including these files as the primary context:
+### Live values
 
-- README.md for the product summary, stack, deployment region, and recorded API URL.
-- docs/spec.md for product behavior, safety rules, screen order, privacy requirements, and design constraints.
-- docs/api/openapi.yaml for request and response types. This is the frontend/backend contract.
-- docs/superpowers/plans/2026-09-18-aftercare.md for the frontend work breakdown in section Frontend tasks (teammate, against the Prism mock).
-- data/fixtures/case01.json through data/fixtures/case10.json for synthetic discharge-summary inputs.
-- data/golden/case01.json through data/golden/case10.json for expected structured extraction output.
-- api/models.py for the Python representation of plans, medicines, molecules, and doses.
-- api/auth.py for owner versus caregiver token behavior.
-- api/circles.py for the implemented invite-link flow and query parameter names.
-- api/handler.py for current route registration and response shape.
-- api/validate.py, api/frequency.py, and api/boxcheck.py for safety rules, schedule semantics, and verdict meanings.
-- infra/aftercare_stack.py and infra/config.py only when wiring deployed Cognito and API values. The frontend should not modify these files as part of normal UI work.
+```text
+NEXT_PUBLIC_API_BASE          = https://ctj5ower7vmwubklgwntkqdwsi0aemrx.lambda-url.ap-south-1.on.aws
+NEXT_PUBLIC_COGNITO_POOL_ID   = ap-south-1_UQXeokR8X
+NEXT_PUBLIC_COGNITO_CLIENT_ID = 5u4d70pcibfkqq77d3qmccjneh
+NEXT_PUBLIC_VAPID_PUBLIC_KEY  = BKqD2yl293BFI56RCMGAsL51qTtILmZ9-66CE41-_Rr6E7DxktmQCJ_R0qDNNWfUIDqbZrQ7V-UpnCKhPfmLYgU
+Region                        = ap-south-1
+```
 
-The backend test files are useful when a response behavior is unclear. They are not required for ordinary UI work.
+- CORS on the API allows every origin, so localhost and Amplify both work.
+- No trailing slash on the API base.
 
-Do not copy generated or machine-specific material into the frontend branch:
+### Demo data (already seeded live)
 
-- .venv/
-- build/
-- cdk.out/
-- __pycache__/
-- .pytest_cache/
-- aftercare.egg-info/
-- node_modules/
-- .env* files
-- raw or private document folders such as data/photos/ and data/drugs_raw/
-- personal agent configuration under .claude/ unless a specific instruction is needed
+- **Circle:** `ci_demo` ("Kulkarni family", language `kn`).
+- **Active plan:** `pl_demo`, 5 medicines:
+  - Ecosprin 75, morning, after food
+  - Clopitab 75, night, after food
+  - Atorva 40, bedtime
+  - Pan 40, morning and night, before food, 14 days
+  - Glycomet GP1 500, morning and night, after food
+- **Dose history:** 3 days, mostly given, with one missed night dose. Today's doses are pending.
+- **Redflags:** from the document.
+- **Re-seeding:** the backend owner runs `python -m scripts.seed_demo --web-origin <your site>`. It resets the demo and prints a fresh one-time caregiver invite link. Ask for one whenever you need to log in as a caregiver.
+
+## 2. Frontend stack and hard constraints
+
+- Next.js 15, TypeScript, App Router, Tailwind, `output: "export"`, `images: { unoptimized: true }`. Hosted on Amplify Hosting as static files.
+- `web/` already holds `AGENTS.md` (instructions for frontend coding agents). `create-next-app` needs an empty folder, so move it out first:
+  `Move-Item web/AGENTS.md web/AGENTS.md.handoff; npx create-next-app@15 web --typescript --tailwind --app --no-src-dir --use-npm; Move-Item web/AGENTS.md.handoff web/AGENTS.md`
+- Client-side fetching only. No SSR, server actions, API routes or edge runtime.
+- All API calls go through one typed client, for example `web/lib/api/client.ts`. Components never build URLs or parse errors themselves.
+- Read the API base from `NEXT_PUBLIC_API_BASE`. Never hardcode it.
+- Develop against the mock when the live API is inconvenient:
+  ```powershell
+  npx @stoplight/prism-cli mock docs/api/openapi.yaml -p 4010
+  ```
+- Work on a branch `frontend/<name>`, and touch only `web/` unless agreed. Never edit `api/`, `infra/` or `openapi.yaml` to make the UI work. Ask the backend owner instead.
+
+## 3. Auth model
+
+There are two kinds of user. Both send `Authorization: Bearer <token>`.
+
+| Who | Token | How they get it | Can do |
+|---|---|---|---|
+| Owner (family member who set it up) | Cognito **ID token** | Email one-time code (passwordless) | everything |
+| Caregiver (whoever gives the medicines) | AfterCare session token (90 days) | Opens an invite link, `POST /circles/{circleId}/join` | view schedule, mark given, Box Check, upload strip photos, audio, adherence |
+
+### Owner sign-in
+
+The Cognito pool uses email as the username. Self sign-up is on, and the first sign-in factor can be `EMAIL_OTP`. With Amplify Auth v6 (`aws-amplify`), the flow is:
+
+1. `signUp({ username: email, options: { userAttributes: { email } } })` for a new user, then `confirmSignUp`.
+2. `signIn({ username: email, options: { authFlowType: "USER_AUTH", preferredChallenge: "EMAIL_OTP" } })`.
+3. `confirmSignIn({ challengeResponse: code })` with the code from the email.
+4. `fetchAuthSession()` and use `tokens.idToken.toString()` as the bearer. **Use the ID token, not the access token.**
+
+Verify these calls against the current Amplify v6 passwordless docs; I have not run them from a browser. Emails come from `abhilashreddymand@gmail.com` through SES. SES is still in sandbox, so login emails only reach verified addresses. Tell the backend owner which test emails to verify.
 
-The committed fixtures are synthetic. They contain no real patient data.
+### Owner tokens and circleId
 
-## Branch and ownership workflow
+An owner token carries no circleId, so **every owner call must pass `circleId`**: in the JSON body for POST and PATCH, or `?circleId=` for GET. A caregiver token carries its own circleId, so caregivers may omit it.
 
-Use a separate branch from the current main commit:
+### Caregiver invite link
 
-~~~powershell
-git switch main
-git pull --ff-only
-git switch -c frontend/<teammate-name>
-~~~
+The link format is `<site>/join?c=<circleId>&t=<token>`. The join page:
+1. Calls `POST /circles/{c}/join` with `{ "token": t }` and no auth header.
+2. Stores `sessionToken` and `circleId`.
+3. Calls `GET /circles/{circleId}` to get `activePlanId`.
 
-The frontend owner should normally modify only web/ and, when required, frontend documentation. Backend, infrastructure, data, and API contract changes stay with the backend owner unless both owners agree.
+A used or expired invite returns 404. Show "This invite link has already been used or expired. Ask for a new one."
 
-Commit small working slices such as shell, upload, review, schedule, Box Check, and PWA behavior. Do not rewrite backend files to make the Prism mock or a UI test pass.
+### What to persist (localStorage is fine)
 
-## Local frontend setup
-
-Run these commands from the repository root:
-
-~~~powershell
-Move-Item web/AGENTS.md web/AGENTS.md.handoff
-npx create-next-app@15 web --typescript --tailwind --app --no-src-dir --use-npm
-Move-Item web/AGENTS.md.handoff web/AGENTS.md
-cd web
-npm install
-~~~
-
-The temporary move lets create-next-app see an empty directory. Restore AGENTS.md immediately after scaffolding. If scaffolding fails, move web/AGENTS.md.handoff back to web/AGENTS.md before retrying.
-
-Start the contract mock in a second terminal from the repository root:
-
-~~~powershell
-npx @stoplight/prism-cli mock docs/api/openapi.yaml -p 4010
-~~~
-
-Run the frontend against the mock:
-
-~~~powershell
-cd web
-$env:NEXT_PUBLIC_API_BASE = "http://127.0.0.1:4010"
-npm run dev
-~~~
-
-The application must read the API base URL from NEXT_PUBLIC_API_BASE. Do not hardcode the deployed URL in components. Static export means this value is supplied at build time.
-
-The current README records this deployed Function URL:
-
-~~~text
-https://ctj5ower7vmwubklgwntkqdwsi0aemrx.lambda-url.ap-south-1.on.aws/
-~~~
-
-Verify GET /health before using it for integration because deployment state can change.
-
-## Required Next.js constraints
-
-Configure the frontend for static export:
-
-~~~js
-const nextConfig = {
-  output: "export",
-  images: { unoptimized: true },
-};
-
-export default nextConfig;
-~~~
-
-Use client-side data fetching. Do not use SSR, server actions, API routes, or an edge runtime. Amplify serves the exported static files and the browser calls the Lambda Function URL directly.
-
-Keep API access in one typed client such as web/lib/api/client.ts. UI components should not build endpoint strings or parse raw response errors independently.
-
-## Contract rules the frontend must implement
-
-### Authentication
-
-- The bearer header is Authorization: Bearer <token>.
-- An owner uses a Cognito ID token.
-- A caregiver receives an AfterCare session token from POST /circles/{circleId}/join.
-- The join endpoint is intentionally unauthenticated and accepts { "token": "..." }.
-- Invite links use the query parameters c for circleId and t for the invite token. This matches api/circles.py.
-- Keep token lookup behind an auth/session adapter. Do not scatter Cognito or caregiver-token logic across pages.
-- A caregiver can view the schedule, mark a dose as given, and run Box Check. A caregiver cannot edit or activate a plan.
-
-### Upload and extraction
-
-The intended flow is:
-
-1. Collect one or more pages with the native file input.
-2. Call POST /documents with circleId, pageCount, and contentType.
-3. Upload each file with PUT to the matching item in the returned uploads array.
-4. Call POST /documents/{documentId}/extract with circleId.
-5. Keep a visible progress state for up to 120 seconds.
-6. Render the returned draft plan in Review and Confirm.
-
-The OpenAPI response is { documentId, uploads[] }. Each upload item contains page, uploadUrl, and key. The older prose in docs/spec.md says { documentId, uploadUrl }; follow the OpenAPI file.
-
-Use the exact file Content-Type when performing a presigned PUT. Keep a batch's page types consistent with the contentType sent to POST /documents.
-
-### Plan and medicine display
-
-The important plan fields are:
-
-- planId, circleId, patientName, sourceDocumentIds, status
-- medicines[]
-- redFlags
-- followUp
-- slotTimes
-- language
-
-Each medicine may contain multiple molecules. Render the brand, molecule names, strength plus unit, form, raw text, frequency, slots, food relation, duration, and PRN condition when present.
-
-Treat null as an unknown value. Do not fill it with an inferred value. A medicine with needsConfirmation: true remains unresolved until the user confirms or edits it.
-
-When the user changes strength or frequency, send userEdited: true in the plan patch. The client must never silently alter a dose or frequency.
-
-### Schedule
-
-- Render rows by medicine and columns in this order: morning, noon, night, bedtime.
-- A filled slot means the medicine is scheduled. An empty slot means it is not scheduled.
-- Show one Given action per dose slot, not one action per medicine.
-- A dose record is identified by doseId and has pending, given, or missed status.
-- Group medicines sharing a slot under the same dose action.
-- Put PRN medicines in a separate Only when needed section. PRN medicines have empty slots and may have prnCondition.
-- The default IST slot times are morning 08:00, noon 14:00, night 20:00, and bedtime 22:00.
-- If durationDays is absent, show Duration not stated. Ask your doctor.
-
-The main schedule uses POST /doses/{doseId}/given. A successful response is a Dose object. For offline use, queue the action and reconcile the server response later. The queue must be idempotent by doseId.
-
-### Box Check
-
-The intended flow is:
-
-1. Photograph medicine strips with the native camera input.
-2. Upload the strip photos through the document upload flow.
-3. Call POST /boxcheck with planId and the strip-photo documentId.
-4. Render every item returned in items.
-
-Use the API-provided message. Do not invent or soften verdict copy.
-
-- matched means the strip matches the prescription.
-- check means the user must check with a chemist or doctor.
-- do_not_take means the user must not take it until asking the doctor.
-
-The UI must never say that a strip is safe to take.
-
-### Red flags
-
-- Render redFlags.text verbatim.
-- When redFlags.source is document, label it as coming from the document.
-- When redFlags.source is generic, visibly show General advice. Not from your document.
-- Never add a client-generated warning.
-
-## Known contract gaps to resolve before live integration
-
-These are evidence-based gaps between the current files. Keep them visible in the branch and ask the backend owner before depending on them:
-
-1. The product plan references GET /plans/{planId}/audio, but docs/api/openapi.yaml does not define that route and main does not register it.
-2. The product spec says a source crop includes documentId and page, but the OpenAPI Medicine.crop schema currently contains only normalized x, y, w, and h. Multi-page crop rendering cannot be reliable without a page or document association.
-3. The W6 task asks for a red-flag source crop, but the OpenAPI RedFlags schema has no crop or page field.
-4. The implementation plan mentions qrPayload for invites in one place. The current API returns url, token, and expiresAt. Use url and generate a QR code in the client only if the UI needs one.
-5. The plan references seeded demo files such as scripts/seed_demo.py, but those files are not present on main. Do not assume a seeded live demo exists.
-
-Until these are resolved, the frontend can use a local adapter or fixture data for the affected screens. Do not silently invent a backend response shape.
-
-## UI and safety requirements
-
-- Body text is at least 18px.
-- Primary actions are at least 56px tall and use 20px or larger text.
-- Use high contrast suitable for bright sunlight. Target a 7:1 contrast ratio for normal text.
-- Use a bottom bar with Schedule, Box Check, and Red flags. Do not add a hamburger menu.
-- Self-host Noto Sans Kannada and Noto Sans Devanagari. Do not depend on a CDN font.
-- Every state has an icon and a word. Color alone cannot communicate given, check, missed, matched, or do-not-take.
-- Every screen carries this exact disclaimer: AfterCare re-displays what your doctor wrote. It never changes a dose.
-- No analytics, ad technology, or third-party tracking scripts.
-- Ask for notification permission only after a user tap.
-- On iOS Safari, explain Add to Home Screen before requesting push permission.
-- Preserve patient privacy in browser logs. Do not log document contents, medicine names, tokens, or email addresses.
-
-## Suggested frontend structure
-
-The exact structure is the frontend owner's decision. A maintainable starting point is:
-
-~~~text
+- **Owner:** `circleId` (from `POST /circles`), plus the current `planId` (from extract).
+- **Caregiver:** `sessionToken` and `circleId`.
+- **Both:** fetch `GET /circles/{circleId}` on app start to learn `activePlanId`, `language`, `slotTimes` and `role`.
+
+There is no "list my circles" endpoint. An owner on a new device has to create a new circle. That's acceptable for the demo.
+
+## 4. Screens and the calls behind them
+
+### 4.1 Setup (owner, first run)
+
+- Sign in, then call `POST /circles` with `{ name, language }`. `language` is one of `en | hi | kn`, default `kn`. The response is `{ circleId }`; store it.
+- Invite a caregiver: `POST /circles/{circleId}/invite` returns `{ token, url, expiresAt }`. Show `url` as a share button and a QR code (generated client-side). The invite is single use and lasts 24 hours.
+
+### 4.2 Upload the discharge summary (owner)
+
+1. `<input type="file" accept="image/jpeg,image/png" capture="environment">`. Use the native camera, not a camera library. Support multiple pages (1 to 10) with thumbnails and an "add page" button.
+2. `POST /documents` with `{ circleId, pageCount, contentType }`. `contentType` is `image/jpeg` or `image/png` only; **PDF is not supported.** All pages in one document share one content type.
+3. The response is `{ documentId, uploads: [{ page, key, uploadUrl }] }`. `PUT` each file's bytes to its `uploadUrl` with header `Content-Type` **exactly equal** to the `contentType` you sent. Any mismatch returns S3 `SignatureDoesNotMatch`. Upload links expire in 15 minutes.
+4. `POST /documents/{documentId}/extract` with `{ circleId }`. **This takes 20 to 120 seconds.** Show a progress state that survives that long ("Reading the prescription..."), and set the fetch timeout to at least 130 s.
+5. The response is a draft `Plan`. Go to Review.
+
+About extract:
+- It is idempotent: calling it again for the same document returns the same plan without re-reading.
+- `422 extraction_failed` means the photo could not be read (blurry, cut off, or upload missing). Offer "Retake photo".
+- Keep the uploaded `File` objects in memory; Review needs them for the crops (see 4.3).
+
+### 4.3 Review and confirm (owner) — the most important screen
+
+- One card per medicine: brand, molecules (name, strength, unit), frequency, slots, food, duration, and `rawText`.
+- **Always show `rawText`.** It's the exact words read from the paper, and it's how the family checks us.
+- **Source crop:** `medicine.crop` is `{ x, y, w, h, s3Key }`. The rect is normalised 0 to 1, and `s3Key` ends in `p<n>.<ext>`, which tells you the page number. Render it as a CSS `background-image` window over the **local** file for that page (`background-size` and `background-position` computed from the rect). The S3 bucket is private, so there is no image URL to fetch. After a reload, fall back to `rawText` only. `crop` may be null; then show `rawText` only.
+- **`null` means "not written on the paper".** Show "Not written, ask your doctor". Never fill a value in.
+- `needsConfirmation: true` shows the card as amber, with an icon and the word "Check this". The Activate button stays disabled until no amber cards remain.
+  - **To confirm an unchanged card:** send `PATCH /plans/{planId}` with the full `medicines` array, that line's `needsConfirmation: false`, and `userEdited: false`.
+  - **To edit a strength, frequency, slots or duration:** send `userEdited: true`. If you edit frequency, also send the `slots` the user picked (tap the morning, noon, night and bedtime dots). The backend never derives slots on edit, and a line with slots but no frequency is rejected.
+  - **To add a line:** `source: "user"`, empty `sourceBlockIds`, `userEdited: true`.
+- `PATCH` body: `{ circleId, medicines, userEdited, language?, slotTimes? }`. It returns the updated `Plan`. `422 validation_failed` carries a readable `message`; show it.
+- **Activate:** `POST /plans/{planId}/activate` with `{ circleId }` returns `{ planId, status, dosesCreated, firstDoseAt }`. It creates 7 days (or the written duration) of doses and schedules reminders. A 409 means it's already active. Slots that have already passed today are skipped.
+
+### 4.4 Schedule (main screen, both roles)
+
+- Get the plan with `GET /plans/{planId}` (owner adds `?circleId=`).
+- **Grid:** rows are medicines, columns are `morning | noon | night | bedtime`. Default times come from `slotTimes` (08:00, 14:00, 20:00, 22:00 IST).
+- Show a filled dot for "take" and an empty dot for "skip". Use a plate icon with a word for before or after food.
+- **One "Given" button per slot, not per medicine.** Each dose record covers every medicine due in that slot.
+- **Today's dose status:** `GET /plans/{planId}/adherence?days=1` returns `{ doses: Dose[], givenPct }`, where `Dose` is `{ doseId, date, slot, status, givenAt, givenBy, medicineLineIds }`. `status` is `pending | given | missed`.
+- **Mark given:** `POST /doses/{doseId}/given`, where `doseId` looks like `ci_demo#2026-09-18#morning`.
+  - **URL-encode it** with `encodeURIComponent`, because `#` breaks URLs otherwise.
+  - The call is idempotent, so a retry returns the same record.
+  - A `missed` dose can still be marked given later.
+- **Offline:** cache the active plan in the service worker, queue Given taps keyed by `doseId`, and replay them when back online.
+- **PRN medicines** (`prn: true`, no slots) go in a separate "Only when needed" section with `prnCondition`.
+- `durationDays: null` shows "Duration not written. Ask your doctor."
+- **Speaker button:** `GET /plans/{planId}/audio?lang=kn|hi|en` returns `{ url, spokenLanguage, text }`. Play `url` in an `<audio>` element; it's a presigned mp3. Kannada comes back as Hindi audio, because Polly has no Kannada voice. Show `text` as captions.
+
+### 4.5 Box Check (both roles)
+
+1. Photograph the medicine strips. The upload flow is the same as 4.2 (`POST /documents` and the PUTs), with one page per photo. Caregivers are allowed to do this.
+2. `POST /boxcheck` with `{ circleId, planId, documentId }`. This takes 10 to 40 seconds, so show a progress state.
+3. The response is `{ items: BoxCheckItem[] }`, where each item is `{ verdict, reason, message, prescribedLineId, stripBrandText, stripMolecules }`:
+   - `matched`: green, tick icon, the word "Matches".
+   - `check`: amber, warning icon, the word "Check".
+   - `do_not_take`: red, stop icon, the words "Do not take".
+4. **Show `message` exactly as returned.** Never write your own verdict copy, and never use the word "safe".
+
+### 4.6 Red flags (both roles)
+
+- Show `plan.redFlags.text` verbatim.
+- `source: "document"` means "From your discharge summary".
+- `source: "generic"` gets a visible band: "General advice, not from your document."
+- There's no crop for red flags. Never add client-written warnings.
+
+### 4.7 Fridge sheet
+
+Render the schedule grid to a `<canvas>`, export it as PNG, and trigger a download plus the Web Share sheet. It must be readable printed in black and white, so use shapes and words rather than colour.
+
+### 4.8 Push notifications and install
+
+- The service worker plus `app/manifest.ts` follow the official Next.js PWA guide.
+- Ask for notification permission **only after a user tap**. On iOS Safari, show Add to Home Screen instructions first, because iOS only allows push from an installed PWA.
+- Subscribe with `applicationServerKey = NEXT_PUBLIC_VAPID_PUBLIC_KEY`, then `POST /circles/{circleId}/push` with `{ subscription: sub.toJSON() }`. It returns 204.
+- Pushes arrive as JSON `{ "title": "...", "body": "..." }`. In the service worker `push` handler, call `showNotification(title, { body })`. Clicking the notification opens the schedule.
+- Reminders fire at each slot time. If the dose isn't marked given within the circle's `escalationMinutes` (30 by default, 60 on the demo), it becomes `missed` and everyone in the circle gets an escalation push, plus email for owners.
+
+### 4.9 Family view (read-only, for relatives far away)
+
+The read-only schedule plus `GET /plans/{planId}/adherence?days=7`: a list of the last 7 days, newest first, with `givenPct` shown as "X% of doses given".
+
+## 5. Errors
+
+Every error body is `{ code, message }`.
+
+| HTTP | code | Show |
+|---|---|---|
+| 401 | unauthorized | Sign in again (owner) or ask for a new invite (caregiver) |
+| 403 | forbidden | "You don't have access to this." |
+| 404 | not_found | Context-specific (plan missing, invite used) |
+| 409 | conflict | Already active: just reload |
+| 422 | validation_failed | Show `message` |
+| 422 | extraction_failed | "We couldn't read this photo. Retake it in good light, flat, whole page in frame." |
+| 503 | auth_unavailable | "Sign-in check is down, try again in a minute." |
+
+## 6. UI and safety rules (non-negotiable)
+
+- Body text at least 18px. Primary buttons at least 56px tall with text of 20px or larger. Contrast about 7:1 for use in sunlight.
+- A bottom bar with Schedule, Box Check and Red flags. No hamburger menu.
+- Self-host Noto Sans Kannada and Noto Sans Devanagari. No CDN fonts.
+- Every state has an icon **and** a word. Never use colour alone.
+- Footer on every screen: *AfterCare re-displays what your doctor wrote. It never changes a dose.*
+- No analytics or third-party scripts. Never `console.log` document text, medicine names, tokens or emails.
+- The client never invents a medical value, a verdict message or a warning.
+
+## 7. Known limits (don't build around these, just be aware)
+
+1. No PDF upload; photos only.
+2. No list of circles for an owner, so persist `circleId` locally.
+3. Crops only work while the uploaded files are still in memory.
+4. Box Check compares salt names literally. "Ferrous ascorbate" on the prescription against "elemental iron" on the strip shows "check with your chemist", even though they're the same drug. This is conservative by design and not a bug to work around.
+5. SES sandbox: login emails reach verified addresses only.
+6. WhatsApp is built but switched off.
+
+## 8. Suggested structure
+
+```text
 web/
-  app/
-    page.tsx                 upload and entry
-    review/page.tsx          review and confirm
-    schedule/page.tsx        active schedule
-    box-check/page.tsx       strip matching
-    red-flags/page.tsx       warnings and source label
-    fridge-sheet/page.tsx    printable/shareable PNG
-    adherence/page.tsx       read-only Arjun view
-    join/page.tsx            caregiver invite exchange
-    settings/page.tsx        privacy and install help
-    layout.tsx
-    manifest.ts
+  app/  page.tsx (entry), join/, setup/, upload/, review/, schedule/, box-check/,
+        red-flags/, fridge-sheet/, family/, layout.tsx, manifest.ts
   components/
-  lib/
-    api/client.ts
-    api/types.ts
-    auth/session.ts
-    demo/fixtures.ts
-    offline/queue.ts
-  public/
-    fonts/
-    icons/
-    sw.js
-  next.config.js
-  package.json
-  README.md
-~~~
+  lib/  api/client.ts, api/types.ts (generate from openapi.yaml, e.g. openapi-typescript),
+        auth/session.ts, offline/queue.ts
+  public/ fonts/, icons/, sw.js
+```
 
-Keep route pages thin. Put request construction, response parsing, session handling, offline queueing, and fixture selection in lib/.
+## 9. Definition of done
 
-## Definition of done for the frontend branch
-
-- The frontend starts locally against the Prism mock.
-- npm run lint passes.
-- npm run build produces a static export.
-- The upload, review, schedule, Box Check, red-flag, and fridge-sheet flows have usable loading, empty, success, and error states.
-- The schedule does not activate while unresolved confirmation fields remain.
-- Dose actions are grouped by slot and are safe to retry.
-- All verdict and safety copy comes from the contract or the fixed product copy.
-- The branch documents any backend dependency that is still mocked.
-- The deployed build is tested against GET /health and each backend route that has actually been merged.
+- `npm run build` produces a static export, and `npm run lint` passes.
+- Owner flow works live end to end: sign in, create circle, upload, extract, review and confirm, activate, schedule, mark given.
+- Caregiver flow works live: invite link, join, schedule, mark given, Box Check, audio.
+- Activate is impossible while amber cards remain.
+- Push works on Android Chrome and on installed iOS.
+- Every verdict and safety text comes from the API or the fixed copy above.

@@ -24,7 +24,7 @@ Do not add secrets, real patient information, tokens, email addresses, or AWS cr
 - Read the API base URL from NEXT_PUBLIC_API_BASE.
 - Route all HTTP calls through one typed API client.
 - Keep Cognito owner sessions and caregiver invite sessions behind an auth/session adapter.
-- Use the Prism mock from ../docs/api/openapi.yaml while backend routes are missing or undeployed.
+- The live API is deployed (see docs/frontend-handoff.md). The Prism mock from ../docs/api/openapi.yaml is optional for offline work.
 - Keep mock fixtures behind an explicit demo or mock adapter. Do not make fixture data look like a live API response without labeling the mode in development code.
 
 ## Safety rules
@@ -74,14 +74,9 @@ Do not log bearer tokens, invite tokens, document contents, medicine names, or p
 
 ## Contract gaps
 
-Do not assume these are available:
-
-- GET /plans/{planId}/audio is referenced by the plan but absent from OpenAPI and current main.
-- Medicine.crop lacks the page/document association required for reliable multi-page rendering.
-- RedFlags lacks a crop/page field even though the UI task requests a source crop.
-- The current main backend does not yet register document, extraction, plan, dose, Box Check, or push routes.
-
-Use a typed mock adapter for these cases and leave a short note in the handoff document when the implementation depends on one.
+Every route in docs/api/openapi.yaml is implemented and deployed. Read docs/frontend-handoff.md
+section 7 for the known limits (crop only while the local file is in memory, no red-flag crop,
+no PDF, no list-my-circles). Do not invent response shapes; ask the backend owner.
 
 ## Verification before reporting completion
 
