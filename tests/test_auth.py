@@ -1,8 +1,10 @@
 import base64
 import hashlib
 import hmac
+import io
 import json
 import time
+import urllib.error
 
 import boto3
 import jwt
@@ -14,6 +16,7 @@ from moto import mock_aws
 import api.auth as auth
 from api.auth import issue_circle_token, require, verify_circle_token
 from api.handler import ROUTES, lambda_handler
+from api.models import DEFAULT_SLOT_TIMES
 
 SECRET = "test-secret-that-is-at-least-32-bytes-long"
 POOL = "ap-south-1_TESTPOOL"
@@ -50,7 +53,8 @@ def table(monkeypatch):
 
 
 def _id_token(**over):
-    claims = {"sub": "u-owner", "iss": ISS, "aud": CLIENT, "token_use": "id",
+    claims = {"sub": "u-owner", "email": "owner@example.com", "iss": ISS, "aud": CLIENT,
+              "token_use": "id",
               "exp": int(time.time()) + 300, "iat": int(time.time())}
     claims.update(over)
     return jwt.encode(claims, RSA_KEY, algorithm="RS256", headers={"kid": "k1"})
@@ -146,7 +150,8 @@ def test_rs256_token_is_never_accepted_as_circle_token():
 
 def test_valid_cognito_id_token_is_owner():
     p = auth.principal_from_event(_event("GET", "/x", _id_token()))
-    assert p == {"sub": "u-owner", "circleId": None, "role": "owner"}
+    assert p == {"sub": "u-owner", "circleId": None, "role": "owner",
+                 "email": "owner@example.com"}
 
 
 @pytest.mark.parametrize("override", [
@@ -240,8 +245,10 @@ def test_owner_creates_invite(table):
     assert set(body) >= {"token", "url", "expiresAt"}
     assert body["url"].startswith("https://") and body["token"] in body["url"]
     assert "T" in body["expiresAt"]
-    item = table.get_item(Key={"PK": "INVITE#%s" % body["token"], "SK": "META"})["Item"]
+    digest = hashlib.sha256(body["token"].encode()).hexdigest()
+    item = table.get_item(Key={"PK": "INVITE#%s" % digest, "SK": "META"})["Item"]
     assert item["circleId"] == "ci_1" and int(item["expiresAt"]) > time.time()
+    assert not any(body["token"] in json.dumps(i, default=str) for i in table.scan()["Items"])
 
 
 def test_caregiver_cannot_create_invite(table):
@@ -282,7 +289,7 @@ def test_join_with_invite_for_another_circle_is_404(table):
 
 
 def test_join_with_expired_invite_is_404(table):
-    table.put_item(Item={"PK": "INVITE#old", "SK": "META", "circleId": "ci_1",
+    table.put_item(Item={"PK": "INVITE#%s" % hashlib.sha256(b"old").hexdigest(), "SK": "META", "circleId": "ci_1",
                          "role": "caregiver", "expiresAt": int(time.time()) - 1,
                          "used": False})
     res = lambda_handler(_event("POST", "/circles/ci_1/join", body={"token": "old"}), None)
@@ -299,3 +306,91 @@ def test_responses_carry_no_cors_headers(table):
     invite = _invite(table)
     res = lambda_handler(_event("POST", "/circles/ci_1/join", body={"token": invite}), None)
     assert not any(k.lower().startswith("access-control") for k in res["headers"])
+
+
+# fix round 1
+
+def _raw_event(method, path, token=None, raw_body=None):
+    e = _event(method, path, token)
+    e["body"] = raw_body
+    return e
+
+
+def test_owner_creates_circle_then_invites(table):
+    res = lambda_handler(_event("POST", "/circles", _id_token(), body={"name": "Amma"}), None)
+    assert res["statusCode"] == 201
+    cid = json.loads(res["body"])["circleId"]
+    meta = table.get_item(Key={"PK": "CIRCLE#%s" % cid, "SK": "META"})["Item"]
+    assert meta["name"] == "Amma" and meta["language"] == "kn"
+    assert meta["slotTimes"] == DEFAULT_SLOT_TIMES and int(meta["escalationMinutes"]) == 30
+    member = table.get_item(Key={"PK": "CIRCLE#%s" % cid, "SK": "MEMBER#u-owner"})["Item"]
+    assert member["role"] == "owner" and member["email"] == "owner@example.com"
+    inv = lambda_handler(_event("POST", "/circles/%s/invite" % cid, _id_token()), None)
+    assert inv["statusCode"] == 201
+
+
+def test_create_circle_without_body_uses_defaults(table):
+    res = lambda_handler(_raw_event("POST", "/circles", _id_token()), None)
+    assert res["statusCode"] == 201
+
+
+def test_circle_token_cannot_create_circle(table):
+    token = issue_circle_token("ci_1", "caregiver")
+    assert lambda_handler(_event("POST", "/circles", token, body={}), None)["statusCode"] == 403
+
+
+def test_create_circle_needs_a_token(table):
+    assert lambda_handler(_event("POST", "/circles", body={}), None)["statusCode"] == 401
+
+
+@pytest.mark.parametrize("body", [{"language": "fr"}, {"name": 5}, {"name": "x" * 101}])
+def test_create_circle_rejects_bad_fields(table, body):
+    res = lambda_handler(_event("POST", "/circles", _id_token(), body=body), None)
+    assert res["statusCode"] == 422
+
+
+def test_second_owner_cannot_invite_for_someone_elses_circle(table):
+    res = lambda_handler(_event("POST", "/circles", _id_token(), body={}), None)
+    cid = json.loads(res["body"])["circleId"]
+    other = _id_token(sub="u-other", email="other@example.com")
+    assert lambda_handler(_event("POST", "/circles", other, body={}), None)["statusCode"] == 201
+    inv = lambda_handler(_event("POST", "/circles/%s/invite" % cid, other), None)
+    assert inv["statusCode"] == 403
+
+
+@pytest.mark.parametrize("path", ["/circles", "/circles/ci_1/join"])
+@pytest.mark.parametrize("raw", ["[]", "5", '"s"', "null", "{bad"])
+def test_non_object_json_body_is_422(table, path, raw):
+    res = lambda_handler(_raw_event("POST", path, _id_token(), raw), None)
+    assert res["statusCode"] == 422
+
+
+def _raise(exc):
+    def fn(*a, **k):
+        raise exc
+    return fn
+
+
+@pytest.mark.parametrize("failure", [
+    _raise(urllib.error.URLError("down")),
+    _raise(TimeoutError("slow")),
+    lambda *a, **k: io.BytesIO(b"not json"),
+    lambda *a, **k: io.BytesIO(b"[]"),
+])
+def test_jwks_failure_is_503(table, monkeypatch, failure):
+    monkeypatch.setattr(auth, "_jwks_cache", None)
+    monkeypatch.setattr(auth.urllib.request, "urlopen", failure)
+    res = lambda_handler(_event("POST", "/circles", _id_token(), body={}), None)
+    assert res["statusCode"] == 503
+    assert json.loads(res["body"])["code"] == "auth_unavailable"
+    assert auth._jwks_cache is None
+
+
+@pytest.mark.parametrize("token", [
+    _id_token(aud="someone-else"), _id_token(exp=int(time.time()) - 10), "garbage",
+    _hs256_by_hand({"sub": "x", "iss": "aftercare", "exp": int(time.time()) + 60}, b"wrong"),
+], ids=["bad-aud", "expired", "garbage", "bad-hmac"])
+def test_401_message_is_flat(table, token):
+    res = lambda_handler(_event("POST", "/circles", token, body={}), None)
+    assert res["statusCode"] == 401
+    assert json.loads(res["body"]) == {"code": "unauthorized", "message": "invalid token"}
