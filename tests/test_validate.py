@@ -99,8 +99,26 @@ def test_removed_line_without_user_edit_is_rejected():
 
 def test_added_line_allowed_with_user_edited():
     original = _plan()
-    edited = _plan(medicines=[_med(), _med(lineId="m2", sourceBlockIds=["b2"])])
+    edited = _plan(medicines=[_med(), _med(lineId="m2", source="user", sourceBlockIds=[])])
     assert validate_edit(original, edited, user_edited=True) == []
+
+
+def test_added_line_with_textract_source_is_rejected_even_with_user_edited():
+    original = _plan()
+    edited = _plan(medicines=[_med(), _med(lineId="m2", sourceBlockIds=["b2"])])
+    assert validate_edit(original, edited, user_edited=True) != []
+
+
+def test_added_user_line_with_source_blocks_is_rejected():
+    original = _plan()
+    edited = _plan(medicines=[_med(), _med(lineId="m2", source="user",
+                                          sourceBlockIds=["b2"])])
+    assert validate_edit(original, edited, user_edited=True) != []
+
+
+def test_user_source_may_have_empty_source_blocks():
+    p = _plan(medicines=[_med(), _med(lineId="m2", source="user", sourceBlockIds=[])])
+    assert validate_plan(p) == []
 
 
 def test_duplicate_lineids_rejected_even_with_user_edited():

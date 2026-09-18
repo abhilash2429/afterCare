@@ -1,7 +1,7 @@
 from aws_cdk import (Stack, Duration, RemovalPolicy, CfnOutput,
                      aws_s3 as s3, aws_dynamodb as ddb, aws_lambda as lambda_,
                      aws_iam as iam, aws_logs as logs, aws_cognito as cognito,
-                     aws_secretsmanager as secretsmanager)
+                     aws_scheduler as scheduler, aws_secretsmanager as secretsmanager)
 from constructs import Construct
 
 from infra import config
@@ -124,12 +124,22 @@ class AftercareStack(Stack):
 
         circle_secret.grant_read(api)
 
+        scheduler.CfnScheduleGroup(self, "DoseSchedules", name="aftercare")
+        scheduler_role = iam.Role(
+            self, "SchedulerRole",
+            assumed_by=iam.ServicePrincipal("scheduler.amazonaws.com"))
+        scheduler_role.add_to_policy(iam.PolicyStatement(
+            actions=["lambda:InvokeFunction"], resources=[reminder.function_arn]))
+        api.add_environment("REMINDER_ARN", reminder.function_arn)
+        api.add_environment("SCHEDULER_ROLE_ARN", scheduler_role.role_arn)
+
         api.add_to_role_policy(iam.PolicyStatement(
             actions=["scheduler:CreateSchedule", "scheduler:DeleteSchedule"],
-            resources=["*"]))
+            resources=["arn:aws:scheduler:%s:%s:schedule/aftercare/*" % (
+                config.REGION, config.ACCOUNT)]))
         api.add_to_role_policy(iam.PolicyStatement(
             actions=["iam:PassRole"],
-            resources=["*"],
+            resources=[scheduler_role.role_arn],
             conditions={"StringEquals": {"iam:PassedToService": "scheduler.amazonaws.com"}}))
 
         url = api.add_function_url(
