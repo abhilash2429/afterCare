@@ -215,6 +215,34 @@ def test_strength_printed_in_the_cited_words_is_accepted(monkeypatch):
     assert plan.medicines[0].needsConfirmation is False
 
 
+# C1: a duration digit next to a day/week/month word is never a printed strength.
+def test_strength_digit_from_a_duration_phrase_needs_confirmation(monkeypatch):
+    words, ids = _page("T.", "Amlodipine", "OD", "x", "5", "days")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand=None, molecules=[{"name": "Amlodipine", "strengthMg": 5, "unit": "mg"}],
+        frequency="OD", durationDays=None, sourceBlockIds=ids)]}, words=words)
+    assert plan.medicines[0].needsConfirmation is True
+
+
+# C1: the model's unit must match the printed unit after the same mcg/g->mg conversion.
+def test_strength_with_wrong_unit_needs_confirmation(monkeypatch):
+    words, ids = _page("Levothyroxine", "25", "mcg")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand=None, molecules=[{"name": "Levothyroxine", "strengthMg": 25, "unit": "mg"}],
+        durationDays=None, sourceBlockIds=ids)]}, words=words)
+    assert plan.medicines[0].needsConfirmation is True
+
+
+# C1: a bare number glued to the brand token ("Ecosprin 75") is a trusted strength, but
+# a bare digit that is really the start of a frequency pattern ("Niftran 1-0-1") is not.
+def test_bare_number_glued_to_the_brand_is_a_trusted_strength():
+    printed = extract._printed_strengths("T. Ecosprin 75", "Ecosprin")
+    assert extract._strength_is_printed(75.0, "mg", printed) is True
+
+    printed = extract._printed_strengths("T. Niftran 1-0-1", "Niftran")
+    assert extract._strength_is_printed(1.0, "mg", printed) is False
+
+
 def test_low_confidence_needs_confirmation(monkeypatch):
     plan, _ = _run(monkeypatch, {"medicines": [_med(confidence=0.5)]})
     assert plan.medicines[0].needsConfirmation is True
@@ -247,3 +275,118 @@ def test_red_flags_without_valid_ids_fall_back_to_generic(monkeypatch):
     assert (plan.redFlags.source, plan.redFlags.text) == ("generic", GENERIC_RED_FLAG_TEXT)
     assert plan.redFlags.sourceBlockIds == []
     assert validate_plan(plan) == []
+
+
+# I1/R49: an unread strength or (on a non-PRN line) an unread duration is never trusted.
+def test_molecule_without_a_read_strength_needs_confirmation(monkeypatch):
+    words, ids = _page("Amlodipine", "5", "mg", "OD", "30", "days")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand=None, molecules=[{"name": "Amlodipine", "strengthMg": None, "unit": "mg"}],
+        frequency="OD", durationDays=30, sourceBlockIds=ids)]}, words=words)
+    assert plan.medicines[0].needsConfirmation is True
+
+
+def test_missing_duration_on_a_non_prn_line_needs_confirmation(monkeypatch):
+    words, ids = _page("Amlodipine", "5", "mg", "OD")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand=None, molecules=[{"name": "Amlodipine", "strengthMg": 5, "unit": "mg"}],
+        frequency="OD", durationDays=None, sourceBlockIds=ids)]}, words=words)
+    assert plan.medicines[0].needsConfirmation is True
+
+
+# I2: a frequency token that is not on the page is never trusted.
+def test_frequency_token_not_printed_needs_confirmation(monkeypatch):
+    words, ids = _page("Amlodipine", "5", "mg", "30", "days")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand=None, molecules=[{"name": "Amlodipine", "strengthMg": 5, "unit": "mg"}],
+        frequency="BD", durationDays=30, sourceBlockIds=ids)]}, words=words)
+    assert plan.medicines[0].needsConfirmation is True
+
+
+# I2: a duration that doesn't equal n/7n/30n for a printed day/week/month word is not trusted.
+def test_duration_not_matching_the_printed_day_word_needs_confirmation(monkeypatch):
+    words, ids = _page("Amlodipine", "5", "mg", "OD", "10", "days")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand=None, molecules=[{"name": "Amlodipine", "strengthMg": 5, "unit": "mg"}],
+        frequency="OD", durationDays=30, sourceBlockIds=ids)]}, words=words)
+    assert plan.medicines[0].needsConfirmation is True
+
+
+# I2: a stated food relation needs a before/after/empty-stomach/AC/PC word on the page.
+def test_food_relation_without_a_printed_word_needs_confirmation(monkeypatch):
+    words, ids = _page("Amlodipine", "5", "mg", "OD", "30", "days")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand=None, molecules=[{"name": "Amlodipine", "strengthMg": 5, "unit": "mg"}],
+        frequency="OD", durationDays=30, foodRelation="after", sourceBlockIds=ids)]},
+        words=words)
+    assert plan.medicines[0].needsConfirmation is True
+
+
+# I4: a "molecule" name that just echoes the brand is not a trusted generic (R45 path).
+def test_molecule_name_echoing_the_brand_is_treated_as_brand_only(monkeypatch):
+    words, ids = _page("T.", "Dolo", "650")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand="Dolo", molecules=[{"name": "Dolo", "strengthMg": 650, "unit": "mg"}],
+        sourceBlockIds=ids)]}, words=words, brands={"Dolo": [Molecule("paracetamol", 650.0)]})
+    m = plan.medicines[0]
+    assert [(x.name, x.strengthMg) for x in m.molecules] == [("paracetamol", 650.0)]
+    assert m.needsConfirmation is True
+
+
+# R50/I6: rawText is rebuilt from the cited words in page reading order, not model prose.
+def test_raw_text_is_rebuilt_from_cited_words_in_reading_order(monkeypatch):
+    words, ids = _page("T.", "Ecosprin", "75", "OD")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        rawText="some unrelated model prose", sourceBlockIds=list(reversed(ids)))]},
+        words=words)
+    assert plan.medicines[0].rawText == "T. Ecosprin 75 OD"
+
+
+# Minor 1: confidence is clamped to [0, 1] and non-finite numbers are rejected.
+def test_confidence_is_clamped_to_zero_one(monkeypatch):
+    plan, _ = _run(monkeypatch, {"medicines": [_med(confidence=1.5)]})
+    assert plan.medicines[0].confidence == 1.0
+
+
+def test_non_finite_numbers_are_rejected(monkeypatch):
+    words, ids = _page("Amlodipine", "5", "mg", "OD", "30", "days")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        molecules=[{"name": "Amlodipine", "strengthMg": float("nan"), "unit": "mg"}],
+        durationDays=float("inf"), confidence=float("nan"), sourceBlockIds=ids)]},
+        words=words)
+    m = plan.medicines[0]
+    assert (m.molecules[0].strengthMg, m.durationDays, m.confidence) == (None, None, 0.0)
+
+
+# Minor 2: an unsupported image extension raises a clear error instead of guessing jpeg.
+def test_unsupported_image_extension_raises(monkeypatch):
+    with pytest.raises(ValueError):
+        _run(monkeypatch, {"medicines": []}, key="circles/c1/doc.gif")
+
+
+# Minor 3: boto3 clients are created lazily, not at import time.
+def test_boto3_clients_are_created_lazily():
+    assert extract._textract is None
+    assert extract._bedrock is None
+    assert extract._s3 is None
+
+
+# Minor 4: a truncated or unparseable model response raises a named, catchable error.
+def test_max_tokens_stop_reason_raises_extraction_failed(monkeypatch):
+    class _Bedrock:
+        def converse(self, **kwargs):
+            return {"stopReason": "max_tokens", "output": {"message": {"content": []}}}
+
+    monkeypatch.setattr(extract, "_bedrock", _Bedrock())
+    with pytest.raises(extract.ExtractionFailed):
+        extract._call_model(b"x", "png", [], "m")
+
+
+def test_unparseable_json_raises_extraction_failed(monkeypatch):
+    class _Bedrock:
+        def converse(self, **kwargs):
+            return {"output": {"message": {"content": [{"text": "not json at all"}]}}}
+
+    monkeypatch.setattr(extract, "_bedrock", _Bedrock())
+    with pytest.raises(extract.ExtractionFailed):
+        extract._call_model(b"x", "png", [], "m")
