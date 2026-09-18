@@ -148,3 +148,27 @@ def test_failure_after_first_page_returns_empty(monkeypatch, drugs_table):
 
     monkeypatch.setattr(repo._table, "query", flaky)
     assert repo.lookup_brand("Ecosprin 75") == []
+
+
+def test_ambiguous_brand_returns_nothing(drugs_table):
+    from api.drugs_repo import lookup_brand
+    drugs_table.put_item(Item={"PK": "levo", "SK": "levolin", "brand": "Levolin",
+                               "ambiguous": True, "molecules": []})
+    assert lookup_brand("Levolin") == []
+
+
+def test_etl_marks_brands_with_conflicting_molecules_ambiguous(tmp_path):
+    from data.etl_drugs import merged
+    csv_path = tmp_path / "m.csv"
+    csv_path.write_text(
+        "id,name,price,Is_discontinued,manufacturer_name,type,pack_size_label,"
+        "short_composition1,short_composition2\n"
+        "1,Levolin 1 Tablet,1,FALSE,A,allopathy,strip,Levosalbutamol (1mg),\n"
+        "2,Levolin 5 Tablet,1,FALSE,B,allopathy,strip,Levocetirizine (5mg),\n"
+        "3,PAN 40 Tablet,1,FALSE,C,allopathy,strip,Pantoprazole (40mg),\n"
+        "4,PAN 20 Tablet,1,FALSE,C,allopathy,strip,Pantoprazole (20mg),\n",
+        encoding="utf-8")
+    items = merged(str(csv_path))
+    assert items[("levo", "levolin")]["ambiguous"] is True
+    assert items[("levo", "levolin")]["molecules"] == []
+    assert not items[("pan", "pan")].get("ambiguous")

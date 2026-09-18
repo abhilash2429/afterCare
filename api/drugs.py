@@ -28,6 +28,8 @@ _SALT_SUFFIX = r"\s+(?:hydrochloride|hcl|sodium|potassium)$"
 # Ferrous salts (ascorbate/fumarate/sulphate/sulfate) are deliberately NOT merged:
 # they are different compounds a doctor can prescribe by design (R28).
 MOLECULE_SYNONYMS = {
+    "levothyroxine": "thyroxine",
+    "alendronate": "alendronic acid",
     "amoxicillin": "amoxycillin",
     "acetaminophen": "paracetamol",
     "elemental iron": "iron",
@@ -48,7 +50,7 @@ def normalise_brand(text):
     t = re.sub(_LEADING_PREFIX, "", t.strip())
     t = re.sub(_FORMS, " ", t)
     t = re.sub(r"\b\d+(\.\d+)?\s*(mg|mcg|g|ml|iu)?\b", " ", t)
-    t = re.sub(r"\bstrip of\b|\bof\b", " ", t)
+    t = re.sub(r"\bstrip of\b", " ", t)
     return re.sub(r"\s+", " ", t).strip()
 
 

@@ -118,7 +118,7 @@ def test_molecules_are_normalised_and_units_carried(monkeypatch):
                    words=words)
     got = [(x.name, x.strengthMg, x.unit) for x in plan.medicines[0].molecules]
     assert got == [("aspirin", 75.0, "mg"), ("vitamin d3", 60000.0, "iu"),
-                   ("levothyroxine", 0.025, "mg"), ("mystery", None, "mg"),
+                   ("thyroxine", 0.025, "mg"), ("mystery", None, "mg"),
                    ("odd", None, "mg"), ("calcium carbonate", 1000.0, "mg")]
     assert plan.medicines[0].needsConfirmation is False
 

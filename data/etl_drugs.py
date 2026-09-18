@@ -7,7 +7,7 @@ import sys
 
 import boto3
 
-from api.drugs import bucket_key, normalise_brand, parse_composition
+from api.drugs import bucket_key, normalise_brand, normalise_molecule, parse_composition
 
 TABLE = "aftercare-drugs"
 
@@ -36,20 +36,47 @@ def rows(path):
             }
 
 
+def _names(item):
+    return frozenset(normalise_molecule(m["name"]) for m in item["molecules"])
+
+
+def merged(path):
+    """One item per normalised brand. A brand whose rows disagree on the molecules
+    (Levolin is levosalbutamol from one maker, levocetirizine from another) is stored
+    ambiguous with no molecules, so a lookup can never pick one of them silently."""
+    out = {}
+    for item in rows(path):
+        key = (item["PK"], item["SK"])
+        first = out.get(key)
+        if first is None:
+            out[key] = item
+        elif not first.get("ambiguous") and _names(first) != _names(item):
+            first["ambiguous"], first["molecules"] = True, []
+    return out
+
+
 def main(path):
     table = boto3.resource("dynamodb", region_name="ap-south-1").Table(TABLE)
-    seen, written = set(), 0
+    items = merged(path)
+    written = 0
     with table.batch_writer(overwrite_by_pkeys=["PK", "SK"]) as batch:
-        for item in rows(path):
-            key = (item["PK"], item["SK"])
-            if key in seen:
-                continue
-            seen.add(key)
+        for item in items.values():
             batch.put_item(Item=item)
             written += 1
             if written % 10000 == 0:
                 print("written", written, flush=True)
-    print("done", written)
+    stale, scan = [], {"ProjectionExpression": "PK, SK"}
+    while True:
+        page = table.scan(**scan)
+        stale += [(i["PK"], i["SK"]) for i in page["Items"] if (i["PK"], i["SK"]) not in items]
+        if "LastEvaluatedKey" not in page:
+            break
+        scan["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+    with table.batch_writer() as batch:
+        for pk, sk in stale:
+            batch.delete_item(Key={"PK": pk, "SK": sk})
+    print("done", written, "ambiguous", sum(1 for i in items.values() if i.get("ambiguous")),
+          "stale removed", len(stale))
 
 
 if __name__ == "__main__":
