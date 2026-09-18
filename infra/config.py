@@ -3,8 +3,9 @@ ACCOUNT = "791725739974"
 TABLE_NAME = "aftercare"
 DRUGS_TABLE_NAME = "aftercare-drugs"
 
+# Task 9 bake-off winner. On-demand in ap-south-1 (aws bedrock list-foundation-models).
+BEDROCK_MODEL_ID = "mistral.mistral-large-3-675b-instruct"
 # From: aws bedrock list-inference-profiles --region ap-south-1
-BEDROCK_MODEL_ID = "global.anthropic.claude-sonnet-5"
 BEDROCK_CHEAP_MODEL_ID = "apac.amazon.nova-lite-v1:0"
 
 # Verified SES identity in ap-south-1; Cognito sends email OTPs from it.

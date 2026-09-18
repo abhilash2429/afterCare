@@ -22,6 +22,11 @@ from api.frequency import parse_frequency
     ("", [], False),
     ("weekly", [], False),
     ("alternate days", [], False),
+    ("3.5 ml BD", ["morning", "night"], False),
+    ("2 puffs BD", ["morning", "night"], False),
+    ("1 tab 1-0-1", ["morning", "night"], False),
+    ("2.5 ml SOS", [], True),
+    ("5 days", [], False),
 ])
 def test_parse_frequency(text, slots, prn):
     assert parse_frequency(text) == (slots, prn)

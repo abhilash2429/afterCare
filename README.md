@@ -34,7 +34,7 @@ This one is for the person holding the pill box.
 ## Stack
 
 Next.js 15 static-export PWA on Amplify Hosting → Lambda Function URL (Python 3.12) →
-Textract (words + boxes) → Bedrock Claude Sonnet 5 (structuring with source citations)
+Textract (words + boxes) → Bedrock Mistral Large 3, in-region (structuring with source citations)
 → DynamoDB → EventBridge Scheduler → Web Push / WhatsApp (AWS End User Messaging
 Social) / SES. Amazon Translate and Polly for language and voice. All storage in
 `ap-south-1`.
@@ -71,7 +71,7 @@ Prerequisites: AWS CLI v2 configured for the target account/region, Node (for
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File infra/build.ps1   # vendors Lambda deps into build/api
-npx aws-cdk@2 deploy --require-approval never               # deploys AftercareStack
+npx aws-cdk@2 deploy --require-approval never               # deploys the "Aftercare" stack
 curl "https://ctj5ower7vmwubklgwntkqdwsi0aemrx.lambda-url.ap-south-1.on.aws/health"
 ```
 

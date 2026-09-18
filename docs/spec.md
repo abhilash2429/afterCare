@@ -96,8 +96,8 @@ another prescription reader.
      ┌───────────────┬───────────┼────────────┬─────────────────┐
      ▼               ▼           ▼            ▼                 ▼
   S3 (docs)      Textract    Bedrock      DynamoDB       EventBridge Scheduler
-  SSE-KMS      words+boxes   Sonnet 5     single table    one-time per dose slot
-  30d expiry    LAYOUT       (global)     + drugs table          │
+  SSE-KMS      words+boxes   Mistral L3   single table    one-time per dose slot
+  30d expiry    LAYOUT       (in-region)  + drugs table          │
                              Nova Lite                           ▼
                                 │                        reminder Lambda
                              Translate                          │
@@ -126,13 +126,11 @@ API is a CDK change plus moving JWT verification into an authorizer.
 Everything that stores data — S3, DynamoDB, Cognito, Scheduler, SES, WhatsApp — runs
 in **ap-south-1**. Health data at rest never leaves India.
 
-Bedrock has **no in-region Anthropic model in Mumbai**. Extraction calls Claude
-Sonnet 5 through the *global* cross-region inference profile, so inference may run
-outside India. This is stated on camera and in the writeup rather than hidden.
-
-If the Task 4 bake-off shows Nova Pro matching Sonnet 5 on the golden set, we switch
-extraction to Nova Pro on the **APAC geo profile**, which keeps inference inside
-Asia-Pacific, and the residency story improves.
+Extraction runs on **Mistral Large 3** (`mistral.mistral-large-3-675b-instruct`),
+an on-demand Bedrock model served **in ap-south-1**, so document inference stays in
+India too. It won the Task 9 golden-set bake-off against Nova Pro (APAC profile) and
+Qwen3-VL 235B: it was the most accurate model to pass every gate. Anthropic and OpenAI
+models are out: they need an AWS Marketplace agreement, which this project does not take.
 
 Polly generative voices do not exist in Mumbai; we use the **neural Hindi voice
 Kajal**, which does.
@@ -141,8 +139,8 @@ Kajal**, which does.
 
 | Job | Model | Why |
 |---|---|---|
-| Document → structured plan | Claude Sonnet 5 (global profile) | Accuracy on messy clinical shorthand is the whole product |
-| Strip photo → brand/composition | Claude Sonnet 5 | Same vision path, small images |
+| Document → structured plan | Mistral Large 3 (on-demand, ap-south-1) | Won the golden-set bake-off; in-region |
+| Strip photo → brand/composition | Mistral Large 3 | Same vision path, small images |
 | Verdict/summary phrasing | Nova Lite (APAC) | Cheap, low-risk text |
 | Translation | Amazon Translate | Deterministic, no model risk |
 
@@ -159,7 +157,7 @@ image/PDF → S3
    │     → WORD blocks with Id + BoundingBox (normalised 0–1)
    │     → LAYOUT_* blocks for section detection
    │
-   ├─ Bedrock Sonnet 5 (Converse API, image + the Textract word list with IDs)
+   ├─ Bedrock Mistral Large 3 (Converse API, image + the Textract word list with IDs)
    │     → strict JSON: medicines[], red_flags, follow_up
    │     → every field carries source_block_ids[] and confidence 0–1
    │
@@ -431,16 +429,16 @@ with hand-written expected JSON. `pytest -m golden` scores field-level accuracy.
 | food relation | ≥ 80% |
 | duration | ≥ 80% |
 
-The same harness runs the **Sonnet 5 vs Nova Pro bake-off**. If Nova Pro is within 5
-points on every field, extraction switches to Nova Pro on the APAC profile for the
-better residency story.
+The same harness runs the model bake-off (`scripts/bakeoff.py <model_id> ...`). A model
+must pass every gate; among passers the highest mean accuracy wins; within 2 points
+in-region on-demand is preferred, then price. Task 9 result: Mistral Large 3.
 
 ## 16. Cost
 
 | Service | Demo-scale estimate |
 |---|---|
 | Textract (Tables + Layout) | $0.015/page → ~$1.50 for 100 test pages |
-| Bedrock Sonnet 5 | ~$0.02 per document extraction |
+| Bedrock Mistral Large 3 | ~4k input + ~2k output tokens per page extracted |
 | Lambda, DynamoDB on-demand, S3, Scheduler | pennies; all scale to zero |
 | Cognito Essentials | free below 10K MAU |
 | Amplify Hosting | free tier |

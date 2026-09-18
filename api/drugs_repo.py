@@ -45,7 +45,7 @@ def lookup_brand(brand_text):
         return []
     items = _bucket_items(bucket_key(norm))
     name, _score = best_brand_match(norm, list(items))
-    if not name:
+    if not name or items[name].get("ambiguous"):
         return []
     out = []
     for m in items[name].get("molecules", []):

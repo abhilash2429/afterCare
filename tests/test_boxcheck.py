@@ -16,6 +16,12 @@ def by_line(items):
     return out
 
 
+def test_acetylsalicylic_acid_line_matches_an_aspirin_strip():
+    items = check_box([med("m1", "acetylsalicylic acid", 75, "Ecosprin")],
+                      [Strip("Ecosprin 75", [Molecule("aspirin", 75)])])
+    assert by_line(items) == {"m1": [("matched", "exact_match")]}
+
+
 def test_same_molecule_different_brand_is_matched():
     items = check_box([med("m1", "aspirin", 75, "Ecosprin")],
                       [Strip("Delisprin 75", [Molecule("aspirin", 75)])])

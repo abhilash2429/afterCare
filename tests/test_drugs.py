@@ -29,7 +29,7 @@ def test_parse_composition_single_and_combination():
 
 
 def test_parse_composition_handles_mcg_and_missing_strength():
-    assert parse_composition("Levothyroxine (25mcg)") == [Molecule("levothyroxine", 0.025)]
+    assert parse_composition("Levothyroxine (25mcg)") == [Molecule("thyroxine", 0.025)]
     assert parse_composition("Multivitamin") == [Molecule("multivitamin", None)]
 
 
@@ -184,3 +184,20 @@ def test_normalise_molecule_no_longer_merges_ferrous_salts():
     assert normalise_molecule("Ferrous Ascorbate") != "iron"
     assert normalise_molecule("Ferrous Fumarate") != "iron"
     assert normalise_molecule("Ferrous Sulfate") != "iron"
+
+
+def test_same_compound_spellings_map_to_the_dataset_name():
+    assert normalise_molecule("Acetylsalicylic Acid") == "aspirin"
+    assert normalise_molecule("Albuterol") == "salbutamol"
+    assert normalise_molecule("Glyceryl Trinitrate") == "nitroglycerin"
+
+
+def test_of_is_part_of_a_brand_not_noise():
+    assert normalise_brand("Of Pan 400mg Tablet") == "of pan"
+    assert normalise_brand("PAN 40 Tablet") == "pan"
+
+
+def test_same_compound_spellings_match_dataset_names():
+    from api.drugs import normalise_molecule
+    assert normalise_molecule("Levothyroxine") == normalise_molecule("Thyroxine Sodium")
+    assert normalise_molecule("Alendronate Sodium") == normalise_molecule("Alendronic Acid")
