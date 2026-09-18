@@ -1,7 +1,7 @@
 import json
 import os
 
-from api.auth import Unauthorized
+from api.auth import AuthUnavailable, Unauthorized
 
 ROUTES = {}
 
@@ -56,6 +56,8 @@ def lambda_handler(event, context):
         return respond(404, {"code": "not_found", "message": "no route"})
     try:
         return fn(event, params)
+    except AuthUnavailable:
+        return respond(503, {"code": "auth_unavailable", "message": "sign-in check unavailable"})
     except Unauthorized as exc:
         return respond(401, {"code": "unauthorized", "message": str(exc)})
     except PermissionError as exc:
