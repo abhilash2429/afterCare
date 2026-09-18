@@ -449,3 +449,24 @@ def test_never_uses_model_guessed_composition(table, s3fake, monkeypatch):
     for item in items:
         for m in item["stripMolecules"]:
             assert m["name"] != "paracetamol"
+
+
+def test_boxcheck_client_error_is_extraction_failed(monkeypatch):
+    from botocore.exceptions import ClientError
+    import pytest
+    from api import boxcheck_api
+    from api.extract import ExtractionFailed
+
+    def boom(key):
+        raise ClientError({"Error": {"Code": "NoSuchKey", "Message": "x"}}, "GetObject")
+    monkeypatch.setattr(boxcheck_api, "textract_words", boom)
+    monkeypatch.setattr(boxcheck_api.plans, "_load", lambda c, p: object())
+    monkeypatch.setattr(boxcheck_api, "principal_from_event", lambda e: {"sub": "u", "circleId": "ci_1"})
+    monkeypatch.setattr(boxcheck_api, "require", lambda *a, **k: None)
+
+    class T:
+        def get_item(self, Key):
+            return {"Item": {"keys": ["circles/ci_1/doc_1/p1.jpg"]}}
+    monkeypatch.setattr(boxcheck_api._ddb, "Table", lambda name: T())
+    with pytest.raises(ExtractionFailed, match="NoSuchKey"):
+        boxcheck_api.boxcheck({"body": '{"planId":"pl_1","documentId":"doc_1"}'}, {})

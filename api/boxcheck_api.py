@@ -1,6 +1,7 @@
 import json
 
 import boto3
+from botocore.exceptions import ClientError
 
 from api import plans
 from api.auth import principal_from_event, require
@@ -8,7 +9,7 @@ from api.boxcheck import Strip, check_box
 from api.common import BUCKET, REGION, TABLE
 from api.drugs import parse_composition
 from api.drugs_repo import lookup_brand
-from api.extract import IMAGE_FORMATS, _call_model, _tokens, textract_words
+from api.extract import ExtractionFailed, IMAGE_FORMATS, _call_model, _tokens, textract_words
 from api.handler import respond, route
 
 _s3 = boto3.client("s3", region_name=REGION)
@@ -62,10 +63,14 @@ def boxcheck(event, params):
         if ext not in IMAGE_FORMATS:
             raise ValueError("unsupported image extension: .%s" % ext)
         image_format = IMAGE_FORMATS[ext]
-        words = textract_words(key)
+        try:
+            words = textract_words(key)
+            image = _s3.get_object(Bucket=BUCKET, Key=key)["Body"].read()
+            raw = _read_strips(image, image_format) or {}
+        except ClientError as exc:
+            raise ExtractionFailed("could not read the strip photo (%s)"
+                                   % exc.response.get("Error", {}).get("Code", "error")) from exc
         photo_tokens = set(t for w in words for t in _tokens(w.get("text", "")))
-        image = _s3.get_object(Bucket=BUCKET, Key=key)["Body"].read()
-        raw = _read_strips(image, image_format) or {}
         for s in raw.get("strips", []):
             trusted_comp = _grounded(s.get("compositionText"), photo_tokens)
             trusted_brand = _grounded(s.get("brandText"), photo_tokens)
