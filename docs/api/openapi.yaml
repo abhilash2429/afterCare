@@ -397,6 +397,49 @@ paths:
                     items: { $ref: '#/components/schemas/Dose' }
                   givenPct: { type: number }
 
+  /plans/{planId}/audio:
+    get:
+      summary: >
+        Spoken schedule as an mp3 (Amazon Polly). Polly has no Kannada voice,
+        so lang=kn is synthesised and returned as Hindi audio.
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: lang
+          in: query
+          schema: { type: string, enum: [en, hi, kn], default: hi }
+        - name: circleId
+          in: query
+          description: >
+            Required for an owner (Cognito) token, which carries no circleId
+            of its own. Optional for a caregiver token, whose own circleId is
+            used when this is omitted.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Presigned URL for the cached mp3
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, spokenLanguage, text]
+                properties:
+                  url: { type: string }
+                  spokenLanguage: { type: string, enum: [en, hi] }
+                  text:
+                    type: string
+                    description: The spoken text, in spokenLanguage.
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422':
+          description: Invalid lang, or an owner token with no circleId given
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /boxcheck:
     post:
       summary: Check photographed strips against the active plan
