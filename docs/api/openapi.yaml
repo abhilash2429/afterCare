@@ -35,7 +35,7 @@ components:
       properties:
         code:
           type: string
-          enum: [unauthorized, forbidden, not_found, validation_failed, extraction_failed, conflict]
+          enum: [unauthorized, forbidden, not_found, validation_failed, extraction_failed, conflict, auth_unavailable]
         message: { type: string }
         details: { type: object, additionalProperties: true }
 
@@ -425,6 +425,36 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/BoxCheckItem' }
 
+  /circles:
+    post:
+      summary: Create a care circle; the signed-in owner becomes its owner (Cognito ID token only)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 1, maxLength: 100, default: Family }
+                language: { type: string, enum: [en, hi, kn], default: kn }
+      responses:
+        '201':
+          description: Circle created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [circleId]
+                properties:
+                  circleId: { type: string, example: ci_01JABCDEF }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422':
+          description: Invalid name or language
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /circles/{circleId}/invite:
     post:
       summary: Create a single-use caregiver invite (owner only)
@@ -478,6 +508,11 @@ paths:
                   role: { type: string, enum: [caregiver] }
                   circleId: { type: string }
         '404': { $ref: '#/components/responses/NotFound' }
+        '422':
+          description: Missing token or body is not a JSON object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
 
   /circles/{circleId}/push:
     post:
