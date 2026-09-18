@@ -1,6 +1,6 @@
 """Load the Kaggle A-Z India medicine CSV into the aftercare-drugs table.
 
-Usage: python data/etl_drugs.py data/drugs_raw/medicine_dataset.csv
+Usage: python -m data.etl_drugs data/drugs_raw/medicine_dataset.csv
 """
 import csv
 import sys
