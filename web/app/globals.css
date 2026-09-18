@@ -350,7 +350,7 @@ button:disabled {
   font-size: clamp(52px, 7.4vw, 96px);
   font-weight: 400;
   letter-spacing: -0.03em;
-  line-height: 1.32;
+  line-height: 1.18;
   text-wrap: balance;
 }
 
@@ -360,14 +360,14 @@ button:disabled {
   font-family: var(--font-mark);
   font-weight: 400;
   letter-spacing: 0;
-  padding: 0 0.04em 0.32em;
+  padding: 0 0.04em 0.16em;
   overflow: visible;
 }
 
 .hero-scribble {
   position: absolute;
   left: -0.05em;
-  top: 1.08em;
+  top: 0.92em;
   width: calc(100% + 0.14em);
   height: auto;
   aspect-ratio: 310 / 21;
