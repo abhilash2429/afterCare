@@ -390,3 +390,15 @@ def test_unparseable_json_raises_extraction_failed(monkeypatch):
     monkeypatch.setattr(extract, "_bedrock", _Bedrock())
     with pytest.raises(extract.ExtractionFailed):
         extract._call_model(b"x", "png", [], "m")
+
+
+def test_elemental_equivalence_is_folded_into_the_salt(monkeypatch):
+    words, ids = _page("T.", "Calcium", "carbonate", "1250", "mg", "(eq.", "to", "elemental",
+                       "calcium", "500", "mg)", "SOS")
+    mols = [{"name": "Calcium carbonate", "strengthMg": 1250, "unit": "mg"},
+            {"name": "Elemental calcium", "strengthMg": 500, "unit": "mg"}]
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand=None, molecules=mols, frequency="SOS", durationDays=None,
+        sourceBlockIds=ids)]}, words=words)
+    assert [(x.name, x.strengthMg) for x in plan.medicines[0].molecules] == [
+        ("calcium carbonate", 1250.0)]

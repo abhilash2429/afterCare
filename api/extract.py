@@ -250,6 +250,12 @@ def _medicine(m, words, source, key):
     cited = " ".join(cited_words).replace(",", "")
     cited_tokens = set(_tokens(cited))
     raw_mols = [x for x in (m.get("molecules") or []) if x.get("name")]
+    # "Calcium carbonate 1250 mg (eq. to elemental calcium 500 mg)" is one drug; the
+    # elemental clause restates the salt, it is not a second active ingredient.
+    salts = [x for x in raw_mols
+             if not str(x["name"]).strip().lower().startswith("elemental ")]
+    if salts:
+        raw_mols = salts
     printed_strengths = _printed_strengths(cited, m.get("brand"))
 
     def _mol_is_printed(x):
