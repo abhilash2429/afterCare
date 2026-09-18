@@ -1,1 +1,1 @@
-{ "app": ".venv/Scripts/python -m infra.app" }
+{ "app": ".venv\\Scripts\\python -m infra.app" }

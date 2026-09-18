@@ -7,4 +7,4 @@ DRUGS_TABLE_NAME = "aftercare-drugs"
 BEDROCK_MODEL_ID = "global.anthropic.claude-sonnet-5"
 BEDROCK_CHEAP_MODEL_ID = "apac.amazon.nova-lite-v1:0"
 
-# Deployed Function URL: filled in after `cdk deploy` (see infra/config.py history / README).
+# ApiUrl (deployed): https://ctj5ower7vmwubklgwntkqdwsi0aemrx.lambda-url.ap-south-1.on.aws/

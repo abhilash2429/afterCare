@@ -1,6 +1,6 @@
 from aws_cdk import (Stack, Duration, RemovalPolicy, CfnOutput,
                      aws_s3 as s3, aws_dynamodb as ddb, aws_lambda as lambda_,
-                     aws_iam as iam)
+                     aws_iam as iam, aws_logs as logs)
 from constructs import Construct
 
 from infra import config
@@ -13,6 +13,8 @@ class AftercareStack(Stack):
         docs = s3.Bucket(
             self, "Docs",
             encryption=s3.BucketEncryption.KMS_MANAGED,
+            bucket_key_enabled=True,
+            enforce_ssl=True,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(30))],
             cors=[s3.CorsRule(allowed_methods=[s3.HttpMethods.PUT, s3.HttpMethods.GET],
@@ -43,13 +45,19 @@ class AftercareStack(Stack):
             self, "Api", runtime=lambda_.Runtime.PYTHON_3_12,
             handler="api.handler.lambda_handler",
             code=lambda_.Code.from_asset("build/api"),
-            timeout=Duration.seconds(120), memory_size=1024, environment=env)
+            timeout=Duration.seconds(120), memory_size=1024, environment=env,
+            log_group=logs.LogGroup(
+                self, "ApiLogs", retention=logs.RetentionDays.TWO_WEEKS,
+                removal_policy=RemovalPolicy.DESTROY))
 
         reminder = lambda_.Function(
             self, "Reminder", runtime=lambda_.Runtime.PYTHON_3_12,
             handler="api.reminder.lambda_handler",
             code=lambda_.Code.from_asset("build/api"),
-            timeout=Duration.seconds(60), memory_size=512, environment=env)
+            timeout=Duration.seconds(60), memory_size=512, environment=env,
+            log_group=logs.LogGroup(
+                self, "ReminderLogs", retention=logs.RetentionDays.TWO_WEEKS,
+                removal_policy=RemovalPolicy.DESTROY))
 
         for fn in (api, reminder):
             table.grant_read_write_data(fn)
@@ -62,8 +70,12 @@ class AftercareStack(Stack):
                 resources=["*"]))
 
         api.add_to_role_policy(iam.PolicyStatement(
-            actions=["scheduler:CreateSchedule", "scheduler:DeleteSchedule", "iam:PassRole"],
+            actions=["scheduler:CreateSchedule", "scheduler:DeleteSchedule"],
             resources=["*"]))
+        api.add_to_role_policy(iam.PolicyStatement(
+            actions=["iam:PassRole"],
+            resources=["*"],
+            conditions={"StringEquals": {"iam:PassedToService": "scheduler.amazonaws.com"}}))
 
         url = api.add_function_url(
             auth_type=lambda_.FunctionUrlAuthType.NONE,

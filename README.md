@@ -62,6 +62,21 @@ The extraction accuracy gate needs AWS credentials and uploaded photos:
 GOLDEN_S3_PREFIX=circles/ci_demo/golden python -m pytest -m golden -v -s
 ```
 
+## Deploy
+
+Prerequisites: AWS CLI v2 configured for the target account/region, Node (for
+`npx aws-cdk@2`), and a `.venv` with the `dev` extra installed
+(`.venv/Scripts/python -m pip install -e ".[dev]"`, which pulls in
+`aws-cdk-lib` and `constructs`).
+
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/build.ps1   # vendors Lambda deps into build/api
+npx aws-cdk@2 deploy --require-approval never               # deploys AftercareStack
+curl "https://ctj5ower7vmwubklgwntkqdwsi0aemrx.lambda-url.ap-south-1.on.aws/health"
+```
+
+Current `ApiUrl`: `https://ctj5ower7vmwubklgwntkqdwsi0aemrx.lambda-url.ap-south-1.on.aws/`
+
 ## Data and attribution
 
 - Brand → molecule mapping: *A-Z Medicine Dataset of India*, CC BY-SA 4.0
