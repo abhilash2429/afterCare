@@ -2,6 +2,7 @@ import json
 import os
 
 from api.auth import AuthUnavailable, Unauthorized
+from api.extract import ExtractionFailed
 
 ROUTES = {}
 
@@ -62,11 +63,14 @@ def lambda_handler(event, context):
         return respond(401, {"code": "unauthorized", "message": str(exc)})
     except PermissionError as exc:
         return respond(403, {"code": "forbidden", "message": str(exc)})
+    except ExtractionFailed as exc:
+        return respond(422, {"code": "extraction_failed", "message": str(exc)})
     except ValueError as exc:
         return respond(422, {"code": "validation_failed", "message": str(exc)})
 
 
 import api.circles  # noqa: E402,F401
+import api.documents  # noqa: E402,F401
 import api.notify  # noqa: E402,F401
 import api.plans  # noqa: E402,F401
 import api.speech  # noqa: E402,F401
