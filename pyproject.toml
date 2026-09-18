@@ -5,7 +5,7 @@ requires-python = ">=3.11"
 dependencies = ["boto3", "PyJWT", "cryptography", "pywebpush"]
 
 [project.optional-dependencies]
-dev = ["pytest", "moto[dynamodb,s3]"]
+dev = ["pytest", "moto[dynamodb,s3]", "aws-cdk-lib", "constructs"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
