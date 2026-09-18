@@ -34,7 +34,7 @@ This one is for the person holding the pill box.
 ## Stack
 
 Next.js 15 static-export PWA on Amplify Hosting → Lambda Function URL (Python 3.12) →
-Textract (words + boxes) → Bedrock Claude Sonnet 5 (structuring with source citations)
+Textract (words + boxes) → Bedrock Mistral Large 3, in-region (structuring with source citations)
 → DynamoDB → EventBridge Scheduler → Web Push / WhatsApp (AWS End User Messaging
 Social) / SES. Amazon Translate and Polly for language and voice. All storage in
 `ap-south-1`.
