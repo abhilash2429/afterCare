@@ -1,6 +1,8 @@
 import json
 import os
 
+from api.auth import Unauthorized
+
 ROUTES = {}
 
 
@@ -54,7 +56,12 @@ def lambda_handler(event, context):
         return respond(404, {"code": "not_found", "message": "no route"})
     try:
         return fn(event, params)
+    except Unauthorized as exc:
+        return respond(401, {"code": "unauthorized", "message": str(exc)})
     except PermissionError as exc:
         return respond(403, {"code": "forbidden", "message": str(exc)})
     except ValueError as exc:
         return respond(422, {"code": "validation_failed", "message": str(exc)})
+
+
+import api.circles  # noqa: E402,F401
