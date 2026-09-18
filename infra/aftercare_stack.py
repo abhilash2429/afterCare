@@ -44,6 +44,10 @@ class AftercareStack(Stack):
                 allowed_first_auth_factors=cognito.AllowedFirstAuthFactors(
                     password=True, email_otp=True)),
             account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
+            # Email OTP sign-in only works with an SES sender, not COGNITO_DEFAULT.
+            email=cognito.UserPoolEmail.with_ses(
+                from_email=config.SES_FROM_EMAIL, from_name="AfterCare",
+                ses_region=config.REGION),
             removal_policy=RemovalPolicy.DESTROY)
         client = pool.add_client("Web", auth_flows=cognito.AuthFlow(user=True),
                                  disable_o_auth=True, prevent_user_existence_errors=True)

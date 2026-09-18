@@ -7,6 +7,9 @@ DRUGS_TABLE_NAME = "aftercare-drugs"
 BEDROCK_MODEL_ID = "global.anthropic.claude-sonnet-5"
 BEDROCK_CHEAP_MODEL_ID = "apac.amazon.nova-lite-v1:0"
 
+# Verified SES identity in ap-south-1; Cognito sends email OTPs from it.
+SES_FROM_EMAIL = "abhilashreddymand@gmail.com"
+
 # Base URL of the PWA; invite links are built on it. Placeholder until Amplify is set up.
 WEB_ORIGIN = "https://main.example.amplifyapp.com"
 
