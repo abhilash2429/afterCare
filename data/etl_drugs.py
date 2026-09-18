@@ -55,6 +55,15 @@ def merged(path):
     return out
 
 
+_STALE_PRUNE_GUARD = 0.05  # a bigger stale fraction smells like a bad/truncated source CSV
+
+
+def _should_prune_stale(stale_count, written):
+    """False guards against wiping the table when the source CSV looks wrong: more than
+    5% of what was just written showing up as stale to delete is not a normal refresh."""
+    return not (written and stale_count > _STALE_PRUNE_GUARD * written)
+
+
 def main(path):
     table = boto3.resource("dynamodb", region_name="ap-south-1").Table(TABLE)
     items = merged(path)
@@ -72,11 +81,18 @@ def main(path):
         if "LastEvaluatedKey" not in page:
             break
         scan["ExclusiveStartKey"] = page["LastEvaluatedKey"]
-    with table.batch_writer() as batch:
-        for pk, sk in stale:
-            batch.delete_item(Key={"PK": pk, "SK": sk})
+    if _should_prune_stale(len(stale), written):
+        with table.batch_writer() as batch:
+            for pk, sk in stale:
+                batch.delete_item(Key={"PK": pk, "SK": sk})
+        removed = len(stale)
+    else:
+        print("WARNING: %d stale rows is more than %.0f%% of %d written - skipping delete, "
+              "check the source CSV" % (len(stale), _STALE_PRUNE_GUARD * 100, written),
+              flush=True)
+        removed = 0
     print("done", written, "ambiguous", sum(1 for i in items.values() if i.get("ambiguous")),
-          "stale removed", len(stale))
+          "stale removed", removed)
 
 
 if __name__ == "__main__":
