@@ -52,7 +52,7 @@ def table(monkeypatch):
                                   {"AttributeName": "SK", "AttributeType": "S"}])
         monkeypatch.setattr(auth, "_table_cache", t)
         import api.reminder as reminder
-        import api.doses as dosesmod
+        import api.dose_routes as dosesmod
         monkeypatch.setattr(reminder, "_ddb",
                             boto3.resource("dynamodb", region_name="ap-south-1"))
         monkeypatch.setattr(dosesmod, "_ddb",
@@ -70,7 +70,7 @@ def _seed_dose(table, circle="ci_1", date="2026-09-20", slot="morning",
 
 
 def _stub_doses_auth(monkeypatch, sub="u-care", circle="ci_1", role="caregiver"):
-    import api.doses as dosesmod
+    import api.dose_routes as dosesmod
     principal = {"sub": sub, "circleId": circle, "role": role}
     monkeypatch.setattr(dosesmod, "principal_from_event", lambda event: principal)
     monkeypatch.setattr(dosesmod, "require",
@@ -289,7 +289,7 @@ def test_check_loses_race_to_given_without_escalation(table, monkeypatch):
 def test_given_route_decodes_url_encoded_dose_id(table, monkeypatch):
     _stub_doses_auth(monkeypatch, sub="u-care")
     _seed_dose(table)
-    import api.doses as dosesmod
+    import api.dose_routes as dosesmod
     monkeypatch.setattr(dosesmod, "now_ist",
                         lambda: datetime(2026, 9, 20, 9, 0, tzinfo=IST))
     enc = quote("ci_1#2026-09-20#morning", safe="")
@@ -366,7 +366,7 @@ def _seed_adherence(table):
 
 
 def test_adherence_math_excludes_pending(table, monkeypatch):
-    import api.doses as dosesmod
+    import api.dose_routes as dosesmod
     _stub_doses_auth(monkeypatch)
     _seed_adherence(table)
     monkeypatch.setattr(dosesmod, "now_ist",
@@ -385,7 +385,7 @@ def test_adherence_math_excludes_pending(table, monkeypatch):
 
 
 def test_adherence_no_scored_doses_is_zero(table, monkeypatch):
-    import api.doses as dosesmod
+    import api.dose_routes as dosesmod
     _stub_doses_auth(monkeypatch)
     _seed_dose(table, date="2026-09-20", slot="morning", status="pending")
     monkeypatch.setattr(dosesmod, "now_ist",
@@ -404,7 +404,7 @@ def test_adherence_days_over_30_is_422(table, monkeypatch):
 
 
 def test_adherence_caregiver_token_supplies_circle(table, monkeypatch):
-    import api.doses as dosesmod
+    import api.dose_routes as dosesmod
     token = auth.issue_circle_token("ci_1", "caregiver")
     _seed_dose(table, status="given")
     monkeypatch.setattr(dosesmod, "now_ist",
