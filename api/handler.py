@@ -71,6 +71,7 @@ def lambda_handler(event, context):
 
 import api.circles  # noqa: E402,F401
 import api.documents  # noqa: E402,F401
+import api.doses  # noqa: E402,F401
 import api.notify  # noqa: E402,F401
 import api.plans  # noqa: E402,F401
 import api.speech  # noqa: E402,F401
