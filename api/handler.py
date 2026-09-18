@@ -69,6 +69,7 @@ def lambda_handler(event, context):
         return respond(422, {"code": "validation_failed", "message": str(exc)})
 
 
+import api.boxcheck_api  # noqa: E402,F401
 import api.circles  # noqa: E402,F401
 import api.documents  # noqa: E402,F401
 import api.doses  # noqa: E402,F401
