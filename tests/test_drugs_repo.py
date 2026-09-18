@@ -63,3 +63,71 @@ def test_lookup_never_raises_on_query_error(monkeypatch, drugs_table):
 
     monkeypatch.setattr(repo._table, "query", boom)
     assert lookup_brand("Ecosprin 75") == []
+
+
+def test_lookup_finds_item_past_first_300_in_bucket(drugs_table):
+    # Regression: an old Limit=300 on the bucket query silently dropped any
+    # item sorting after the first 300 SKs. "zzbrtarget" sorts after all 305
+    # "zzbrfiller####" SKs (f < t), so it must still be found.
+    from api.drugs_repo import lookup_brand
+    with drugs_table.batch_writer() as batch:
+        for i in range(305):
+            batch.put_item(Item={
+                "PK": "zzbr", "SK": "zzbrfiller%04d" % i,
+                "brand": "filler", "molecules": []})
+        batch.put_item(Item={
+            "PK": "zzbr", "SK": "zzbrtarget", "brand": "Zzbrtarget",
+            "molecules": [{"name": "targetmol", "strengthMg": "10", "unit": "mg"}]})
+    mols = lookup_brand("Zzbrtarget")
+    assert mols and mols[0].name == "targetmol"
+
+
+def test_bucket_items_pages_on_last_evaluated_key(monkeypatch, drugs_table):
+    import api.drugs_repo as repo
+
+    page1 = {"Items": [{"PK": "pgtb", "SK": "pgtbitem1"}],
+             "LastEvaluatedKey": {"PK": "pgtb", "SK": "pgtbitem1"}}
+    page2 = {"Items": [{"PK": "pgtb", "SK": "pgtbitem2",
+                        "molecules": [{"name": "found", "strengthMg": "5", "unit": "mg"}]}]}
+    calls = {"n": 0}
+
+    def fake_query(**kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            assert "ExclusiveStartKey" not in kwargs
+            return page1
+        assert kwargs["ExclusiveStartKey"] == {"PK": "pgtb", "SK": "pgtbitem1"}
+        return page2
+
+    monkeypatch.setattr(repo._table, "query", fake_query)
+    items = repo._bucket_items("pgtb")
+    assert set(items) == {"pgtbitem1", "pgtbitem2"}
+    assert calls["n"] == 2
+
+
+def test_lookup_strength_zero_is_not_dropped(drugs_table):
+    from api.drugs_repo import lookup_brand
+    drugs_table.put_item(Item={"PK": "zero", "SK": "zerodrug", "brand": "Zerodrug",
+                               "molecules": [{"name": "placebo", "strengthMg": "0", "unit": "mg"}]})
+    mols = lookup_brand("Zerodrug")
+    assert mols[0].strengthMg == 0.0
+
+
+def test_etl_rows_preserves_zero_strength(tmp_path):
+    # Regression: `if m.strengthMg else None` treats a real 0mg strength as
+    # falsy and silently drops it to None. Must store "0.0", not None.
+    import csv
+    from data.etl_drugs import rows
+
+    csv_path = tmp_path / "sample.csv"
+    fieldnames = ["id", "name", "price(₹)", "Is_discontinued", "manufacturer_name",
+                  "type", "pack_size_label", "short_composition1", "short_composition2"]
+    with open(csv_path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=fieldnames)
+        w.writeheader()
+        w.writerow({"id": "1", "name": "Placebo Tablet", "price(₹)": "10",
+                    "Is_discontinued": "False", "manufacturer_name": "Acme",
+                    "type": "tablet", "pack_size_label": "strip of 10",
+                    "short_composition1": "Placebo (0mg)", "short_composition2": ""})
+    item = next(rows(str(csv_path)))
+    assert item["molecules"][0]["strengthMg"] == "0.0"

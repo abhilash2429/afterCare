@@ -30,7 +30,7 @@ def rows(path):
                 "packSize": (row.get("pack_size_label") or "").strip(),
                 "discontinued": str(row.get("Is_discontinued", "")).lower() == "true",
                 "molecules": [{"name": m.name,
-                               "strengthMg": str(m.strengthMg) if m.strengthMg else None,
+                               "strengthMg": str(m.strengthMg) if m.strengthMg is not None else None,
                                "unit": m.unit}
                               for m in molecules],
             }
