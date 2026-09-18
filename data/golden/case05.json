@@ -1,0 +1,110 @@
+{
+  "caseId": "case05",
+  "medicines": [
+    {
+      "lineId": "m1",
+      "brand": "Orofer XT",
+      "molecules": [
+        {
+          "name": "ferrous ascorbate",
+          "strengthMg": 100
+        },
+        {
+          "name": "folic acid",
+          "strengthMg": 1.5
+        }
+      ],
+      "frequency": "OD",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 90
+    },
+    {
+      "lineId": "m2",
+      "brand": "Calcium carbonate",
+      "molecules": [
+        {
+          "name": "calcium carbonate",
+          "strengthMg": 1250
+        }
+      ],
+      "frequency": "0-0-1",
+      "slots": [
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 90
+    },
+    {
+      "lineId": "m3",
+      "brand": "Ceftum",
+      "molecules": [
+        {
+          "name": "cefuroxime",
+          "strengthMg": 500
+        }
+      ],
+      "frequency": "BD",
+      "slots": [
+        "morning",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 5
+    },
+    {
+      "lineId": "m4",
+      "brand": "Dolo 650",
+      "molecules": [
+        {
+          "name": "paracetamol",
+          "strengthMg": 650
+        }
+      ],
+      "frequency": "TDS",
+      "slots": [
+        "morning",
+        "noon",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 3
+    },
+    {
+      "lineId": "m5",
+      "brand": "Omez",
+      "molecules": [
+        {
+          "name": "omeprazole",
+          "strengthMg": 20
+        }
+      ],
+      "frequency": "OD",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": 5
+    }
+  ],
+  "redFlags": {
+    "source": "document",
+    "text": "Come to the hospital immediately if heavy vaginal bleeding (soaking more than one pad an hour), foul smelling discharge, fever, pus or gaping at the stitch line, severe headache with blurred vision, or pain and swelling in one leg."
+  },
+  "followUp": {
+    "date": "2026-09-21",
+    "with": "OBG OPD for wound check"
+  }
+}

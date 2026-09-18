@@ -1,0 +1,30 @@
+{
+  "caseId": "case03",
+  "hospital": "Vasundhara Diabetes & Endocrine Hospital, Davanagere",
+  "patient": {"name": "Shantamma Patil", "age": 59, "sex": "F", "uhid": "VDE/2026/08861"},
+  "admitted": "2026-09-08", "discharged": "2026-09-12",
+  "diagnosis": "Type 2 diabetes mellitus with uncontrolled hyperglycaemia, acute cystitis, systemic hypertension, dyslipidaemia",
+  "doctor": "Dr. Kavitha Rao, MD, DM (Endocrinology)<br>Reg. No. KMC/57209",
+  "medicines": [
+    {"raw": "T. Glycomet 500 mg  1-0-1  after food  x 30 days",
+     "brand": "Glycomet", "molecules": [{"name": "metformin", "strengthMg": 500}],
+     "frequency": "1-0-1", "foodRelation": "after", "durationDays": 30, "prn": false},
+    {"raw": "T. Amaryl 2 mg  1-0-0  before food  x 30 days",
+     "brand": "Amaryl", "molecules": [{"name": "glimepiride", "strengthMg": 2}],
+     "frequency": "1-0-0", "foodRelation": "before", "durationDays": 30, "prn": false},
+    {"raw": "T. Januvia 100 mg  1-0-0  x 30 days",
+     "brand": "Januvia", "molecules": [{"name": "sitagliptin", "strengthMg": 100}],
+     "frequency": "1-0-0", "foodRelation": "unspecified", "durationDays": 30, "prn": false},
+    {"raw": "T. Telma 40 mg  1-0-0  x 30 days",
+     "brand": "Telma", "molecules": [{"name": "telmisartan", "strengthMg": 40}],
+     "frequency": "1-0-0", "foodRelation": "unspecified", "durationDays": 30, "prn": false},
+    {"raw": "T. Rosuvas 10 mg  0-0-1  x 30 days",
+     "brand": "Rosuvas", "molecules": [{"name": "rosuvastatin", "strengthMg": 10}],
+     "frequency": "0-0-1", "foodRelation": "unspecified", "durationDays": 30, "prn": false},
+    {"raw": "Cap. Niftran 100 mg  1-0-1  after food  x 5 days",
+     "brand": "Niftran", "molecules": [{"name": "nitrofurantoin", "strengthMg": 100}],
+     "frequency": "1-0-1", "foodRelation": "after", "durationDays": 5, "prn": false}
+  ],
+  "redFlags": "Return immediately if blood sugar is below 70 mg/dl or above 400 mg/dl, if you have sweating, shaking or confusion, persistent vomiting, or fever with burning urination that does not improve in 3 days.",
+  "followUp": {"date": "2026-09-26", "with": "Endocrinology OPD with fasting and post-lunch blood sugar reports"}
+}

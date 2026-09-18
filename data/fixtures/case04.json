@@ -1,0 +1,27 @@
+{
+  "caseId": "case04",
+  "hospital": "Nandadeepa Child Care Centre, Shivamogga",
+  "patient": {"name": "Baby Ananya Gowda", "age": 2, "sex": "F", "uhid": "NCC-26-1904"},
+  "admitted": "2026-09-11", "discharged": "2026-09-15",
+  "diagnosis": "Community acquired pneumonia (right lower lobe) with wheeze. Weight 12 kg",
+  "doctor": "Dr. Nagaraj Bhat, MD (Paediatrics)<br>Reg. No. KMC/66318",
+  "medicines": [
+    {"raw": "Syp. Augmentin Duo (400 mg + 57 mg per 5 ml)  3.5 ml BD (45 mg/kg/day)  after food  x 7 days",
+     "brand": "Augmentin Duo", "molecules": [{"name": "amoxycillin", "strengthMg": 400},
+                                             {"name": "clavulanic acid", "strengthMg": 57}],
+     "frequency": "BD", "foodRelation": "after", "durationDays": 7, "prn": false},
+    {"raw": "Syp. Paracetamol 120 mg/5 ml  7.5 ml (15 mg/kg)  SOS for fever above 100 F, minimum 6 hours apart",
+     "brand": "Paracetamol", "molecules": [{"name": "paracetamol", "strengthMg": 120}],
+     "frequency": "SOS", "foodRelation": "unspecified", "durationDays": null,
+     "prn": true, "prnCondition": "for fever above 100 F"},
+    {"raw": "Syp. Levolin 1 mg/5 ml  2.5 ml TDS  x 5 days",
+     "brand": "Levolin", "molecules": [{"name": "levosalbutamol", "strengthMg": 1}],
+     "frequency": "TDS", "foodRelation": "unspecified", "durationDays": 5, "prn": false},
+    {"raw": "Syp. Ondem 2 mg/5 ml  2.5 ml SOS for vomiting",
+     "brand": "Ondem", "molecules": [{"name": "ondansetron", "strengthMg": 2}],
+     "frequency": "SOS", "foodRelation": "unspecified", "durationDays": null,
+     "prn": true, "prnCondition": "for vomiting"}
+  ],
+  "redFlags": "Bring the child back immediately if breathing becomes fast or difficult, chest indrawing, lips turn bluish, child is unable to feed or drink, is very drowsy, or has a convulsion.",
+  "followUp": {"date": "2026-09-22", "with": "Paediatric OPD"}
+}

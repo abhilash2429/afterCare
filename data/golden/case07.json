@@ -1,0 +1,87 @@
+{
+  "caseId": "case07",
+  "medicines": [
+    {
+      "lineId": "m1",
+      "brand": "Thyronorm",
+      "molecules": [
+        {
+          "name": "levothyroxine",
+          "strengthMg": 0.05
+        }
+      ],
+      "frequency": "1-0-0",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": 90
+    },
+    {
+      "lineId": "m2",
+      "brand": "Amlong",
+      "molecules": [
+        {
+          "name": "amlodipine",
+          "strengthMg": 5
+        }
+      ],
+      "frequency": "1-0-0",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 90
+    },
+    {
+      "lineId": "m3",
+      "brand": "Montair LC",
+      "molecules": [
+        {
+          "name": "montelukast",
+          "strengthMg": 10
+        },
+        {
+          "name": "levocetirizine",
+          "strengthMg": 5
+        }
+      ],
+      "frequency": "0-0-1",
+      "slots": [
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 10
+    },
+    {
+      "lineId": "m4",
+      "brand": "Dolo 650",
+      "molecules": [
+        {
+          "name": "paracetamol",
+          "strengthMg": 650
+        }
+      ],
+      "frequency": "SOS",
+      "slots": [],
+      "prn": true,
+      "prnCondition": "for headache or fever",
+      "foodRelation": "unspecified",
+      "durationDays": null
+    }
+  ],
+  "redFlags": {
+    "source": "document",
+    "text": "Severe headache, chest pain, palpitations, sudden weakness of face, arm or leg, or BP above 180/110 at home."
+  },
+  "followUp": {
+    "date": "2026-12-16",
+    "with": "Dr. Meera Hegde with repeat TSH report"
+  }
+}

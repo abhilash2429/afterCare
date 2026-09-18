@@ -1,0 +1,88 @@
+{
+  "caseId": "case04",
+  "medicines": [
+    {
+      "lineId": "m1",
+      "brand": "Augmentin Duo",
+      "molecules": [
+        {
+          "name": "amoxycillin",
+          "strengthMg": 400
+        },
+        {
+          "name": "clavulanic acid",
+          "strengthMg": 57
+        }
+      ],
+      "frequency": "BD",
+      "slots": [
+        "morning",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 7
+    },
+    {
+      "lineId": "m2",
+      "brand": "Paracetamol",
+      "molecules": [
+        {
+          "name": "paracetamol",
+          "strengthMg": 120
+        }
+      ],
+      "frequency": "SOS",
+      "slots": [],
+      "prn": true,
+      "prnCondition": "for fever above 100 F",
+      "foodRelation": "unspecified",
+      "durationDays": null
+    },
+    {
+      "lineId": "m3",
+      "brand": "Levolin",
+      "molecules": [
+        {
+          "name": "levosalbutamol",
+          "strengthMg": 1
+        }
+      ],
+      "frequency": "TDS",
+      "slots": [
+        "morning",
+        "noon",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 5
+    },
+    {
+      "lineId": "m4",
+      "brand": "Ondem",
+      "molecules": [
+        {
+          "name": "ondansetron",
+          "strengthMg": 2
+        }
+      ],
+      "frequency": "SOS",
+      "slots": [],
+      "prn": true,
+      "prnCondition": "for vomiting",
+      "foodRelation": "unspecified",
+      "durationDays": null
+    }
+  ],
+  "redFlags": {
+    "source": "document",
+    "text": "Bring the child back immediately if breathing becomes fast or difficult, chest indrawing, lips turn bluish, child is unable to feed or drink, is very drowsy, or has a convulsion."
+  },
+  "followUp": {
+    "date": "2026-09-22",
+    "with": "Paediatric OPD"
+  }
+}

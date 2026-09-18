@@ -1,0 +1,128 @@
+{
+  "caseId": "case06",
+  "medicines": [
+    {
+      "lineId": "m1",
+      "brand": "Foracort 200",
+      "molecules": [
+        {
+          "name": "budesonide",
+          "strengthMg": 0.2
+        },
+        {
+          "name": "formoterol",
+          "strengthMg": 0.006
+        }
+      ],
+      "frequency": "BD",
+      "slots": [
+        "morning",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m2",
+      "brand": "Tiova",
+      "molecules": [
+        {
+          "name": "tiotropium",
+          "strengthMg": 0.018
+        }
+      ],
+      "frequency": "OD",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m3",
+      "brand": "Duolin",
+      "molecules": [
+        {
+          "name": "levosalbutamol",
+          "strengthMg": 0.05
+        },
+        {
+          "name": "ipratropium",
+          "strengthMg": 0.02
+        }
+      ],
+      "frequency": "SOS",
+      "slots": [],
+      "prn": true,
+      "prnCondition": "for breathlessness",
+      "foodRelation": "unspecified",
+      "durationDays": null
+    },
+    {
+      "lineId": "m4",
+      "brand": "Wysolone",
+      "molecules": [
+        {
+          "name": "prednisolone",
+          "strengthMg": 40
+        }
+      ],
+      "frequency": "OD",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 10
+    },
+    {
+      "lineId": "m5",
+      "brand": "Azithral",
+      "molecules": [
+        {
+          "name": "azithromycin",
+          "strengthMg": 500
+        }
+      ],
+      "frequency": "OD",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 3
+    },
+    {
+      "lineId": "m6",
+      "brand": "Pan",
+      "molecules": [
+        {
+          "name": "pantoprazole",
+          "strengthMg": 40
+        }
+      ],
+      "frequency": "OD",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": 10
+    }
+  ],
+  "redFlags": {
+    "source": "document",
+    "text": "Return to emergency if breathlessness is not relieved by 2 puffs of Duolin repeated twice, lips or nails turn blue, excessive drowsiness or confusion, or fever with increased yellow-green sputum."
+  },
+  "followUp": {
+    "date": "2026-09-26",
+    "with": "Pulmonology OPD with spirometry"
+  }
+}

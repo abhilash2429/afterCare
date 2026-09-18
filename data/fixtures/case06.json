@@ -1,0 +1,33 @@
+{
+  "caseId": "case06",
+  "hospital": "Varuna Chest & Respiratory Care Hospital, Mandya",
+  "patient": {"name": "Channappa Madiwal", "age": 66, "sex": "M", "uhid": "VCR-26-2208"},
+  "admitted": "2026-09-07", "discharged": "2026-09-12",
+  "diagnosis": "Acute exacerbation of COPD (GOLD group E), type 2 respiratory failure resolved. Ex-smoker",
+  "doctor": "Dr. Raghavendra Joshi, MD (Pulmonary Medicine)<br>Reg. No. KMC/63490",
+  "medicines": [
+    {"raw": "Foracort 200 Inhaler (Budesonide 200 mcg + Formoterol 6 mcg)  2 puffs BD with spacer, rinse mouth after use  x 30 days",
+     "brand": "Foracort 200", "molecules": [{"name": "budesonide", "strengthMg": 0.2},
+                                            {"name": "formoterol", "strengthMg": 0.006}],
+     "frequency": "BD", "foodRelation": "unspecified", "durationDays": 30, "prn": false},
+    {"raw": "Tiova 18 mcg Rotacap  1 capsule inhaled via Rotahaler OD (do not swallow)  x 30 days",
+     "brand": "Tiova", "molecules": [{"name": "tiotropium", "strengthMg": 0.018}],
+     "frequency": "OD", "foodRelation": "unspecified", "durationDays": 30, "prn": false},
+    {"raw": "Duolin Inhaler (Levosalbutamol 50 mcg + Ipratropium 20 mcg)  2 puffs SOS for breathlessness",
+     "brand": "Duolin", "molecules": [{"name": "levosalbutamol", "strengthMg": 0.05},
+                                      {"name": "ipratropium", "strengthMg": 0.02}],
+     "frequency": "SOS", "foodRelation": "unspecified", "durationDays": null,
+     "prn": true, "prnCondition": "for breathlessness"},
+    {"raw": "T. Wysolone 40 mg OD x 5 days then 20 mg OD x 5 days, after food",
+     "brand": "Wysolone", "molecules": [{"name": "prednisolone", "strengthMg": 40}],
+     "frequency": "OD", "foodRelation": "after", "durationDays": 10, "prn": false},
+    {"raw": "T. Azithral 500 mg  OD  x 3 days",
+     "brand": "Azithral", "molecules": [{"name": "azithromycin", "strengthMg": 500}],
+     "frequency": "OD", "foodRelation": "unspecified", "durationDays": 3, "prn": false},
+    {"raw": "T. Pan 40 mg  OD  before food  x 10 days",
+     "brand": "Pan", "molecules": [{"name": "pantoprazole", "strengthMg": 40}],
+     "frequency": "OD", "foodRelation": "before", "durationDays": 10, "prn": false}
+  ],
+  "redFlags": "Return to emergency if breathlessness is not relieved by 2 puffs of Duolin repeated twice, lips or nails turn blue, excessive drowsiness or confusion, or fever with increased yellow-green sputum.",
+  "followUp": {"date": "2026-09-26", "with": "Pulmonology OPD with spirometry"}
+}

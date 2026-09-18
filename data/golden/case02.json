@@ -1,0 +1,98 @@
+{
+  "caseId": "case02",
+  "medicines": [
+    {
+      "lineId": "m1",
+      "brand": "Zerodol-P",
+      "molecules": [
+        {
+          "name": "aceclofenac",
+          "strengthMg": 100
+        },
+        {
+          "name": "paracetamol",
+          "strengthMg": 325
+        }
+      ],
+      "frequency": "twice daily",
+      "slots": [
+        "morning",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 5
+    },
+    {
+      "lineId": "m2",
+      "brand": "Pan",
+      "molecules": [
+        {
+          "name": "pantoprazole",
+          "strengthMg": 40
+        }
+      ],
+      "frequency": "once daily",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": 5
+    },
+    {
+      "lineId": "m3",
+      "brand": "Augmentin 625 Duo",
+      "molecules": [
+        {
+          "name": "amoxycillin",
+          "strengthMg": 500
+        },
+        {
+          "name": "clavulanic acid",
+          "strengthMg": 125
+        }
+      ],
+      "frequency": "TDS",
+      "slots": [
+        "morning",
+        "noon",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 5
+    },
+    {
+      "lineId": "m4",
+      "brand": "Ultracet",
+      "molecules": [
+        {
+          "name": "tramadol",
+          "strengthMg": 37.5
+        },
+        {
+          "name": "paracetamol",
+          "strengthMg": 325
+        }
+      ],
+      "frequency": "SOS",
+      "slots": [],
+      "prn": true,
+      "prnCondition": "if pain is severe",
+      "foodRelation": "unspecified",
+      "durationDays": null
+    }
+  ],
+  "redFlags": {
+    "source": "document",
+    "text": "Come to casualty immediately if fingers become cold, blue or numb, swelling increases despite limb elevation, fever above 100 F, or discharge from the wound."
+  },
+  "followUp": {
+    "date": "2026-09-24",
+    "with": "Orthopaedic OPD for suture removal and check X-ray"
+  }
+}

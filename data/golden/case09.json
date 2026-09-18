@@ -1,0 +1,86 @@
+{
+  "caseId": "case09",
+  "medicines": [
+    {
+      "lineId": "m1",
+      "brand": "Taxim-O",
+      "molecules": [
+        {
+          "name": "cefixime",
+          "strengthMg": 200
+        }
+      ],
+      "frequency": "BD",
+      "slots": [
+        "morning",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 5
+    },
+    {
+      "lineId": "m2",
+      "brand": "Dolo 650",
+      "molecules": [
+        {
+          "name": "paracetamol",
+          "strengthMg": 650
+        }
+      ],
+      "frequency": "TDS",
+      "slots": [
+        "morning",
+        "noon",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 5
+    },
+    {
+      "lineId": "m3",
+      "brand": "Razo",
+      "molecules": [
+        {
+          "name": "rabeprazole",
+          "strengthMg": 20
+        }
+      ],
+      "frequency": "OD",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": 7
+    },
+    {
+      "lineId": "m4",
+      "brand": "Emeset",
+      "molecules": [
+        {
+          "name": "ondansetron",
+          "strengthMg": 4
+        }
+      ],
+      "frequency": "SOS",
+      "slots": [],
+      "prn": true,
+      "prnCondition": "for vomiting",
+      "foodRelation": "unspecified",
+      "durationDays": null
+    }
+  ],
+  "redFlags": {
+    "source": "document",
+    "text": "Return immediately if fever with chills, yellowish discolouration of eyes or urine, severe or increasing abdominal pain, persistent vomiting, or redness and discharge from the port sites."
+  },
+  "followUp": {
+    "date": "2026-09-21",
+    "with": "Surgery OPD for suture removal"
+  }
+}

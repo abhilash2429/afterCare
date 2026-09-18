@@ -1,0 +1,29 @@
+{
+  "caseId": "case05",
+  "hospitalLocal": "ಶ್ರೀ ಅನ್ನಪೂರ್ಣ ಹೆರಿಗೆ ಮತ್ತು ಶಿಶು ಆಸ್ಪತ್ರೆ, ಗದಗ",
+  "hospital": "Sri Annapoorna Maternity & Child Care Hospital, Gadag",
+  "patient": {"name": "Lakshmi Badiger", "age": 26, "sex": "F", "uhid": "SAM-2026-4471"},
+  "admitted": "2026-09-10", "discharged": "2026-09-14",
+  "diagnosis": "G2P2L2, term pregnancy, elective lower segment caesarean section on 2026-09-11 for previous LSCS. Mild anaemia (Hb 9.8 g/dl)",
+  "doctor": "Dr. Sunanda Kattimani, MS (OBG)<br>Reg. No. KMC/59836",
+  "medicines": [
+    {"raw": "T. Orofer XT (Ferrous ascorbate eq. to elemental iron 100 mg + Folic acid 1.5 mg)  OD  after food  x 3 months",
+     "brand": "Orofer XT", "molecules": [{"name": "ferrous ascorbate", "strengthMg": 100},
+                                         {"name": "folic acid", "strengthMg": 1.5}],
+     "frequency": "OD", "foodRelation": "after", "durationDays": 90, "prn": false},
+    {"raw": "T. Calcium carbonate 1250 mg (eq. to elemental calcium 500 mg)  0-0-1  after food  x 3 months",
+     "brand": "Calcium carbonate", "molecules": [{"name": "calcium carbonate", "strengthMg": 1250}],
+     "frequency": "0-0-1", "foodRelation": "after", "durationDays": 90, "prn": false},
+    {"raw": "T. Ceftum 500 mg  BD  after food  x 5 days",
+     "brand": "Ceftum", "molecules": [{"name": "cefuroxime", "strengthMg": 500}],
+     "frequency": "BD", "foodRelation": "after", "durationDays": 5, "prn": false},
+    {"raw": "T. Dolo 650 mg  TDS  after food  x 3 days",
+     "brand": "Dolo 650", "molecules": [{"name": "paracetamol", "strengthMg": 650}],
+     "frequency": "TDS", "foodRelation": "after", "durationDays": 3, "prn": false},
+    {"raw": "Cap. Omez 20 mg  OD  before food  x 5 days",
+     "brand": "Omez", "molecules": [{"name": "omeprazole", "strengthMg": 20}],
+     "frequency": "OD", "foodRelation": "before", "durationDays": 5, "prn": false}
+  ],
+  "redFlags": "Come to the hospital immediately if heavy vaginal bleeding (soaking more than one pad an hour), foul smelling discharge, fever, pus or gaping at the stitch line, severe headache with blurred vision, or pain and swelling in one leg.",
+  "followUp": {"date": "2026-09-21", "with": "OBG OPD for wound check"}
+}

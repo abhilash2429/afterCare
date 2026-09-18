@@ -1,0 +1,143 @@
+{
+  "caseId": "case01",
+  "medicines": [
+    {
+      "lineId": "m1",
+      "brand": "Ecosprin",
+      "molecules": [
+        {
+          "name": "aspirin",
+          "strengthMg": 75
+        }
+      ],
+      "frequency": "1-0-0",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m2",
+      "brand": "Clopitab",
+      "molecules": [
+        {
+          "name": "clopidogrel",
+          "strengthMg": 75
+        }
+      ],
+      "frequency": "0-0-1",
+      "slots": [
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m3",
+      "brand": "Atorva",
+      "molecules": [
+        {
+          "name": "atorvastatin",
+          "strengthMg": 40
+        }
+      ],
+      "frequency": "HS",
+      "slots": [
+        "bedtime"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m4",
+      "brand": "Pan",
+      "molecules": [
+        {
+          "name": "pantoprazole",
+          "strengthMg": 40
+        }
+      ],
+      "frequency": "BD",
+      "slots": [
+        "morning",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": 14
+    },
+    {
+      "lineId": "m5",
+      "brand": "Pantocid",
+      "molecules": [
+        {
+          "name": "pantoprazole",
+          "strengthMg": 40
+        }
+      ],
+      "frequency": "OD",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": null
+    },
+    {
+      "lineId": "m6",
+      "brand": "Glycomet GP1",
+      "molecules": [
+        {
+          "name": "metformin",
+          "strengthMg": 500
+        },
+        {
+          "name": "glimepiride",
+          "strengthMg": 1
+        }
+      ],
+      "frequency": "BD",
+      "slots": [
+        "morning",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m7",
+      "brand": "Sorbitrate",
+      "molecules": [
+        {
+          "name": "isosorbide dinitrate",
+          "strengthMg": 5
+        }
+      ],
+      "frequency": "SOS",
+      "slots": [],
+      "prn": true,
+      "prnCondition": "for chest pain",
+      "foodRelation": "unspecified",
+      "durationDays": null
+    }
+  ],
+  "redFlags": {
+    "source": "document",
+    "text": "Report immediately to the emergency department if chest pain returns, breathlessness at rest, bleeding from any site, or black stools."
+  },
+  "followUp": {
+    "date": "2026-09-28",
+    "with": "Cardiology OPD"
+  }
+}

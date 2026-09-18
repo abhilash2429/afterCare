@@ -1,0 +1,27 @@
+{
+  "caseId": "case07",
+  "layout": "opd",
+  "hospital": "Anugraha Family Clinic, Station Road, Vijayapura. Timings 9 am to 1 pm, 5 pm to 9 pm",
+  "doctor": "Dr. Meera Hegde, MBBS, MD (General Medicine)<br>Reg. No. KMC/70125",
+  "patient": {"name": "Vidya Kulkarni", "age": 47, "sex": "F", "uhid": "OP-26-1187"},
+  "visitDate": "2026-09-16",
+  "diagnosis": "Hypothyroidism (TSH 9.2), essential hypertension, allergic rhinitis",
+  "medicines": [
+    {"raw": "Tab. Thyronorm 50 mcg  1-0-0  empty stomach, 30 min before breakfast  x 3 months",
+     "brand": "Thyronorm", "molecules": [{"name": "levothyroxine", "strengthMg": 0.05}],
+     "frequency": "1-0-0", "foodRelation": "before", "durationDays": 90, "prn": false},
+    {"raw": "Tab. Amlong 5 mg  1-0-0  x 3 months",
+     "brand": "Amlong", "molecules": [{"name": "amlodipine", "strengthMg": 5}],
+     "frequency": "1-0-0", "foodRelation": "unspecified", "durationDays": 90, "prn": false},
+    {"raw": "Tab. Montair LC (Montelukast 10 mg + Levocetirizine 5 mg)  0-0-1  x 10 days",
+     "brand": "Montair LC", "molecules": [{"name": "montelukast", "strengthMg": 10},
+                                          {"name": "levocetirizine", "strengthMg": 5}],
+     "frequency": "0-0-1", "foodRelation": "unspecified", "durationDays": 10, "prn": false},
+    {"raw": "Tab. Dolo 650  SOS for headache or fever",
+     "brand": "Dolo 650", "molecules": [{"name": "paracetamol", "strengthMg": 650}],
+     "frequency": "SOS", "foodRelation": "unspecified", "durationDays": null,
+     "prn": true, "prnCondition": "for headache or fever"}
+  ],
+  "redFlags": "Severe headache, chest pain, palpitations, sudden weakness of face, arm or leg, or BP above 180/110 at home.",
+  "followUp": {"date": "2026-12-16", "with": "Dr. Meera Hegde with repeat TSH report"}
+}

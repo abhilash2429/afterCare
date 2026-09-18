@@ -1,0 +1,101 @@
+{
+  "caseId": "case10",
+  "medicines": [
+    {
+      "lineId": "m1",
+      "brand": "Amlodipine",
+      "molecules": [
+        {
+          "name": "amlodipine",
+          "strengthMg": null
+        }
+      ],
+      "frequency": "OD",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m2",
+      "brand": "Domstal",
+      "molecules": [
+        {
+          "name": "domperidone",
+          "strengthMg": 10
+        }
+      ],
+      "frequency": "TDS",
+      "slots": [
+        "morning",
+        "noon",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": null
+    },
+    {
+      "lineId": "m3",
+      "brand": "Pantocid",
+      "molecules": [
+        {
+          "name": "pantoprazole",
+          "strengthMg": 40
+        }
+      ],
+      "frequency": "OD",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": 14
+    },
+    {
+      "lineId": "m4",
+      "brand": "Osteofos",
+      "molecules": [
+        {
+          "name": "alendronate",
+          "strengthMg": 70
+        }
+      ],
+      "frequency": "once a week",
+      "slots": [],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": 90
+    },
+    {
+      "lineId": "m5",
+      "brand": "Dolo 650",
+      "molecules": [
+        {
+          "name": "paracetamol",
+          "strengthMg": 650
+        }
+      ],
+      "frequency": "SOS",
+      "slots": [],
+      "prn": true,
+      "prnCondition": "for body ache or fever",
+      "foodRelation": "unspecified",
+      "durationDays": null
+    }
+  ],
+  "redFlags": {
+    "source": "document",
+    "text": "Come back immediately if vomiting recurs and you cannot keep fluids down, vomit contains blood or coffee-ground material, black stools, giddiness on standing, or passing very little urine."
+  },
+  "followUp": {
+    "date": "2026-09-28",
+    "with": "Medicine OPD"
+  }
+}

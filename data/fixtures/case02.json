@@ -1,0 +1,29 @@
+{
+  "caseId": "case02",
+  "layout": "freetext",
+  "hospital": "Malaprabha Bone & Joint Centre, Dharwad",
+  "patient": {"name": "Suresh Angadi", "age": 44, "sex": "M", "uhid": "MBJ-26-03317"},
+  "admitted": "2026-09-10", "discharged": "2026-09-13",
+  "diagnosis": "Closed fracture distal end right radius, ORIF with volar locking plate done on 2026-09-11",
+  "doctor": "Dr. Prakash Hiremath, MS (Ortho)<br>Reg. No. KMC/61742",
+  "medicines": [
+    {"raw": "Tab. Zerodol-P (Aceclofenac 100 mg + Paracetamol 325 mg) one tablet twice daily after food for 5 days",
+     "brand": "Zerodol-P", "molecules": [{"name": "aceclofenac", "strengthMg": 100},
+                                         {"name": "paracetamol", "strengthMg": 325}],
+     "frequency": "twice daily", "foodRelation": "after", "durationDays": 5, "prn": false},
+    {"raw": "Tab. Pan 40 mg one tablet once daily before breakfast for 5 days",
+     "brand": "Pan", "molecules": [{"name": "pantoprazole", "strengthMg": 40}],
+     "frequency": "once daily", "foodRelation": "before", "durationDays": 5, "prn": false},
+    {"raw": "Tab. Augmentin 625 Duo one tablet TDS after food for 5 days",
+     "brand": "Augmentin 625 Duo", "molecules": [{"name": "amoxycillin", "strengthMg": 500},
+                                                 {"name": "clavulanic acid", "strengthMg": 125}],
+     "frequency": "TDS", "foodRelation": "after", "durationDays": 5, "prn": false},
+    {"raw": "Tab. Ultracet (Tramadol 37.5 mg + Paracetamol 325 mg) one tablet SOS if pain is severe, not more than 3 tablets a day",
+     "brand": "Ultracet", "molecules": [{"name": "tramadol", "strengthMg": 37.5},
+                                        {"name": "paracetamol", "strengthMg": 325}],
+     "frequency": "SOS", "foodRelation": "unspecified", "durationDays": null,
+     "prn": true, "prnCondition": "if pain is severe"}
+  ],
+  "redFlags": "Come to casualty immediately if fingers become cold, blue or numb, swelling increases despite limb elevation, fever above 100 F, or discharge from the wound.",
+  "followUp": {"date": "2026-09-24", "with": "Orthopaedic OPD for suture removal and check X-ray"}
+}

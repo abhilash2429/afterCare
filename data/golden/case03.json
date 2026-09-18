@@ -1,0 +1,123 @@
+{
+  "caseId": "case03",
+  "medicines": [
+    {
+      "lineId": "m1",
+      "brand": "Glycomet",
+      "molecules": [
+        {
+          "name": "metformin",
+          "strengthMg": 500
+        }
+      ],
+      "frequency": "1-0-1",
+      "slots": [
+        "morning",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m2",
+      "brand": "Amaryl",
+      "molecules": [
+        {
+          "name": "glimepiride",
+          "strengthMg": 2
+        }
+      ],
+      "frequency": "1-0-0",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "before",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m3",
+      "brand": "Januvia",
+      "molecules": [
+        {
+          "name": "sitagliptin",
+          "strengthMg": 100
+        }
+      ],
+      "frequency": "1-0-0",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m4",
+      "brand": "Telma",
+      "molecules": [
+        {
+          "name": "telmisartan",
+          "strengthMg": 40
+        }
+      ],
+      "frequency": "1-0-0",
+      "slots": [
+        "morning"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m5",
+      "brand": "Rosuvas",
+      "molecules": [
+        {
+          "name": "rosuvastatin",
+          "strengthMg": 10
+        }
+      ],
+      "frequency": "0-0-1",
+      "slots": [
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "unspecified",
+      "durationDays": 30
+    },
+    {
+      "lineId": "m6",
+      "brand": "Niftran",
+      "molecules": [
+        {
+          "name": "nitrofurantoin",
+          "strengthMg": 100
+        }
+      ],
+      "frequency": "1-0-1",
+      "slots": [
+        "morning",
+        "night"
+      ],
+      "prn": false,
+      "prnCondition": null,
+      "foodRelation": "after",
+      "durationDays": 5
+    }
+  ],
+  "redFlags": {
+    "source": "document",
+    "text": "Return immediately if blood sugar is below 70 mg/dl or above 400 mg/dl, if you have sweating, shaking or confusion, persistent vomiting, or fever with burning urination that does not improve in 3 days."
+  },
+  "followUp": {
+    "date": "2026-09-26",
+    "with": "Endocrinology OPD with fasting and post-lunch blood sugar reports"
+  }
+}
