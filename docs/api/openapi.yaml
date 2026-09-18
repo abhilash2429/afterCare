@@ -225,7 +225,7 @@ paths:
               properties:
                 circleId: { type: string }
                 pageCount: { type: integer, minimum: 1, maximum: 10 }
-                contentType: { type: string, enum: [image/jpeg, image/png, application/pdf] }
+                contentType: { type: string, enum: [image/jpeg, image/png] }
       responses:
         '201':
           description: Created
