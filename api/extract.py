@@ -118,10 +118,10 @@ def crop_for(block_ids, words):
     return {"x": x, "y": y, "w": min(1.0, right + pad) - x, "h": min(1.0, bottom + pad) - y}
 
 
-def _call_model(image_bytes, image_format, words, model_id):
+def _call_model(image_bytes, image_format, words, model_id, prompt=PROMPT):
     word_list = "\n".join("%s: %s" % (w["id"], w["text"]) for w in words)
     # Without a closing instruction after the word list Qwen3-VL returns the empty schema.
-    content = [{"text": PROMPT + word_list + "\n\nNow return the JSON for this page, "
+    content = [{"text": prompt + word_list + "\n\nNow return the JSON for this page, "
                 "with one entry per medicine line."}]
     if image_bytes:
         content.insert(0, {"image": {"format": image_format, "source": {"bytes": image_bytes}}})
