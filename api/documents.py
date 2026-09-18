@@ -86,7 +86,7 @@ def extract(event, params):
     try:
         plan = extract_plan(doc.get("keys") or [], circle_id)
     except ClientError as exc:
-        raise ExtractionFailed(str(exc) or "extraction failed") from exc
+        raise ExtractionFailed("could not read the document (%s)" % exc.response.get("Error", {}).get("Code", "error")) from exc
     plan.status = "draft"
     plan.sourceDocumentIds = [params["documentId"]]
     plans._save(plan)
