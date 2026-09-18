@@ -131,3 +131,20 @@ def test_etl_rows_preserves_zero_strength(tmp_path):
                     "short_composition1": "Placebo (0mg)", "short_composition2": ""})
     item = next(rows(str(csv_path)))
     assert item["molecules"][0]["strengthMg"] == "0.0"
+
+
+def test_failure_after_first_page_returns_empty(monkeypatch, drugs_table):
+    import api.drugs_repo as repo
+    real = repo._table.query
+    calls = []
+
+    def flaky(**kw):
+        calls.append(1)
+        if len(calls) > 1:
+            raise RuntimeError("throttled")
+        res = real(**kw)
+        res["LastEvaluatedKey"] = {"PK": "ecos", "SK": "ecosprin"}
+        return res
+
+    monkeypatch.setattr(repo._table, "query", flaky)
+    assert repo.lookup_brand("Ecosprin 75") == []

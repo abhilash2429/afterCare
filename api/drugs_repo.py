@@ -16,7 +16,7 @@ def _t():
 
 def _bucket_items(pk):
     """All items in a PK bucket, paginating past DynamoDB's 1 MB/page limit.
-    Never raises: any query failure returns whatever was read so far (possibly none)."""
+    Never raises: any query failure returns {} so a partial bucket never picks a wrong brand."""
     items = {}
     start_key = None
     try:
@@ -34,7 +34,7 @@ def _bucket_items(pk):
             if not start_key:
                 break
     except Exception:
-        pass
+        return {}
     return items
 
 
