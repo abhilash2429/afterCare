@@ -61,7 +61,11 @@ class AftercareStack(Stack):
         env = {"TABLE_NAME": table.table_name, "DRUGS_TABLE_NAME": drugs.table_name,
                "DOCS_BUCKET": docs.bucket_name,
                "BEDROCK_MODEL_ID": config.BEDROCK_MODEL_ID,
-               "BEDROCK_CHEAP_MODEL_ID": config.BEDROCK_CHEAP_MODEL_ID}
+               "BEDROCK_CHEAP_MODEL_ID": config.BEDROCK_CHEAP_MODEL_ID,
+               "SES_FROM_EMAIL": config.SES_FROM_EMAIL,
+               "VAPID_PRIVATE_PARAM": config.VAPID_PRIVATE_PARAM,
+               "VAPID_PUBLIC_PARAM": config.VAPID_PUBLIC_PARAM,
+               "WHATSAPP_ENABLED": config.WHATSAPP_ENABLED}
 
         api = lambda_.Function(
             self, "Api", runtime=lambda_.Runtime.PYTHON_3_12,
@@ -85,15 +89,38 @@ class AftercareStack(Stack):
                 self, "ReminderLogs", retention=logs.RetentionDays.TWO_WEEKS,
                 removal_policy=RemovalPolicy.DESTROY))
 
+        # SES identity abhilashreddymand@gmail.com already exists in ap-south-1 (created by
+        # CLI); CDK must not create it, only grant send on it. Same for the VAPID SSM params:
+        # scripts/make_vapid.py prints the put-parameter commands, CDK only grants read.
+        ses_identity_arn = "arn:aws:ses:%s:%s:identity/%s" % (
+            config.REGION, config.ACCOUNT, config.SES_FROM_EMAIL)
+        vapid_param_arns = [
+            "arn:aws:ssm:%s:%s:parameter%s" % (config.REGION, config.ACCOUNT, name)
+            for name in (config.VAPID_PRIVATE_PARAM, config.VAPID_PUBLIC_PARAM)]
+
         for fn in (api, reminder):
             table.grant_read_write_data(fn)
             drugs.grant_read_data(fn)
             docs.grant_read_write(fn)
             fn.add_to_role_policy(iam.PolicyStatement(
                 actions=["bedrock:InvokeModel", "textract:AnalyzeDocument",
-                         "translate:TranslateText", "polly:SynthesizeSpeech",
-                         "ses:SendEmail", "social-messaging:SendWhatsAppMessage"],
+                         "translate:TranslateText", "polly:SynthesizeSpeech"],
                 resources=["*"]))
+            fn.add_to_role_policy(iam.PolicyStatement(
+                actions=["ses:SendEmail", "ses:SendRawEmail"], resources=[ses_identity_arn]))
+            fn.add_to_role_policy(iam.PolicyStatement(
+                actions=["ssm:GetParameter"], resources=vapid_param_arns))
+            fn.add_to_role_policy(iam.PolicyStatement(
+                # The private VAPID param is a SecureString under the AWS-managed SSM key
+                # (alias/aws/ssm), which has no fixed per-account key ARN to pin as a
+                # Resource. ViaService scopes decrypt to calls made through SSM only.
+                actions=["kms:Decrypt"], resources=["*"],
+                conditions={"StringEquals": {
+                    "kms:ViaService": "ssm.%s.amazonaws.com" % config.REGION}}))
+            fn.add_to_role_policy(iam.PolicyStatement(
+                # WhatsApp ships flag-off by default (money rule); the phone number isn't
+                # provisioned yet, so there's no resource ARN to scope this to.
+                actions=["social-messaging:SendWhatsAppMessage"], resources=["*"]))
 
         circle_secret.grant_read(api)
 
