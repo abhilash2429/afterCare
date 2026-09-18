@@ -394,3 +394,21 @@ def test_401_message_is_flat(table, token):
     res = lambda_handler(_event("POST", "/circles", token, body={}), None)
     assert res["statusCode"] == 401
     assert json.loads(res["body"]) == {"code": "unauthorized", "message": "invalid token"}
+
+
+def test_get_circle_returns_active_plan_for_caregiver(table):
+    table.put_item(Item={"PK": "CIRCLE#ci_1", "SK": "META", "circleId": "ci_1", "name": "Fam",
+                         "language": "kn", "escalationMinutes": 45, "activePlanId": "pl_9"})
+    token = issue_circle_token("ci_1", "caregiver")
+    res = lambda_handler(_event("GET", "/circles/ci_1", token), None)
+    body = json.loads(res["body"])
+    assert res["statusCode"] == 200
+    assert body["activePlanId"] == "pl_9" and body["role"] == "caregiver"
+    assert body["escalationMinutes"] == 45 and body["slotTimes"]["morning"] == "08:00"
+    assert lambda_handler(_event("GET", "/circles/ci_2", token), None)["statusCode"] == 403
+
+
+def test_get_circle_missing_meta_is_404(table):
+    _make_owner(table)
+    res = lambda_handler(_event("GET", "/circles/ci_1", _id_token()), None)
+    assert res["statusCode"] == 404

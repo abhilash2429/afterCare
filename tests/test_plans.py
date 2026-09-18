@@ -297,6 +297,8 @@ def test_activate_creates_doses_and_contract_shape(table, monkeypatch):
     assert len(doses) == 7
     plan = table.get_item(Key={"PK": "CIRCLE#ci_1", "SK": "PLAN#pl_1"})["Item"]
     assert plan["status"] == "active"
+    meta = table.get_item(Key={"PK": "CIRCLE#ci_1", "SK": "META"})["Item"]
+    assert meta["activePlanId"] == "pl_1"
 
 
 def test_activate_active_plan_is_409(table, monkeypatch):
@@ -433,3 +435,24 @@ def test_patch_without_medicines_keeps_them(table, monkeypatch):
     res = lambda_handler(_event("PATCH", "/plans/pl_1", {"circleId": "ci_1", "language": "kn"}), None)
     assert res["statusCode"] == 200
     assert len(json.loads(res["body"])["medicines"]) == 1
+
+
+def test_owner_confirming_a_low_confidence_line_lets_it_activate(table, monkeypatch):
+    _stub_owner(monkeypatch)
+    _stub_scheduler(monkeypatch)
+    _store_plan(table, _plan(medicines=[_med(confidence=0.6, needsConfirmation=True)]))
+    body = {"circleId": "ci_1", "userEdited": False,
+            "medicines": [_med_dict(confidence=0.6, needsConfirmation=False)]}
+    res = lambda_handler(_event("PATCH", "/plans/pl_1", body), None)
+    assert res["statusCode"] == 200, res["body"]
+    assert json.loads(res["body"])["medicines"][0]["confidence"] == 1.0
+    res = lambda_handler(_event("POST", "/plans/pl_1/activate", {"circleId": "ci_1"}), None)
+    assert res["statusCode"] == 200, res["body"]
+
+
+def test_unflagged_low_confidence_line_is_still_rejected(table, monkeypatch):
+    _stub_owner(monkeypatch)
+    _store_plan(table, _plan())
+    body = {"circleId": "ci_1", "userEdited": False,
+            "medicines": [_med_dict(confidence=0.6, needsConfirmation=False)]}
+    assert lambda_handler(_event("PATCH", "/plans/pl_1", body), None)["statusCode"] == 422

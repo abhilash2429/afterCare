@@ -87,6 +87,12 @@ def patch_plan(event, params):
                              "medicines": body.get("medicines", original.to_dict()["medicines"]),
                              "language": body.get("language", original.language),
                              "slotTimes": body.get("slotTimes", original.slotTimes)})
+    # The confidence floor judges the model's reading; once the owner confirms a flagged
+    # line it is human-verified, else a low-confidence line could never be activated.
+    flagged = {m.lineId for m in original.medicines if m.needsConfirmation}
+    for m in edited.medicines:
+        if m.lineId in flagged and not m.needsConfirmation:
+            m.confidence = 1.0
     user_edited = bool(body.get("userEdited"))
     errors = validate_edit(original, edited, user_edited)
     if errors:
@@ -135,6 +141,9 @@ def activate_plan(event, params):
     create_dose_schedules(plan, doses)
     plan.status = "active"
     _save(plan)
+    _ddb.Table(TABLE).update_item(
+        Key={"PK": "CIRCLE#%s" % plan.circleId, "SK": "META"},
+        UpdateExpression="SET activePlanId = :p", ExpressionAttributeValues={":p": plan.planId})
     first_at = min((dose_at(plan, d) for d in doses), default=None)
     first_at = first_at.isoformat() if first_at else None
     return respond(200, {"planId": plan.planId, "status": "active",

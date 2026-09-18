@@ -498,6 +498,37 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /circles/{circleId}:
+    get:
+      summary: Circle details and its active plan (owner or caregiver)
+      description: How a caregiver who just joined finds the plan to show. activePlanId is null until a plan is activated.
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [circleId, language, slotTimes, escalationMinutes, activePlanId, role]
+                properties:
+                  circleId: { type: string }
+                  name: { type: [string, "null"] }
+                  language: { type: string, enum: [en, hi, kn] }
+                  slotTimes:
+                    type: object
+                    additionalProperties: { type: string, example: "08:00" }
+                  escalationMinutes: { type: integer }
+                  activePlanId: { type: [string, "null"] }
+                  role: { type: string, enum: [owner, caregiver] }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /circles/{circleId}/invite:
     post:
       summary: Create a single-use caregiver invite (owner only)

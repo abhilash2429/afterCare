@@ -54,6 +54,21 @@ def create_circle(event, params):
     return respond(201, {"circleId": circle_id})
 
 
+@route("GET", "/circles/{circleId}")
+def get_circle(event, params):
+    circle_id = params["circleId"]
+    principal = require(principal_from_event(event), circle_id)
+    meta = _table().get_item(Key={"PK": "CIRCLE#%s" % circle_id, "SK": "META"}).get("Item")
+    if not meta:
+        return respond(404, {"code": "not_found", "message": "circle not found"})
+    return respond(200, {"circleId": circle_id, "name": meta.get("name"),
+                         "language": meta.get("language", "en"),
+                         "slotTimes": meta.get("slotTimes") or dict(DEFAULT_SLOT_TIMES),
+                         "escalationMinutes": int(meta.get("escalationMinutes", 30)),
+                         "activePlanId": meta.get("activePlanId"),
+                         "role": principal["role"]})
+
+
 @route("POST", "/circles/{circleId}/invite")
 def invite(event, params):
     circle_id = params["circleId"]

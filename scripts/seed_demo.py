@@ -66,7 +66,7 @@ def seed(table, owner_sub=None, now=None):
     plan = demo_plan()
     table.put_item(Item={"PK": pk, "SK": "META", "circleId": CIRCLE,
                          "name": "Kulkarni family", "language": "kn",
-                         "slotTimes": dict(DEFAULT_SLOT_TIMES), "escalationMinutes": 60})
+                         "slotTimes": dict(DEFAULT_SLOT_TIMES), "escalationMinutes": 60, "activePlanId": PLAN})
     if owner_sub:
         table.put_item(Item={"PK": pk, "SK": "MEMBER#%s" % owner_sub, "role": "owner"})
     item = plan.to_dict()
