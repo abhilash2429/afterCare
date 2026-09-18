@@ -61,6 +61,7 @@ def _score_case(expected, plan):
                     cand, cand_idx = m, i
                     break
         if cand is None:
+            print("MISS absent %s expected=%s" % (exp["brand"], sorted(exp_map.items())))
             continue
         matched.add(cand_idx)
 
@@ -78,6 +79,11 @@ def _score_case(expected, plan):
         if cand.durationDays == exp["durationDays"]:
             line_hits["duration"] = 1
 
+        if not (line_hits["name"] and line_hits["strength"]):
+            print("MISS %s %s expected=%s got=%s source=%s ids=%s" % (
+                "TRUSTED" if not cand.needsConfirmation else "confirm", exp["brand"],
+                sorted(exp_map.items()), sorted(cand_map.items()), cand.source,
+                cand.sourceBlockIds[:3]))
         for f in FIELDS:
             hits[f] += line_hits[f]
         if not cand.needsConfirmation:
