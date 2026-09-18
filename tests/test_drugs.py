@@ -52,3 +52,74 @@ def test_molecules_equal_ignores_case_and_matches_strength():
 def test_molecules_equal_requires_matching_unit():
     assert molecules_equal(Molecule("vitamin d3", 60000, "iu"), Molecule("vitamin d3", 60000, "iu")) is True
     assert molecules_equal(Molecule("vitamin d3", 60000, "iu"), Molecule("vitamin d3", 60000, "mg")) is False
+
+
+# --- final review: R20 / R26 / R22 ---
+
+from api.drugs import normalise_molecule
+
+
+def test_normalise_molecule_strips_pharmacopoeia_form_and_salt():
+    assert normalise_molecule("Aspirin IP") == "aspirin"
+    assert normalise_molecule("Metformin HCl SR") == "metformin"
+    assert normalise_molecule("Metformin Hydrochloride") == "metformin"
+    assert normalise_molecule("Paracetamol Tablet") == "paracetamol"
+    assert normalise_molecule("Losartan Potassium USP") == "losartan"
+    assert normalise_molecule("Sodium") == "sodium"
+
+
+def test_normalise_molecule_keeps_leading_salt_word():
+    # suffix-only: sodium chloride and potassium chloride must never collapse together
+    assert normalise_molecule("Potassium Chloride") == "potassium chloride"
+    assert normalise_molecule("Sodium Chloride") == "sodium chloride"
+
+
+def test_normalise_molecule_resolves_each_contains_and_eq_to():
+    text = "Each film coated tablet contains: Pantoprazole Sodium IP eq. to Pantoprazole"
+    assert normalise_molecule(text) == "pantoprazole"
+    assert normalise_molecule("Ferrous Ascorbate equivalent to Elemental Iron") == "iron"
+
+
+def test_normalise_molecule_synonyms():
+    assert normalise_molecule("Amoxicillin") == "amoxycillin"
+    assert normalise_molecule("Acetaminophen") == "paracetamol"
+    assert normalise_molecule("Ferrous Sulfate") == "iron"
+
+
+def test_parse_composition_realistic_strip_text():
+    assert parse_composition("Aspirin IP 75 mg") == [Molecule("aspirin", 75)]
+    assert parse_composition("Metformin HCl 500 mg SR") == [Molecule("metformin", 500)]
+    assert parse_composition("Paracetamol 500 mg Tablet") == [Molecule("paracetamol", 500)]
+    assert parse_composition(
+        "Each film coated tablet contains: Pantoprazole Sodium IP eq. to Pantoprazole 40 mg"
+    ) == [Molecule("pantoprazole", 40)]
+
+
+def test_parse_composition_eq_to_takes_the_equivalent_strength():
+    assert parse_composition("Pantoprazole Sodium IP 45.1 mg eq. to Pantoprazole 40 mg") == [
+        Molecule("pantoprazole", 40)]
+
+
+def test_parse_composition_each_5ml_clause_is_not_the_strength():
+    assert parse_composition("Each 5 ml contains: Amoxycillin 125 mg") == [Molecule("amoxycillin", 125)]
+
+
+def test_parse_composition_thousands_separator():
+    assert parse_composition("Vitamin D3 60,000 IU") == [Molecule("vitamin d3", 60000, "iu")]
+    assert parse_composition("Cholecalciferol 6,00,000 IU") == [Molecule("cholecalciferol", 600000, "iu")]
+
+
+def test_parse_composition_per_volume_denominator_not_in_name():
+    got = parse_composition("Amoxycillin 125mg/5ml")
+    assert got == [Molecule("amoxycillin", 125)]
+    assert "/" not in got[0].name
+
+
+def test_molecules_equal_uses_normalised_names():
+    assert molecules_equal(Molecule("Amoxicillin", 500), Molecule("amoxycillin", 500))
+    assert molecules_equal(Molecule("Pantoprazole Sodium IP", 40), Molecule("pantoprazole", 40))
+
+
+def test_molecules_equal_requires_known_strength():
+    assert not molecules_equal(Molecule("multivitamin", None), Molecule("multivitamin", None))
+    assert not molecules_equal(Molecule("aspirin", None), Molecule("aspirin", 75))

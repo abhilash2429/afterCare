@@ -7,6 +7,27 @@ _FORMS = r"\b(tab|tabs|tablet|cap|caps|capsule|syp|syrup|inj|injection|oint|drop
 _LEADING_PREFIX = r"^(t|c)\b\s*"
 _MATCH_FLOOR = 0.88
 
+_EACH_CLAUSE = r"^\s*each\b.*?\bcontains?\b\s*:?"
+_EQ_TO = r"\b(?:eq\b\.?|equivalent)\s*to\b"
+_THOUSANDS = r"(?<=\d),(?=(?:\d{2},)*\d{3}(?!\d))"  # 60,000 and Indian 6,00,000
+_STRENGTH = r"(\d+(?:\.\d+)?)\s*(mcg|mg|g|ml|iu)\b"
+_PER_VOLUME = r"(?:\s*/\s*\d*(?:\.\d+)?\s*(?:ml|mg|g)\b)?"
+_PHARMACOPOEIA = r"\b(?:ip|bp|usp)\b"
+_RELEASE_FORMS = r"\b(?:tablets?|capsules?|film[\s-]*coated|sr|er|xr|cr|mr|dt)\b"
+_SALT_SUFFIX = r"\s+(?:hydrochloride|hcl|sodium|potassium)$"
+
+# Only spellings of the same active drug. Every entry here merges two names into one
+# match, so keep it tiny: a wrong entry would green-light a different medicine.
+MOLECULE_SYNONYMS = {
+    "amoxicillin": "amoxycillin",
+    "acetaminophen": "paracetamol",
+    "ferrous ascorbate": "iron",
+    "ferrous fumarate": "iron",
+    "ferrous sulphate": "iron",
+    "ferrous sulfate": "iron",
+    "elemental iron": "iron",
+}
+
 
 def normalise_brand(text):
     if not text:
@@ -25,16 +46,32 @@ def bucket_key(normalised):
     return (normalised or "")[:4]
 
 
+def normalise_molecule(name):
+    """'Pantoprazole Sodium IP eq. to Pantoprazole' -> 'pantoprazole'. Name only, no strength."""
+    t = re.sub(_EACH_CLAUSE, " ", str(name or "").lower())
+    t = re.split(_EQ_TO, t)[-1]
+    t = re.sub(_PHARMACOPOEIA, " ", t)
+    t = re.sub(_RELEASE_FORMS, " ", t)
+    t = re.sub(r"\s+", " ", t).strip(" .,:;")
+    while True:
+        stripped = re.sub(_SALT_SUFFIX, "", t)
+        if stripped == t or not stripped:
+            break
+        t = stripped
+    return MOLECULE_SYNONYMS.get(t, t)
+
+
 def parse_composition(text):
     """'Amoxycillin (500mg) + Clavulanic Acid (125mg)' -> two Molecules (strength in mg)."""
     if not text:
         return []
+    text = re.sub(_THOUSANDS, "", re.sub(_EACH_CLAUSE, " ", str(text), flags=re.I))
     out = []
-    for part in re.split(r"\s*\+\s*", str(text)):
-        part = part.strip()
+    for part in re.split(r"\s*\+\s*", text):
+        part = re.split(_EQ_TO, part, flags=re.I)[-1].strip()
         if not part:
             continue
-        m = re.search(r"\(?\s*(\d+(?:\.\d+)?)\s*(mg|mcg|g|ml|iu)\s*\)?", part, re.I)
+        m = re.search(_STRENGTH, part, re.I)
         strength = None
         unit = "mg"
         if m:
@@ -44,8 +81,7 @@ def parse_composition(text):
             else:
                 strength = {"mcg": value / 1000.0, "g": value * 1000.0}.get(raw_unit, value)
         name = re.sub(r"\(.*?\)", " ", part)
-        name = re.sub(r"\d+(\.\d+)?\s*(mg|mcg|g|ml|iu)", " ", name, flags=re.I)
-        name = re.sub(r"\s+", " ", name).strip().lower()
+        name = normalise_molecule(re.sub(_STRENGTH + _PER_VOLUME, " ", name, flags=re.I))
         if name:
             out.append(Molecule(name=name, strengthMg=strength, unit=unit))
     return out
@@ -68,11 +104,14 @@ def best_brand_match(query, candidates):
     return best, best_score
 
 
+def same_drug(a, b):
+    """Same normalised molecule in the same unit, strength ignored."""
+    return (normalise_molecule(a.name) == normalise_molecule(b.name)
+            and (a.unit or "").strip().lower() == (b.unit or "").strip().lower())
+
+
 def molecules_equal(a, b):
-    if a.name.strip().lower() != b.name.strip().lower():
+    """Same drug and a known, equal strength. An unread strength is never equal."""
+    if not same_drug(a, b) or a.strengthMg is None or b.strengthMg is None:
         return False
-    if (a.unit or "").strip().lower() != (b.unit or "").strip().lower():
-        return False
-    if a.strengthMg is None or b.strengthMg is None:
-        return a.strengthMg == b.strengthMg
     return abs(float(a.strengthMg) - float(b.strengthMg)) < 0.001
