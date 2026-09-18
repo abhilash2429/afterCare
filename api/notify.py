@@ -10,6 +10,10 @@ from api.handler import respond, route
 
 log = logging.getLogger()
 
+
+class DeadSubscription(Exception):
+    """Push subscription is gone (404/410); it was dropped and the next channel should run."""
+
 _clients = {}
 _vapid_private_cache = None
 
@@ -70,9 +74,8 @@ def _push(member, title, body):
                                                                    "admin@aftercare.invalid")})
     except WebPushException as exc:
         if exc.status_code in (404, 410):
-            # ponytail: dead subscription, drop it instead of retrying forever.
             _drop_push_subscription(member)
-            return
+            raise DeadSubscription() from None
         raise
 
 
@@ -93,7 +96,8 @@ def _whatsapp(member, body):
                             "type": "text", "text": {"body": body}}).encode("utf-8"))
 
 
-def _fan_out(circle_id, title, body, roles):
+def _fan_out(circle_id, title, body, roles, every_channel=False):
+    """Reminders stop at the first channel that works; escalations use every channel."""
     for member in _members(circle_id):
         if member.get("role") not in roles:
             continue
@@ -105,7 +109,8 @@ def _fan_out(circle_id, title, body, roles):
                     _whatsapp(member, body)
                 elif channel == "email":
                     _email(member, title, body)
-                break  # first channel that works wins
+                if not every_channel:
+                    break
             except Exception as exc:  # a channel/member failure never blocks the rest
                 log.warning("notify failed channel=%s member=%s err=%s",
                             channel, redact(member.get("SK")), type(exc).__name__)
@@ -119,7 +124,8 @@ def send_reminder(circle_id, dose):
 
 
 def send_escalation(circle_id, dose):
-    _fan_out(circle_id, "AfterCare alert", "A dose was missed. Please check.", roles=("owner",))
+    _fan_out(circle_id, "AfterCare alert", "A dose was missed. Please check.", roles=("owner",),
+              every_channel=True)
 
 
 def _validate_subscription(subscription):

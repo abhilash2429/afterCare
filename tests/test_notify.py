@@ -116,7 +116,8 @@ def test_dead_push_subscription_is_removed_not_retried(table, monkeypatch):
                          "pushSubscription": SUB})
     member = table.get_item(Key={"PK": "CIRCLE#ci_1", "SK": "MEMBER#u1"})["Item"]
 
-    notify._push(member, "t", "b")  # must not raise
+    with pytest.raises(notify.DeadSubscription):
+        notify._push(member, "t", "b")
 
     after = table.get_item(Key={"PK": "CIRCLE#ci_1", "SK": "MEMBER#u1"})["Item"]
     assert "pushSubscription" not in after
@@ -184,3 +185,30 @@ def test_one_members_failure_never_blocks_the_next_member(table, monkeypatch):
         flaky(member, subject, body), calls.append(member["SK"]))[1])
     notify.send_reminder("ci_1", {"slot": "morning"})
     assert calls == ["MEMBER#u2"]
+
+
+def test_dead_push_falls_back_to_email(table, monkeypatch):
+    table.put_item(Item={"PK": "CIRCLE#ci_1", "SK": "MEMBER#u1", "role": "owner",
+                         "email": "a@b.com", "pushSubscription": SUB})
+
+    def dead(member, title, body):
+        raise notify.DeadSubscription()
+
+    monkeypatch.setattr(notify, "_push", dead)
+    calls = []
+    monkeypatch.setattr(notify, "_email", lambda member, subject, body: calls.append(body))
+    notify.send_reminder("ci_1", {"slot": "morning"})
+    assert calls
+
+
+def test_escalation_uses_every_channel(table, monkeypatch):
+    table.put_item(Item={"PK": "CIRCLE#ci_1", "SK": "MEMBER#u1", "role": "owner",
+                         "email": "a@b.com", "pushSubscription": SUB})
+    sent = []
+    monkeypatch.setattr(notify, "_push", lambda member, title, body: sent.append("push"))
+    monkeypatch.setattr(notify, "_email", lambda member, subject, body: sent.append("email"))
+    notify.send_escalation("ci_1", {"slot": "night"})
+    assert sent == ["push", "email"]
+    sent.clear()
+    notify.send_reminder("ci_1", {"slot": "night"})
+    assert sent == ["push"]
