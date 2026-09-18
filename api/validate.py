@@ -29,7 +29,7 @@ def validate_plan(plan):
 
     for m in plan.medicines:
         has_values = bool(m.molecules) or m.frequency is not None or m.durationDays is not None
-        if has_values and not m.sourceBlockIds and m.source != "vision_only":
+        if has_values and not m.sourceBlockIds and m.source not in ("vision_only", "user"):
             errors.append("%s: sourceBlockIds required for extracted values" % m.lineId)
         if m.prn and m.slots:
             errors.append("%s: prn medicines must not be scheduled (slots must be empty)" % m.lineId)
@@ -77,6 +77,12 @@ def validate_edit(original, edited, user_edited):
     """
     errors = validate_plan(edited)
     if user_edited:
+        orig_ids = {m.lineId for m in original.medicines}
+        for m in edited.medicines:
+            if m.lineId not in orig_ids and not (m.source == "user" and not m.sourceBlockIds):
+                errors.append(
+                    "%s: new lines must have source 'user' with empty sourceBlockIds"
+                    % m.lineId)
         return errors
 
     orig_ids = {m.lineId for m in original.medicines}
