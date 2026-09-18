@@ -1,7 +1,8 @@
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, fields, asdict
 from typing import List, Optional
 
 SLOTS = ("morning", "noon", "night", "bedtime")
+DEFAULT_SLOT_TIMES = {"morning": "08:00", "noon": "14:00", "night": "20:00", "bedtime": "22:00"}
 
 
 @dataclass
@@ -47,8 +48,7 @@ class Plan:
     patientName: Optional[str] = None
     sourceDocumentIds: List[str] = field(default_factory=list)
     followUp: Optional[dict] = None
-    slotTimes: dict = field(default_factory=lambda: {
-        "morning": "08:00", "noon": "14:00", "night": "20:00", "bedtime": "22:00"})
+    slotTimes: dict = field(default_factory=lambda: dict(DEFAULT_SLOT_TIMES))
     language: str = "en"
     status: str = "draft"
 
@@ -57,17 +57,40 @@ class Plan:
 
     @staticmethod
     def from_dict(d):
-        meds = [Medicine(**{**m, "molecules": [Molecule(**x) for x in m.get("molecules", [])]})
-                for m in d.get("medicines", [])]
+        """Tolerates a DynamoDB round trip: numbers as strings, unknown keys ignored."""
+        meds = [_medicine(m) for m in d.get("medicines", [])]
         rf = d.get("redFlags")
         return Plan(
             planId=d["planId"], circleId=d["circleId"], medicines=meds,
-            redFlags=RedFlags(**rf) if rf else None,
+            redFlags=RedFlags(**_known(RedFlags, rf)) if rf else None,
             patientName=d.get("patientName"),
             sourceDocumentIds=d.get("sourceDocumentIds", []),
             followUp=d.get("followUp"),
-            slotTimes=d.get("slotTimes", Plan(planId="", circleId="").slotTimes),
+            slotTimes=d.get("slotTimes", dict(DEFAULT_SLOT_TIMES)),
             language=d.get("language", "en"), status=d.get("status", "draft"))
+
+
+def _known(cls, d):
+    names = {f.name for f in fields(cls)}
+    return {k: v for k, v in d.items() if k in names}
+
+
+def _opt(convert, value):
+    return None if value is None else convert(value)
+
+
+def _medicine(d):
+    m = Medicine(**_known(Medicine, d))
+    m.lineId = str(m.lineId)
+    m.molecules = [Molecule(**_known(Molecule, x)) for x in d.get("molecules", [])]
+    for x in m.molecules:
+        x.strengthMg = _opt(float, x.strengthMg)
+    m.confidence = _opt(float, m.confidence)
+    m.durationDays = _opt(int, m.durationDays)
+    if m.crop:
+        m.crop = {k: (_opt(float, v) if k in ("x", "y", "w", "h") else v)
+                  for k, v in m.crop.items()}
+    return m
 
 
 @dataclass

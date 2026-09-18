@@ -1,3 +1,4 @@
+from api.drugs import normalise_molecule
 from api.models import SLOTS
 
 GENERIC_RED_FLAG_TEXT = (
@@ -30,8 +31,6 @@ def validate_plan(plan):
         has_values = bool(m.molecules) or m.frequency is not None or m.durationDays is not None
         if has_values and not m.sourceBlockIds and m.source != "vision_only":
             errors.append("%s: sourceBlockIds required for extracted values" % m.lineId)
-        if m.source == "vision_only" and not m.needsConfirmation:
-            errors.append("%s: vision_only medicines must set needsConfirmation" % m.lineId)
         if m.prn and m.slots:
             errors.append("%s: prn medicines must not be scheduled (slots must be empty)" % m.lineId)
         if m.frequency is None and m.slots:
@@ -51,20 +50,30 @@ def validate_plan(plan):
 def _dose_signature(plan):
     out = {}
     for m in plan.medicines:
+        molecules = [(normalise_molecule(x.name), x.strengthMg, (x.unit or "").strip().lower())
+                     for x in m.molecules]
         out[m.lineId] = (
-            tuple(sorted((x.name.lower(), x.strengthMg) for x in m.molecules)),
+            tuple(sorted(molecules, key=repr)),
             (m.frequency or "").lower(),
+            tuple(sorted(m.slots)),
+            bool(m.prn),
+            m.durationDays,
         )
     return out
 
 
+def _source_signature(plan):
+    return {m.lineId: (m.source, tuple(sorted(m.sourceBlockIds))) for m in plan.medicines}
+
+
 def validate_edit(original, edited, user_edited):
-    """A strength or frequency may only change with an explicit user edit.
+    """A dose or its provenance may only change with an explicit user edit.
 
     Duplicate lineIds are rejected regardless of user_edited (validate_plan
     always checks that). Without user_edited, the set of lineIds must be
-    unchanged - no line may be added, removed, or renamed - and no dose or
-    frequency may change for a line that exists in both plans.
+    unchanged - no line may be added, removed, or renamed - and for a line in
+    both plans none of molecules (normalised name, strength, unit), frequency,
+    slots, prn, durationDays, source or sourceBlockIds may change.
     """
     errors = validate_plan(edited)
     if user_edited:
@@ -79,6 +88,10 @@ def validate_edit(original, edited, user_edited):
     for line_id, sig in after.items():
         if line_id in before and before[line_id] != sig:
             errors.append("%s: dose or frequency changed without userEdited=true" % line_id)
+    before, after = _source_signature(original), _source_signature(edited)
+    for line_id, sig in after.items():
+        if line_id in before and before[line_id] != sig:
+            errors.append("%s: source or sourceBlockIds changed without userEdited=true" % line_id)
     return errors
 
 

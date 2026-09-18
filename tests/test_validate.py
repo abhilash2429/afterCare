@@ -39,7 +39,7 @@ def test_value_without_source_blocks_is_rejected():
     assert "sourceBlockIds" in " ".join(validate_plan(p))
 
 
-def test_vision_only_medicine_may_have_no_blocks_but_must_confirm():
+def test_vision_only_medicine_may_have_no_source_blocks():
     p = _plan(medicines=[_med(sourceBlockIds=[], source="vision_only", needsConfirmation=True)])
     assert validate_plan(p) == []
 
@@ -142,3 +142,85 @@ def test_unknown_slot_is_rejected():
 def test_can_activate_without_redflags_is_rejected():
     p = _plan(redFlags=None)
     assert can_activate(p) != []
+
+
+# --- final review: R24 ---
+
+def _rejected_only_without_user_edit(edited):
+    original = _plan()
+    errors = validate_edit(original, edited, user_edited=False)
+    assert any("without userEdited" in e for e in errors), errors
+    assert validate_edit(original, edited, user_edited=True) == []
+
+
+def test_slot_change_without_user_edited_is_rejected():
+    _rejected_only_without_user_edit(_plan(medicines=[_med(slots=["night"])]))
+
+
+def test_prn_flip_without_user_edited_is_rejected():
+    _rejected_only_without_user_edit(_plan(medicines=[_med(prn=True, slots=[])]))
+
+
+def test_unit_change_without_user_edited_is_rejected():
+    _rejected_only_without_user_edit(
+        _plan(medicines=[_med(molecules=[Molecule(name="Aspirin", strengthMg=75, unit="iu")])]))
+
+
+def test_duration_change_without_user_edited_is_rejected():
+    original = _plan(medicines=[_med(durationDays=30)])
+    edited = _plan(medicines=[_med(durationDays=90)])
+    assert validate_edit(original, edited, user_edited=False) != []
+    assert validate_edit(original, edited, user_edited=True) == []
+
+
+def test_source_change_without_user_edited_is_rejected():
+    _rejected_only_without_user_edit(_plan(medicines=[_med(source="vision_only")]))
+
+
+def test_source_block_change_without_user_edited_is_rejected():
+    _rejected_only_without_user_edit(_plan(medicines=[_med(sourceBlockIds=["b7"])]))
+
+
+def test_cosmetic_name_edit_is_not_a_dose_change():
+    edited = _plan(medicines=[_med(molecules=[Molecule(name="Aspirin IP", strengthMg=75.0)])])
+    assert validate_edit(_plan(), edited, user_edited=False) == []
+
+
+def test_confirmed_vision_only_plan_can_activate():
+    p = _plan(medicines=[_med(sourceBlockIds=[], source="vision_only", needsConfirmation=False)])
+    assert validate_plan(p) == []
+    assert can_activate(p) == []
+
+
+# --- final review: R25 ---
+
+def _stringify(value):
+    if isinstance(value, dict):
+        return {k: _stringify(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_stringify(v) for v in value]
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return str(value)
+    return value
+
+
+def test_dynamodb_round_trip_with_string_numbers_and_unknown_keys():
+    original = _plan(medicines=[
+        _med(durationDays=30, crop={"x": 0.1, "y": 0.2, "w": 0.3, "h": 0.05}),
+        _med(lineId="m2", molecules=[Molecule(name="Vitamin D3", strengthMg=60000, unit="iu")],
+             sourceBlockIds=["b2"]),
+    ])
+    d = _stringify(original.to_dict())
+    d["medicines"][0]["lineId"] = 1
+    original.medicines[0].lineId = "1"
+    d["medicines"][0]["futureField"] = "x"
+    d["medicines"][0]["molecules"][0]["atcCode"] = "B01AC06"
+    d["redFlags"]["lang"] = "kn"
+    back = Plan.from_dict(d)
+    assert back.medicines[0].lineId == "1"
+    assert back.medicines[0].confidence == 0.95
+    assert back.medicines[0].durationDays == 30
+    assert back.medicines[0].molecules[0].strengthMg == 75.0
+    assert back.medicines[0].crop == {"x": 0.1, "y": 0.2, "w": 0.3, "h": 0.05}
+    assert validate_plan(back) == []
+    assert validate_edit(original, back, False) == []
