@@ -14,6 +14,8 @@ def _box(left, top, width=0.1, height=0.02):
 WORDS = [{"id": "w%d" % i, "text": "word%d" % i, "box": _box(0.1, 0.1 + i * 0.03)}
          for i in range(1, 26)]
 WORDS[0]["text"], WORDS[1]["text"] = "Aspirin", "75"
+(WORDS[2]["text"], WORDS[3]["text"], WORDS[4]["text"], WORDS[5]["text"]) = (
+    "mg", "1-0-0", "30", "days")
 
 
 def _page(*texts):
@@ -72,8 +74,8 @@ def _run(monkeypatch, raw, words=WORDS, key="circles/c1/doc.png", brands=None):
 def _med(**over):
     m = {"rawText": "T. Ecosprin 75 1-0-0", "brand": "Ecosprin",
          "molecules": [{"name": "Aspirin", "strengthMg": 75, "unit": "mg"}],
-         "frequency": "1-0-0", "foodRelation": "after", "durationDays": 30,
-         "confidence": 0.97, "sourceBlockIds": ["w1", "w2"]}
+         "frequency": "1-0-0", "foodRelation": "unspecified", "durationDays": 30,
+         "confidence": 0.97, "sourceBlockIds": ["w1", "w2", "w3", "w4", "w5", "w6"]}
     m.update(over)
     return m
 
@@ -112,22 +114,25 @@ def test_molecules_are_normalised_and_units_carried(monkeypatch):
             {"name": "Calcium Carbonate", "strengthMg": 1, "unit": "g"}]
     words, ids = _page("Acetylsalicylic", "Acid", "IP", "75mg", "Vitamin", "D3", "60,000",
                        "IU", "Levothyroxine", "25", "mcg", "Mystery", "Odd",
-                       "(Calcium", "Carbonate", "1", "g)")
+                       "(Calcium", "Carbonate", "1", "g)", "SOS")
     mols[2]["strengthMg"] = 25
-    plan, _ = _run(monkeypatch, {"medicines": [_med(molecules=mols, sourceBlockIds=ids)]},
-                   words=words)
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        molecules=mols, frequency="SOS", durationDays=None, sourceBlockIds=ids)]},
+        words=words)
     got = [(x.name, x.strengthMg, x.unit) for x in plan.medicines[0].molecules]
     assert got == [("aspirin", 75.0, "mg"), ("vitamin d3", 60000.0, "iu"),
                    ("thyroxine", 0.025, "mg"), ("mystery", None, "mg"),
                    ("odd", None, "mg"), ("calcium carbonate", 1000.0, "mg")]
-    assert plan.medicines[0].needsConfirmation is False
+    # Mystery and Odd have no read strength (I1/R49), so this line still needs confirmation.
+    assert plan.medicines[0].needsConfirmation is True
 
 
 def test_printed_multi_word_generic_is_kept_as_is(monkeypatch):
     words, ids = _page("T.", "Sorbitrate", "(Isosorbide", "Dinitrate", "5", "mg)", "SOS")
     mols = [{"name": "Isosorbide dinitrate", "strengthMg": 5, "unit": "mg"}]
     plan, _ = _run(monkeypatch, {"medicines": [_med(
-        brand="Sorbitrate", molecules=mols, frequency="SOS", sourceBlockIds=ids)]},
+        brand="Sorbitrate", molecules=mols, frequency="SOS", durationDays=None,
+        sourceBlockIds=ids)]},
         words=words, brands={"Sorbitrate": [Molecule("nitroglycerin", 2.6)]})
     m = plan.medicines[0]
     assert [(x.name, x.strengthMg) for x in m.molecules] == [("isosorbide dinitrate", 5.0)]
@@ -204,8 +209,9 @@ def test_strength_not_printed_in_the_cited_words_needs_confirmation(monkeypatch)
 
 
 def test_strength_printed_in_the_cited_words_is_accepted(monkeypatch):
-    words, ids = _page("Aspirin", "75mg")
-    plan, _ = _run(monkeypatch, {"medicines": [_med(sourceBlockIds=ids)]}, words=words)
+    words, ids = _page("Aspirin", "75mg", "SOS")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        frequency="SOS", durationDays=None, sourceBlockIds=ids)]}, words=words)
     assert plan.medicines[0].needsConfirmation is False
 
 
@@ -221,9 +227,18 @@ def test_few_words_is_vision_only_and_needs_confirmation(monkeypatch):
 
 
 def test_document_red_flags_keep_their_valid_ids(monkeypatch):
-    rf = {"present": True, "text": "Report if chest pain", "sourceBlockIds": ["w3", "x"]}
-    plan, _ = _run(monkeypatch, {"medicines": [], "redFlags": rf})
-    assert (plan.redFlags.source, plan.redFlags.sourceBlockIds) == ("document", ["w3"])
+    words, ids = _page("Report", "if", "chest", "pain")
+    rf = {"present": True, "text": "Report if chest pain", "sourceBlockIds": ids + ["x"]}
+    plan, _ = _run(monkeypatch, {"medicines": [], "redFlags": rf}, words=words)
+    assert (plan.redFlags.source, plan.redFlags.sourceBlockIds) == ("document", ids)
+
+
+def test_red_flags_with_invented_text_falls_back_to_generic(monkeypatch):
+    words, ids = _page("Report", "if", "chest", "pain")
+    rf = {"present": True, "text": "Seek immediate care for severe bleeding",
+          "sourceBlockIds": ids}
+    plan, _ = _run(monkeypatch, {"medicines": [], "redFlags": rf}, words=words)
+    assert (plan.redFlags.source, plan.redFlags.text) == ("generic", GENERIC_RED_FLAG_TEXT)
 
 
 def test_red_flags_without_valid_ids_fall_back_to_generic(monkeypatch):
