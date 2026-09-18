@@ -47,6 +47,11 @@ components:
         strengthMg:
           type: [number, "null"]
           example: 75
+        unit:
+          type: string
+          enum: [mg, iu, ml]
+          default: mg
+          description: Unit of strengthMg. Mass units are normalised to mg; IU and ml keep their own amount.
 
     Medicine:
       type: object

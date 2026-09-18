@@ -3,7 +3,8 @@ import re
 
 from api.models import Molecule
 
-_FORMS = r"\b(tab|tabs|tablet|cap|caps|capsule|syp|syrup|inj|injection|oint|drops|susp|t|c)\b"
+_FORMS = r"\b(tab|tabs|tablet|cap|caps|capsule|syp|syrup|inj|injection|oint|drops|susp)\b"
+_LEADING_PREFIX = r"^(t|c)\b\s*"
 _MATCH_FLOOR = 0.88
 
 
@@ -13,6 +14,7 @@ def normalise_brand(text):
     t = str(text).lower()
     t = re.sub(r"\(.*?\)", " ", t)
     t = re.sub(r"[.\-/,]", " ", t)
+    t = re.sub(_LEADING_PREFIX, "", t.strip())
     t = re.sub(_FORMS, " ", t)
     t = re.sub(r"\b\d+(\.\d+)?\s*(mg|mcg|g|ml|iu)?\b", " ", t)
     t = re.sub(r"\bstrip of\b|\bof\b", " ", t)
@@ -34,14 +36,18 @@ def parse_composition(text):
             continue
         m = re.search(r"\(?\s*(\d+(?:\.\d+)?)\s*(mg|mcg|g|ml|iu)\s*\)?", part, re.I)
         strength = None
+        unit = "mg"
         if m:
-            value, unit = float(m.group(1)), m.group(2).lower()
-            strength = {"mcg": value / 1000.0, "g": value * 1000.0}.get(unit, value)
+            value, raw_unit = float(m.group(1)), m.group(2).lower()
+            if raw_unit in ("iu", "ml"):
+                strength, unit = value, raw_unit
+            else:
+                strength = {"mcg": value / 1000.0, "g": value * 1000.0}.get(raw_unit, value)
         name = re.sub(r"\(.*?\)", " ", part)
         name = re.sub(r"\d+(\.\d+)?\s*(mg|mcg|g|ml|iu)", " ", name, flags=re.I)
         name = re.sub(r"\s+", " ", name).strip().lower()
         if name:
-            out.append(Molecule(name=name, strengthMg=strength))
+            out.append(Molecule(name=name, strengthMg=strength, unit=unit))
     return out
 
 
@@ -64,6 +70,8 @@ def best_brand_match(query, candidates):
 
 def molecules_equal(a, b):
     if a.name.strip().lower() != b.name.strip().lower():
+        return False
+    if (a.unit or "").strip().lower() != (b.unit or "").strip().lower():
         return False
     if a.strengthMg is None or b.strengthMg is None:
         return a.strengthMg == b.strengthMg

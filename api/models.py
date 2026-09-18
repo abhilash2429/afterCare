@@ -8,6 +8,7 @@ SLOTS = ("morning", "noon", "night", "bedtime")
 class Molecule:
     name: str
     strengthMg: Optional[float] = None
+    unit: str = "mg"
 
 
 @dataclass
