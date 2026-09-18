@@ -66,3 +66,79 @@ def test_cannot_activate_while_a_field_needs_confirmation():
     p = _plan(medicines=[_med(needsConfirmation=True)])
     assert can_activate(p) != []
     assert can_activate(_plan()) == []
+
+
+# --- fix round 1: R10/R11/R12 ---
+
+def test_rename_lineid_without_user_edit_is_rejected():
+    original = _plan()
+    edited = _plan(medicines=[_med(lineId="m2", molecules=[Molecule(name="Aspirin", strengthMg=150)])])
+    assert validate_edit(original, edited, user_edited=False) != []
+
+
+def test_duplicate_lineids_in_edited_are_rejected_without_user_edit():
+    original = _plan()
+    edited = _plan(medicines=[
+        _med(lineId="m1", molecules=[Molecule(name="Aspirin", strengthMg=150)]),
+        _med(lineId="m1", molecules=[Molecule(name="Aspirin", strengthMg=75)]),
+    ])
+    assert validate_edit(original, edited, user_edited=False) != []
+
+
+def test_added_line_without_user_edit_is_rejected():
+    original = _plan()
+    edited = _plan(medicines=[_med(), _med(lineId="m2", sourceBlockIds=["b2"])])
+    assert validate_edit(original, edited, user_edited=False) != []
+
+
+def test_removed_line_without_user_edit_is_rejected():
+    original = _plan(medicines=[_med(), _med(lineId="m2", sourceBlockIds=["b2"])])
+    edited = _plan(medicines=[_med()])
+    assert validate_edit(original, edited, user_edited=False) != []
+
+
+def test_added_line_allowed_with_user_edited():
+    original = _plan()
+    edited = _plan(medicines=[_med(), _med(lineId="m2", sourceBlockIds=["b2"])])
+    assert validate_edit(original, edited, user_edited=True) == []
+
+
+def test_duplicate_lineids_rejected_even_with_user_edited():
+    original = _plan()
+    edited = _plan(medicines=[
+        _med(lineId="m1"),
+        _med(lineId="m1", sourceBlockIds=["b2"]),
+    ])
+    assert validate_edit(original, edited, user_edited=True) != []
+
+
+def test_validate_plan_rejects_duplicate_lineids():
+    p = _plan(medicines=[_med(lineId="m1"), _med(lineId="m1", sourceBlockIds=["b2"])])
+    assert validate_plan(p) != []
+
+
+def test_null_frequency_non_prn_requires_confirmation():
+    p = _plan(medicines=[_med(frequency=None, slots=[], needsConfirmation=False)])
+    assert validate_plan(p) != []
+
+
+def test_null_frequency_prn_is_fine():
+    p = _plan(medicines=[_med(frequency=None, slots=[], prn=True, needsConfirmation=False)])
+    assert validate_plan(p) == []
+
+
+def test_confidence_none_produces_error_not_crash():
+    p = _plan(medicines=[_med(confidence=None)])
+    errors = validate_plan(p)
+    assert errors != []
+    assert all(isinstance(e, str) for e in errors)
+
+
+def test_unknown_slot_is_rejected():
+    p = _plan(medicines=[_med(slots=["afternoon"])])
+    assert validate_plan(p) != []
+
+
+def test_can_activate_without_redflags_is_rejected():
+    p = _plan(redFlags=None)
+    assert can_activate(p) != []
