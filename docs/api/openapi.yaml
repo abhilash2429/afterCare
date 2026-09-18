@@ -170,7 +170,7 @@ components:
         verdict: { type: string, enum: [matched, check, do_not_take] }
         reason:
           type: string
-          enum: [exact_match, strength_mismatch, combination_extra, brand_unreadable, missing_from_box, not_prescribed, duplicate_molecule, combination_strip]
+          enum: [exact_match, strength_mismatch, combination_extra, brand_unreadable, missing_from_box, not_prescribed, duplicate_molecule, combination_strip, unreadable_strip, strength_unreadable]
         message: { type: string, description: Localised copy for display. }
         prescribedLineId: { type: [string, "null"] }
         stripBrandText: { type: [string, "null"] }

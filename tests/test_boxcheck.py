@@ -179,3 +179,130 @@ def test_all_reasons_carry_their_tier_phrase_and_never_say_safe():
         "exact_match", "strength_mismatch", "combination_extra", "combination_strip",
         "brand_unreadable", "missing_from_box", "not_prescribed", "duplicate_molecule",
     }
+
+
+# --- final review: R20-R23 ---
+
+from api.drugs import parse_composition
+
+
+def test_realistic_strip_names_match_their_lines():
+    lines = [med("m1", "aspirin", 75), med("m2", "pantoprazole", 40),
+             med("m3", "metformin", 500), med("m4", "paracetamol", 500)]
+    strips = [
+        Strip("Ecosprin 75", parse_composition("Aspirin IP 75 mg")),
+        Strip("Pantocid 40", parse_composition(
+            "Each film coated tablet contains: Pantoprazole Sodium IP eq. to Pantoprazole 40 mg")),
+        Strip("Glycomet SR 500", parse_composition("Metformin HCl 500 mg SR")),
+        Strip("Calpol 500", parse_composition("Paracetamol 500 mg Tablet")),
+    ]
+    assert by_line(check_box(lines, strips)) == {"m1": [("matched", "exact_match")],
+                                                 "m2": [("matched", "exact_match")],
+                                                 "m3": [("matched", "exact_match")],
+                                                 "m4": [("matched", "exact_match")]}
+
+
+def test_eq_to_molecule_name_on_strip_matches_line():
+    items = check_box([med("m1", "pantoprazole", 40)],
+                      [Strip("Pan 40", [Molecule("Pantoprazole Sodium IP eq. to Pantoprazole", 40)])])
+    assert by_line(items) == {"m1": [("matched", "exact_match")]}
+
+
+def test_amoxicillin_strip_matches_amoxycillin_line():
+    items = check_box([med("m1", "amoxycillin", 500)],
+                      [Strip("Mox 500", [Molecule("amoxicillin", 500)])])
+    assert by_line(items) == {"m1": [("matched", "exact_match")]}
+
+
+def test_second_brand_of_satisfied_line_is_duplicate():
+    items = check_box([med("m1", "aspirin", 75)],
+                      [Strip("Ecosprin 75", [Molecule("aspirin", 75)]),
+                       Strip("Loprin 75", [Molecule("aspirin", 75)])])
+    assert by_line(items) == {"m1": [("matched", "exact_match"),
+                                     ("do_not_take", "duplicate_molecule")]}
+    assert items[1]["stripBrandText"] == "Loprin 75"
+
+
+def test_leftover_combination_covered_by_satisfied_lines_is_duplicate():
+    items = check_box([med("m1", "aspirin", 75), med("m2", "clopidogrel", 75)],
+                      [Strip("Ecosprin 75", [Molecule("aspirin", 75)]),
+                       Strip("Clopitab 75", [Molecule("clopidogrel", 75)]),
+                       Strip("Clopitab-A", [Molecule("clopidogrel", 75), Molecule("aspirin", 75)])])
+    assert by_line(items) == {"m1": [("matched", "exact_match"),
+                                     ("do_not_take", "duplicate_molecule")],
+                              "m2": [("matched", "exact_match")]}
+    assert items[2]["stripBrandText"] == "Clopitab-A"
+
+
+def test_second_pack_of_same_combination_is_an_extra_pack():
+    items = check_box([med("m1", "metformin", 500), med("m2", "glimepiride", 1)],
+                      [Strip("Glycomet GP1", [Molecule("metformin", 500), Molecule("glimepiride", 1)]),
+                       Strip("Glycomet GP1", [Molecule("metformin", 500), Molecule("glimepiride", 1)])])
+    assert by_line(items) == {"m1": [("check", "combination_strip"), ("check", "combination_strip")],
+                              "m2": [("check", "combination_strip")]}
+
+
+def test_blurry_strip_is_unreadable_and_line_still_matched():
+    items = check_box([med("m1", "aspirin", 75)],
+                      [Strip(None, []), Strip("Ecosprin 75", [Molecule("aspirin", 75)])])
+    assert by_line(items) == {"m1": [("matched", "exact_match")],
+                              None: [("check", "unreadable_strip")]}
+
+
+def test_strip_with_brand_but_no_molecules_is_unreadable_not_prescribed():
+    items = check_box([med("m1", "aspirin", 75)], [Strip("Ecosprin", [])])
+    assert by_line(items) == {"m1": [("do_not_take", "missing_from_box")],
+                              None: [("check", "unreadable_strip")]}
+
+
+def test_prn_and_regular_line_of_same_molecule_are_not_duplicates():
+    tds = med("m1", "paracetamol", 650, "Dolo 650")
+    tds.frequency, tds.slots = "TDS", ["morning", "noon", "night"]
+    sos = med("m2", "paracetamol", 650)
+    sos.frequency, sos.slots, sos.prn = "SOS", [], True
+    items = check_box([tds, sos], [Strip("Dolo 650", [Molecule("paracetamol", 650)])])
+    assert by_line(items) == {"m1": [("matched", "exact_match")],
+                              "m2": [("matched", "exact_match")]}
+
+
+def test_prn_line_listed_first_still_shares_the_strip():
+    sos = med("m1", "paracetamol", 650)
+    sos.frequency, sos.slots, sos.prn = "SOS", [], True
+    tds = med("m2", "paracetamol", 650)
+    items = check_box([sos, tds], [Strip("Dolo 650", [Molecule("paracetamol", 650)])])
+    assert by_line(items) == {"m1": [("matched", "exact_match")],
+                              "m2": [("matched", "exact_match")]}
+
+
+def test_two_regular_lines_same_molecule_still_duplicate():
+    items = check_box([med("m1", "paracetamol", 650), med("m2", "paracetamol", 650)],
+                      [Strip("Dolo 650", [Molecule("paracetamol", 650)])])
+    assert by_line(items) == {"m1": [("matched", "exact_match")],
+                              "m2": [("do_not_take", "duplicate_molecule")]}
+
+
+def test_null_strength_both_sides_is_strength_unreadable():
+    items = check_box([med("m1", "multivitamin", None)],
+                      [Strip("Zincovit", [Molecule("multivitamin", None)])])
+    assert by_line(items) == {"m1": [("check", "strength_unreadable")]}
+
+
+def test_unreadable_strip_strength_is_strength_unreadable():
+    items = check_box([med("m1", "aspirin", 75)],
+                      [Strip("Ecosprin", [Molecule("aspirin", None)])])
+    assert by_line(items) == {"m1": [("check", "strength_unreadable")]}
+
+
+def test_new_reasons_carry_tier_phrase():
+    scenarios = [
+        ([med("m1", "aspirin", 75)], [Strip(None, []), Strip("Ecosprin 75", [Molecule("aspirin", 75)])]),
+        ([med("m1", "multivitamin", None)], [Strip("Zincovit", [Molecule("multivitamin", None)])]),
+    ]
+    seen = set()
+    for medicines, strips in scenarios:
+        for item in check_box(medicines, strips):
+            message = item["message"].lower()
+            assert "safe" not in message
+            assert TIER_PHRASE[item["verdict"]] in message
+            seen.add(item["reason"])
+    assert {"unreadable_strip", "strength_unreadable"} <= seen
