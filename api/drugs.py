@@ -33,6 +33,9 @@ MOLECULE_SYNONYMS = {
     "elemental iron": "iron",
     "potassium clavulanate": "clavulanic acid",
     "clavulanate": "clavulanic acid",
+    "acetylsalicylic acid": "aspirin",
+    "albuterol": "salbutamol",
+    "glyceryl trinitrate": "nitroglycerin",
 }
 
 

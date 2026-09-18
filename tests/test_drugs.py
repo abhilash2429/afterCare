@@ -184,3 +184,9 @@ def test_normalise_molecule_no_longer_merges_ferrous_salts():
     assert normalise_molecule("Ferrous Ascorbate") != "iron"
     assert normalise_molecule("Ferrous Fumarate") != "iron"
     assert normalise_molecule("Ferrous Sulfate") != "iron"
+
+
+def test_same_compound_spellings_map_to_the_dataset_name():
+    assert normalise_molecule("Acetylsalicylic Acid") == "aspirin"
+    assert normalise_molecule("Albuterol") == "salbutamol"
+    assert normalise_molecule("Glyceryl Trinitrate") == "nitroglycerin"
