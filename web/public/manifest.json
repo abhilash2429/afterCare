@@ -1,0 +1,16 @@
+{
+  "name": "AfterCare",
+  "short_name": "AfterCare",
+  "description": "Photograph the paper. Check the pill box.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#080A30",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
