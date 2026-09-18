@@ -71,7 +71,7 @@ Prerequisites: AWS CLI v2 configured for the target account/region, Node (for
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File infra/build.ps1   # vendors Lambda deps into build/api
-npx aws-cdk@2 deploy --require-approval never               # deploys AftercareStack
+npx aws-cdk@2 deploy --require-approval never               # deploys the "Aftercare" stack
 curl "https://ctj5ower7vmwubklgwntkqdwsi0aemrx.lambda-url.ap-south-1.on.aws/health"
 ```
 

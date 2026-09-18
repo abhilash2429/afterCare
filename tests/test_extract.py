@@ -3,6 +3,7 @@ import io
 import pytest
 
 from api import extract
+from api.models import Molecule
 from api.validate import GENERIC_RED_FLAG_TEXT, validate_plan
 
 
@@ -12,7 +13,14 @@ def _box(left, top, width=0.1, height=0.02):
 
 WORDS = [{"id": "w%d" % i, "text": "word%d" % i, "box": _box(0.1, 0.1 + i * 0.03)}
          for i in range(1, 26)]
-WORDS[0]["text"], WORDS[1]["text"] = "Ecosprin", "75"
+WORDS[0]["text"], WORDS[1]["text"] = "Aspirin", "75"
+
+
+def _page(*texts):
+    words = [dict(w) for w in WORDS]
+    for i, t in enumerate(texts):
+        words[i]["text"] = t
+    return words, ["w%d" % (i + 1) for i in range(len(texts))]
 
 
 def test_crop_for_is_the_padded_union_of_the_cited_words():
@@ -46,8 +54,10 @@ class _S3:
         return {"Body": io.BytesIO(b"png-bytes")}
 
 
-def _run(monkeypatch, raw, words=WORDS, key="circles/c1/doc.png"):
+def _run(monkeypatch, raw, words=WORDS, key="circles/c1/doc.png", brands=None):
     seen = {}
+    monkeypatch.setattr(extract, "lookup_brand",
+                        lambda brand: list((brands or {}).get(brand, [])))
 
     def fake_model(image, fmt, words_, model_id):
         seen.update(image=image, fmt=fmt)
@@ -98,12 +108,84 @@ def test_molecules_are_normalised_and_units_carried(monkeypatch):
             {"name": "Vitamin D3", "strengthMg": 60000, "unit": "IU"},
             {"name": "Levothyroxine", "strengthMg": 50, "unit": "mcg"},
             {"name": "Mystery", "strengthMg": None, "unit": "tabs"},
-            {"name": "Odd", "strengthMg": "n/a", "unit": None}]
-    plan, _ = _run(monkeypatch, {"medicines": [_med(molecules=mols)]})
+            {"name": "Odd", "strengthMg": "n/a", "unit": None},
+            {"name": "Calcium Carbonate", "strengthMg": 1, "unit": "g"}]
+    words, ids = _page("Acetylsalicylic", "Acid", "IP", "75mg", "Vitamin", "D3", "60,000",
+                       "IU", "Levothyroxine", "25", "mcg", "Mystery", "Odd",
+                       "(Calcium", "Carbonate", "1", "g)")
+    mols[2]["strengthMg"] = 25
+    plan, _ = _run(monkeypatch, {"medicines": [_med(molecules=mols, sourceBlockIds=ids)]},
+                   words=words)
     got = [(x.name, x.strengthMg, x.unit) for x in plan.medicines[0].molecules]
     assert got == [("aspirin", 75.0, "mg"), ("vitamin d3", 60000.0, "iu"),
-                   ("levothyroxine", 0.05, "mg"), ("mystery", None, "mg"),
-                   ("odd", None, "mg")]
+                   ("levothyroxine", 0.025, "mg"), ("mystery", None, "mg"),
+                   ("odd", None, "mg"), ("calcium carbonate", 1000.0, "mg")]
+    assert plan.medicines[0].needsConfirmation is False
+
+
+def test_printed_multi_word_generic_is_kept_as_is(monkeypatch):
+    words, ids = _page("T.", "Sorbitrate", "(Isosorbide", "Dinitrate", "5", "mg)", "SOS")
+    mols = [{"name": "Isosorbide dinitrate", "strengthMg": 5, "unit": "mg"}]
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand="Sorbitrate", molecules=mols, frequency="SOS", sourceBlockIds=ids)]},
+        words=words, brands={"Sorbitrate": [Molecule("nitroglycerin", 2.6)]})
+    m = plan.medicines[0]
+    assert [(x.name, x.strengthMg) for x in m.molecules] == [("isosorbide dinitrate", 5.0)]
+    assert m.needsConfirmation is False
+
+
+def test_generic_split_across_the_line_is_not_a_phrase_match(monkeypatch):
+    words, ids = _page("Isosorbide", "5", "mg", "Dinitrate")
+    mols = [{"name": "Isosorbide dinitrate", "strengthMg": 5, "unit": "mg"}]
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand="Sorbitrate", molecules=mols, sourceBlockIds=ids)]}, words=words)
+    assert (plan.medicines[0].molecules, plan.medicines[0].needsConfirmation) == ([], True)
+
+
+def test_brand_only_line_takes_the_generic_from_the_dataset(monkeypatch):
+    words, ids = _page("Syp.", "Levolin", "1", "mg/5", "ml", "2.5", "ml", "TDS")
+    mols = [{"name": "Salbutamol", "strengthMg": 1, "unit": "mg"}]
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand="Levolin", molecules=mols, frequency="TDS", sourceBlockIds=ids)]},
+        words=words, brands={"Levolin": [Molecule("levosalbutamol", 1.0)]})
+    m = plan.medicines[0]
+    assert [(x.name, x.strengthMg, x.unit) for x in m.molecules] == \
+        [("levosalbutamol", 1.0, "mg")]
+    assert m.needsConfirmation is True
+
+
+def test_brand_only_line_never_copies_the_dataset_strength(monkeypatch):
+    words, ids = _page("T.", "Niftran", "1-0-1")
+    mols = [{"name": "Nifedipine", "strengthMg": 100, "unit": "mg"}]
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand="Niftran", molecules=mols, frequency="1-0-1", sourceBlockIds=ids)]},
+        words=words, brands={"Niftran": [Molecule("nitrofurantoin", 100.0)]})
+    m = plan.medicines[0]
+    assert [(x.name, x.strengthMg) for x in m.molecules] == [("nitrofurantoin", None)]
+    assert m.needsConfirmation is True
+
+
+def test_brand_only_combination_pairs_printed_strengths_by_value(monkeypatch):
+    words, ids = _page("Syp.", "Augmentin", "Duo", "(400", "mg", "+", "57", "mg", "BD")
+    mols = [{"name": "Clavulanic acid", "strengthMg": 57, "unit": "mg"},
+            {"name": "Amoxicillin", "strengthMg": 400, "unit": "mg"}]
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand="Augmentin Duo", molecules=mols, frequency="BD", sourceBlockIds=ids)]},
+        words=words, brands={"Augmentin Duo": [Molecule("amoxycillin", 400.0),
+                                               Molecule("clavulanic acid", 57.0)]})
+    m = plan.medicines[0]
+    assert [(x.name, x.strengthMg) for x in m.molecules] == \
+        [("amoxycillin", 400.0), ("clavulanic acid", 57.0)]
+    assert m.needsConfirmation is True
+
+
+def test_brand_lookup_miss_leaves_no_molecules(monkeypatch):
+    words, ids = _page("T.", "Unknownix", "10", "mg", "OD")
+    mols = [{"name": "Madeupzole", "strengthMg": 10, "unit": "mg"}]
+    plan, _ = _run(monkeypatch, {"medicines": [_med(
+        brand="Unknownix", molecules=mols, frequency="OD", sourceBlockIds=ids)]}, words=words)
+    m = plan.medicines[0]
+    assert (m.molecules, m.needsConfirmation) == ([], True)
 
 
 def test_missing_frequency_needs_confirmation(monkeypatch):
@@ -114,17 +196,16 @@ def test_missing_frequency_needs_confirmation(monkeypatch):
 
 
 def test_strength_not_printed_in_the_cited_words_needs_confirmation(monkeypatch):
-    words = [dict(w) for w in WORDS]
-    words[0]["text"], words[1]["text"] = "Amlodipine", "OD"
+    words, ids = _page("Amlodipine", "OD")
     plan, _ = _run(monkeypatch, {"medicines": [_med(
-        molecules=[{"name": "Amlodipine", "strengthMg": 5, "unit": "mg"}])]}, words=words)
+        molecules=[{"name": "Amlodipine", "strengthMg": 5, "unit": "mg"}],
+        sourceBlockIds=ids)]}, words=words)
     assert plan.medicines[0].needsConfirmation is True
 
 
 def test_strength_printed_in_the_cited_words_is_accepted(monkeypatch):
-    words = [dict(w) for w in WORDS]
-    words[0]["text"], words[1]["text"] = "Ecosprin", "75mg"
-    plan, _ = _run(monkeypatch, {"medicines": [_med()]}, words=words)
+    words, ids = _page("Aspirin", "75mg")
+    plan, _ = _run(monkeypatch, {"medicines": [_med(sourceBlockIds=ids)]}, words=words)
     assert plan.medicines[0].needsConfirmation is False
 
 

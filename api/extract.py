@@ -6,6 +6,7 @@ import boto3
 
 from api.common import BUCKET, REGION, new_id
 from api.drugs import normalise_molecule
+from api.drugs_repo import lookup_brand
 from api.frequency import parse_frequency
 from api.models import Medicine, Molecule, Plan, RedFlags
 from api.validate import GENERIC_RED_FLAG_TEXT
@@ -122,6 +123,30 @@ def _molecule(x):
     return Molecule(name=normalise_molecule(x["name"]), strengthMg=strength, unit=unit)
 
 
+def _printed_names(text):
+    """Every run of 1-5 consecutive words on the line, normalised like a molecule name."""
+    tokens = re.findall(r"[a-z0-9]+", text.lower())
+    return {normalise_molecule(" ".join(tokens[i:i + n]))
+            for n in range(1, 6) for i in range(len(tokens) - n + 1)}
+
+
+def _dataset_molecules(brand, page):
+    """Brand-only line: molecules from the dataset, strengths only as printed on the page.
+    The dataset strength is used to pair a printed strength with a molecule, never copied."""
+    found = lookup_brand(brand) if brand else []
+    out = []
+    for d in found:
+        if len(found) == 1 and len(page) == 1:
+            match = page[0]
+        else:
+            match = next((p for p in page if d.strengthMg is not None and p.unit == d.unit
+                          and abs(p.strengthMg - d.strengthMg) < 1e-6), None)
+        out.append(Molecule(name=normalise_molecule(d.name),
+                            strengthMg=match.strengthMg if match else None,
+                            unit=match.unit if match else (d.unit or "mg")))
+    return out
+
+
 def _valid_ids(ids, words):
     known = {w["id"] for w in words}
     return [b for b in (ids or []) if b in known]
@@ -134,16 +159,24 @@ def _medicine(m, words, source, key):
     prn = bool(m.get("prn") or prn_word)
     if prn:
         slots = []
-    mols = [_molecule(x) for x in (m.get("molecules") or []) if x.get("name")]
-    mols = [x for x in mols if x.name]
     duration = _float(m.get("durationDays"))
     block_ids = _valid_ids(m.get("sourceBlockIds"), words)
     cited = " ".join(w["text"] for w in words if w["id"] in block_ids).replace(",", "")
     printed = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", cited)}
+    raw_mols = [x for x in (m.get("molecules") or []) if x.get("name")]
     # A strength the model states must be a number on the cited words, else it was inferred.
-    unprinted = any(_float(x.get("strengthMg")) not in printed
-                    for x in (m.get("molecules") or [])
-                    if x.get("name") and _float(x.get("strengthMg")) is not None)
+    unprinted = any(_float(x.get("strengthMg")) not in printed for x in raw_mols
+                    if _float(x.get("strengthMg")) is not None)
+    # R45: a generic is trusted only if printed in the cited words; otherwise the line is
+    # brand-only and its molecules come from the drugs dataset, never from model memory.
+    names = _printed_names(cited)
+    brand_only = not raw_mols or not all(normalise_molecule(x["name"]) in names
+                                         for x in raw_mols)
+    if brand_only:
+        page = [_molecule(x) for x in raw_mols if _float(x.get("strengthMg")) in printed]
+        mols = _dataset_molecules(m.get("brand"), page)
+    else:
+        mols = [x for x in map(_molecule, raw_mols) if x.name]
     confidence = _float(m.get("confidence")) or 0.0
     food = m.get("foodRelation")
     crop = crop_for(block_ids, words)
@@ -158,7 +191,7 @@ def _medicine(m, words, source, key):
         sourceBlockIds=block_ids, source=source, crop=crop,
         needsConfirmation=(confidence < CONFIDENCE_FLOOR or not mols or frequency is None
                            or (not slots and not prn) or source == "vision_only"
-                           or not block_ids or unprinted))
+                           or not block_ids or unprinted or brand_only))
 
 
 def extract_plan(s3_keys, circle_id, model_id=None):
