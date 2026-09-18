@@ -86,6 +86,14 @@ components:
         needsConfirmation:
           type: boolean
           description: True when confidence < 0.85 or any required field is null.
+        crop:
+          type: [object, "null"]
+          description: Normalised crop rect of the source text on the page image (0-1).
+          properties:
+            x: { type: number }
+            y: { type: number }
+            w: { type: number }
+            h: { type: number }
 
     RedFlags:
       type: object

@@ -1,0 +1,20 @@
+[project]
+name = "aftercare"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["boto3", "PyJWT", "cryptography", "pywebpush"]
+
+[project.optional-dependencies]
+dev = ["pytest", "moto[dynamodb,s3]"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["golden: extraction accuracy gate, needs AWS credentials"]
+addopts = "-m 'not golden'"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["api"]

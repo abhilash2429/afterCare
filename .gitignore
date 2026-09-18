@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+build/
+*.egg-info/
+cdk.out/
+node_modules/
+.env*
+data/drugs_raw/
+data/photos/
+.superpowers/
