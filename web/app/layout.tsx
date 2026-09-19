@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Noto_Sans_Devanagari, Noto_Sans_Kannada } from "next/font/google";
+import "@fontsource/noto-sans-kannada/kannada-400.css";
+import "@fontsource/noto-sans-kannada/kannada-700.css";
+import "@fontsource/noto-sans-devanagari/devanagari-400.css";
+import "@fontsource/noto-sans-devanagari/devanagari-700.css";
+import "@fontsource/noto-sans-telugu/telugu-400.css";
+import "@fontsource/noto-sans-telugu/telugu-700.css";
 import { Providers } from "@/app/providers";
 import "./globals.css";
 
@@ -27,25 +32,18 @@ const carmenSans = localFont({
   weight: "700",
 });
 
-const notoKannada = Noto_Sans_Kannada({
-  subsets: ["kannada"],
-  weight: ["400", "600", "700"],
-  variable: "--font-kannada",
-  display: "swap",
-});
-
-const notoDevanagari = Noto_Sans_Devanagari({
-  subsets: ["devanagari"],
-  weight: ["400", "600", "700"],
-  variable: "--font-devanagari",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   title: "AfterCare",
   description:
     "Photograph an Indian hospital discharge summary. Get a picture-and-voice medicine schedule in your language.",
-  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
   appleWebApp: {
     capable: true,
     title: "AfterCare",
@@ -56,13 +54,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const fontClassName = [
-    funnelDisplay.variable,
-    satishSans.variable,
-    carmenSans.variable,
-    notoKannada.variable,
-    notoDevanagari.variable,
-  ].join(" ");
+  const fontClassName = [funnelDisplay.variable, satishSans.variable, carmenSans.variable].join(" ");
 
   return (
     <html lang="en" className={fontClassName}>

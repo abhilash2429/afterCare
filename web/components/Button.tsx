@@ -22,3 +22,11 @@ export function Button({ variant = "primary", className = "", children, ...props
     </button>
   );
 }
+
+export function BtnArrow() {
+  return (
+    <span className="btn-arrow" aria-hidden="true">
+      →
+    </span>
+  );
+}

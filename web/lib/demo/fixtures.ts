@@ -245,7 +245,7 @@ export function dosesForPlan(plan: Plan, date = todayIst()): Dose[] {
 
 export const EXTRACT_STEPS = [
   "Uploading pages",
-  "Reading the discharge summary",
+  "Reading the prescription...",
   "Finding each medicine",
   "Building the schedule",
 ];

@@ -1,26 +1,35 @@
 "use client";
 
+import { useState } from "react";
+import { Bilingual } from "@/components/Bilingual";
 import { Button } from "@/components/Button";
+import { DoseMatrix } from "@/components/DoseMatrix";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorNote } from "@/components/ErrorNote";
 import { PageHeader } from "@/components/PageHeader";
 import { ILLUSTRATIONS, ScenePhoto } from "@/components/marketing/illustrations";
-import { SLOT_LABELS } from "@/lib/copy";
-import { brandLabel, foodLabel } from "@/lib/format";
-import { useDemo } from "@/lib/demo/store";
+import { bi, COPY } from "@/lib/copy";
+import { brandLabel, foodKey, foodLabel } from "@/lib/format";
+import { downloadBlob, renderFridgePng, shareFridgePng } from "@/lib/fridge/render";
+import { useApp } from "@/lib/app/store";
+import { useAppView } from "@/lib/app/view";
 import type { Slot } from "@/lib/api/types";
 
 const SLOTS: Slot[] = ["morning", "noon", "night", "bedtime"];
 
 export default function FridgeSheetPage() {
-  const { ready, plan } = useDemo();
+  const { ready, plan, uiLang } = useApp();
+  const { isApp } = useAppView();
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  if (!ready) return <p>Loading fridge sheet…</p>;
+  if (!ready) return <p>{bi("loading", uiLang)}</p>;
   if (!plan) {
     return (
       <EmptyState
-        title="Nothing to print yet"
-        body="Photograph a discharge summary first."
-        action="Photograph paper"
+        title="nothingToPrint"
+        body="photographFirst"
+        action="photographPaper"
         href="/upload/"
         illustration={<ScenePhoto src={ILLUSTRATIONS.reminder} />}
       />
@@ -30,57 +39,91 @@ export default function FridgeSheetPage() {
   const scheduled = plan.medicines.filter((medicine) => !medicine.prn);
   const prn = plan.medicines.filter((medicine) => medicine.prn);
 
+  async function exportSheet() {
+    if (!plan) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const blob = await renderFridgePng(plan);
+      downloadBlob(blob, "aftercare-fridge-sheet.png");
+      await shareFridgePng(blob);
+    } catch {
+      setError("Could not make the fridge sheet. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section>
       <PageHeader
-        eyebrow="Fridge sheet"
-        title="Print this and keep it on the fridge"
-        actions={<Button onClick={() => window.print()}>Print or save PDF</Button>}
+        eyebrow="fridgeSheet"
+        title="printFridgeTitle"
+        actions={
+          <Button onClick={exportSheet} disabled={busy}>
+            <Bilingual k="downloadPng" lang={uiLang} />
+          </Button>
+        }
       />
-      <div className="page-scene mb-8 print:hidden">
-        <ScenePhoto src={ILLUSTRATIONS.reminder} />
-      </div>
+      <ErrorNote message={error} />
+      {isApp ? null : (
+        <div className="page-scene mb-8 print:hidden">
+          <ScenePhoto src={ILLUSTRATIONS.reminder} />
+        </div>
+      )}
 
-      <div className="rounded-[28px] border-2 border-primary bg-white p-8">
-        <p className="font-display text-[32px]">AfterCare schedule</p>
-        <table className="mt-6 w-full text-left">
-          <thead>
-            <tr>
-              <th className="border-b border-primary py-3">Medicine</th>
-              {SLOTS.map((slot) => (
-                <th key={slot} className="border-b border-primary py-3 text-center">
-                  {SLOT_LABELS[slot].en}
+      <div className="app-panel rounded-[28px] border-2 border-primary bg-white p-8">
+        <p className={isApp ? "font-display text-[22px] leading-snug" : "font-display text-[32px]"}>{COPY.aftercareSchedule[uiLang]}</p>
+        {isApp ? (
+          <div className="mt-4">
+            <DoseMatrix medicines={scheduled} />
+          </div>
+        ) : (
+          <table className="mt-6 w-full text-left">
+            <thead>
+              <tr>
+                <th className="border-b border-primary py-3">
+                  <Bilingual k="medicine" lang={uiLang} stacked />
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {scheduled.map((medicine) => (
-              <tr key={medicine.lineId}>
-                <td className="border-b border-primary/20 py-3">
-                  <strong>{brandLabel(medicine.brand)}</strong>
-                  <div>{foodLabel(medicine.foodRelation)}</div>
-                </td>
                 {SLOTS.map((slot) => (
-                  <td key={slot} className="border-b border-primary/20 py-3 text-center">
-                    {medicine.slots.includes(slot) ? "Take" : "—"}
-                  </td>
+                  <th key={slot} className="border-b border-primary py-3 text-center">
+                    <Bilingual k={slot} lang={uiLang} stacked />
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {scheduled.map((medicine) => (
+                <tr key={medicine.lineId}>
+                  <td className="border-b border-primary/20 py-3">
+                    <strong>{brandLabel(medicine.brand)}</strong>
+                    <div>
+                      <Bilingual k={foodKey(medicine.foodRelation)} lang={uiLang} />
+                    </div>
+                  </td>
+                  {SLOTS.map((slot) => (
+                    <td key={slot} className="border-b border-primary/20 py-3 text-center">
+                      <Bilingual k={medicine.slots.includes(slot) ? "take" : "skip"} lang={uiLang} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
         {prn.length > 0 ? (
           <div className="mt-6">
-            <p className="font-semibold">Only when needed</p>
+            <p className="font-semibold">
+              <Bilingual k="onlyWhenNeeded" lang={uiLang} />
+            </p>
             {prn.map((medicine) => (
               <p key={medicine.lineId}>
-                {brandLabel(medicine.brand)} — {medicine.prnCondition ?? "ask your doctor"}
+                {brandLabel(medicine.brand)} — {medicine.prnCondition ?? foodLabel("unspecified", uiLang)}
               </p>
             ))}
           </div>
         ) : null}
-        <p className="mt-6">AfterCare re-displays what your doctor wrote. It never changes a dose.</p>
+        <p className="mt-6">{COPY.disclaimer[uiLang]}</p>
       </div>
     </section>
   );

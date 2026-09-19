@@ -4,6 +4,7 @@ export type PlanStatus = "draft" | "active" | "archived";
 export type DoseStatus = "pending" | "given" | "missed";
 export type BoxCheckVerdict = "matched" | "check" | "do_not_take";
 export type Role = "owner" | "caregiver";
+export type Language = "en" | "hi" | "kn";
 
 export type ApiErrorCode =
   | "unauthorized"
@@ -31,6 +32,7 @@ export type Crop = {
   y: number;
   w: number;
   h: number;
+  s3Key?: string;
 };
 
 export type Medicine = {
@@ -47,7 +49,7 @@ export type Medicine = {
   prnCondition: string | null;
   confidence: number;
   sourceBlockIds: string[];
-  source?: "textract" | "vision_only";
+  source?: "textract" | "vision_only" | "user";
   needsConfirmation: boolean;
   crop: Crop | null;
 };
@@ -80,7 +82,7 @@ export type Plan = {
   redFlags: RedFlags;
   followUp: FollowUp | null;
   slotTimes: SlotTimes;
-  language: "kn" | "hi" | "en";
+  language: Language;
   status: PlanStatus;
 };
 
@@ -92,6 +94,11 @@ export type Dose = {
   givenAt: string | null;
   givenBy: string | null;
   medicineLineIds: string[];
+};
+
+export type Adherence = {
+  doses: Dose[];
+  givenPct: number;
 };
 
 export type BoxCheckItem = {
@@ -112,5 +119,41 @@ export type ActivateResponse = {
   planId: string;
   status: "active";
   dosesCreated: number;
-  firstDoseAt: string;
+  firstDoseAt: string | null;
+};
+
+export type Circle = {
+  circleId: string;
+  name: string | null;
+  language: Language;
+  slotTimes: SlotTimes;
+  escalationMinutes: number;
+  activePlanId: string | null;
+  role: Role;
+};
+
+export type Invite = {
+  token: string;
+  url: string;
+  expiresAt: string;
+};
+
+export type JoinResponse = {
+  sessionToken: string;
+  role: "caregiver";
+  circleId: string;
+};
+
+export type AudioClip = {
+  url: string;
+  spokenLanguage: "en" | "hi";
+  text: string;
+};
+
+export type PushSubscriptionJSON = {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
 };

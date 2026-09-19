@@ -18,7 +18,7 @@ export function StatusChip({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[18px] font-semibold ${tones[tone]}`}
+      className={`status-chip inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-[16px] font-semibold leading-tight ${tones[tone]}`}
     >
       <span aria-hidden="true">{icon}</span>
       {label}

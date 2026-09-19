@@ -1,3 +1,6 @@
+import type { ReactNode } from "react";
+import { IphoneShell } from "@/components/IphoneShell";
+
 const BLUE = "#0061FE";
 const PAPER = "#FFFFFF";
 
@@ -32,17 +35,20 @@ export function LogoMark({ className = "h-5 w-5" }: { className?: string }) {
   );
 }
 
-export function PhoneMockup({ className = "" }: { className?: string }) {
+export function PhoneMockup({
+  children,
+  className = "",
+}: {
+  children?: ReactNode;
+  className?: string;
+}) {
   return (
     <div className={`phone-mock ${className}`.trim()} aria-hidden="true">
-      <div className="phone-mock-body">
-        <span className="phone-mock-btn phone-mock-btn-silent" />
-        <span className="phone-mock-btn phone-mock-btn-vol-up" />
-        <span className="phone-mock-btn phone-mock-btn-vol-down" />
-        <span className="phone-mock-btn phone-mock-btn-power" />
-        <div className="phone-mock-screen" />
-        <div className="phone-mock-island" />
-      </div>
+      <IphoneShell>
+        <div className="phone-mock-app" inert>
+          {children}
+        </div>
+      </IphoneShell>
     </div>
   );
 }

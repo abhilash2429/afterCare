@@ -1,5 +1,5 @@
 import type { FoodRelation, Medicine, Molecule, SlotTimes } from "@/lib/api/types";
-import { SLOT_LABELS } from "@/lib/copy";
+import { COPY, NOT_WRITTEN, SLOT_LABELS, type CopyKey, type UiLang } from "@/lib/copy";
 
 export function todayIst(): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -13,46 +13,53 @@ export function todayIst(): string {
 export function moleculeLabel(molecule: Molecule): string {
   const unit = molecule.unit ?? "mg";
   if (molecule.strengthMg === null) {
-    return `${molecule.name} — strength not stated. Ask your doctor.`;
+    return `${molecule.name} — ${NOT_WRITTEN}`;
   }
   return `${molecule.name} ${molecule.strengthMg} ${unit}`;
 }
 
 export function medicineMolecules(medicine: Medicine): string {
   if (medicine.molecules.length === 0) {
-    return "Molecule not stated. Ask your doctor.";
+    return NOT_WRITTEN;
   }
   return medicine.molecules.map(moleculeLabel).join(" + ");
 }
 
-export function durationLabel(days: number | null): string {
+export function durationLabel(days: number | null, language: UiLang = "en"): string {
   if (days === null) {
-    return "Duration not stated. Ask your doctor.";
+    return COPY.durationUnknown[language];
   }
-  return `${days} days`;
+  return `${days} ${COPY.days[language]}`;
 }
 
-export function foodLabel(relation: FoodRelation): string {
-  if (relation === "before") return "Before food";
-  if (relation === "after") return "After food";
-  return "Food relation not stated";
+export function foodKey(relation: FoodRelation): CopyKey {
+  if (relation === "before") return "beforeFood";
+  if (relation === "after") return "afterFood";
+  return "notWritten";
 }
 
-export function frequencyLabel(frequency: string | null): string {
-  if (frequency === null) {
-    return "Frequency not stated. Ask your doctor.";
-  }
+export function foodLabel(relation: FoodRelation, language: UiLang = "en"): string {
+  return COPY[foodKey(relation)][language];
+}
+
+export function frequencyLabel(frequency: string | null, language: UiLang = "en"): string {
+  if (frequency === null) return COPY.notWritten[language];
   return frequency;
 }
 
-export function brandLabel(brand: string | null): string {
-  return brand ?? "Brand not stated";
+export function brandLabel(brand: string | null, language: UiLang = "en"): string {
+  return brand ?? COPY.notWritten[language];
 }
 
 export function slotTime(times: SlotTimes, slot: keyof SlotTimes): string {
   return times[slot];
 }
 
-export function slotTitle(slot: keyof typeof SLOT_LABELS): string {
-  return `${SLOT_LABELS[slot].en} · ${SLOT_LABELS[slot].kn}`;
+export function slotTitle(slot: keyof typeof SLOT_LABELS, language: UiLang = "en"): string {
+  return SLOT_LABELS[slot][language];
+}
+
+export function writtenOrAsk(value: string | null | undefined, language: UiLang = "en"): string {
+  if (!value) return COPY.notWritten[language];
+  return value;
 }

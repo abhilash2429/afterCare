@@ -2,20 +2,63 @@
 
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Bilingual } from "@/components/Bilingual";
 import { Button } from "@/components/Button";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorNote } from "@/components/ErrorNote";
 import { PageHeader } from "@/components/PageHeader";
 import { ILLUSTRATIONS, ScenePhoto } from "@/components/marketing/illustrations";
-import { useDemo } from "@/lib/demo/store";
+import { bi } from "@/lib/copy";
+import { useApp } from "@/lib/app/store";
+import { useAppView } from "@/lib/app/view";
 
 export default function UploadPage() {
   const router = useRouter();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
-  const { pages, addPages, removePage, extracting, extractStep, startExtract } = useDemo();
+  const { isApp } = useAppView();
+  const {
+    ready,
+    circleId,
+    pages,
+    addPages,
+    removePage,
+    extracting,
+    extractStep,
+    startExtract,
+    error,
+    setError,
+    role,
+    uiLang,
+  } = useApp();
+
+  if (!ready) return <p>{bi("loading", uiLang)}</p>;
+  if (!circleId) {
+    return (
+      <EmptyState
+        title="noCircleTitle"
+        body="noCircleUploadBody"
+        action="setUp"
+        href="/setup/"
+        illustration={<ScenePhoto src={ILLUSTRATIONS.upload} />}
+      />
+    );
+  }
+  if (role === "caregiver") {
+    return (
+      <EmptyState
+        title="ownersUpload"
+        body="ownersUploadBody"
+        action="openSchedule"
+        href="/schedule/"
+        illustration={<ScenePhoto src={ILLUSTRATIONS.upload} />}
+      />
+    );
+  }
 
   async function extract() {
-    await startExtract();
-    router.push("/review/");
+    const ok = await startExtract();
+    if (ok) router.push("/review/");
   }
 
   if (extracting) {
@@ -24,93 +67,94 @@ export default function UploadPage() {
         <div className="page-scene page-scene-center">
           <ScenePhoto src={ILLUSTRATIONS.review} />
         </div>
-        <h1 className="font-display text-[40px] text-primary">Reading the paper</h1>
+        <h1 className={`font-display text-primary ${isApp ? "text-[26px] leading-snug" : "text-[40px]"}`}>{bi("readingPrescription", uiLang)}</h1>
         <p className="mt-3 text-primary/80">{extractStep}</p>
-        <p className="muted mt-8">This can take up to two minutes on a live document.</p>
+        <p className="muted mt-8">{bi("canTake2min", uiLang)}</p>
       </section>
     );
   }
 
   return (
     <section>
-      <PageHeader
-        eyebrow="Discharge summary"
-        title="Photograph the paper."
-        description="Then we check that the pill box matches what your doctor wrote."
-      />
+      <PageHeader eyebrow="dischargeSummary" title="photographPaper" description="uploadDesc" />
+      <ErrorNote message={error} />
 
-      <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className={isApp ? "flex flex-col gap-4" : "grid gap-8 lg:grid-cols-[1.1fr_0.9fr]"}>
         <button
           type="button"
           onClick={() => galleryRef.current?.click()}
-          className="flex min-h-[320px] flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-secondary/35 bg-white px-8 py-12 text-center"
+          className={
+            isApp
+              ? "app-dropzone"
+              : "flex min-h-[320px] flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-secondary/35 bg-transparent px-8 py-12 text-center"
+          }
         >
           <div className="page-scene">
             <ScenePhoto src={ILLUSTRATIONS.upload} />
           </div>
-          <span className="mt-4 text-[24px] font-semibold">Drop pages here, or browse</span>
-          <span className="muted mt-2">JPEG or PNG. Add one page at a time if you prefer.</span>
+          <span className={`mt-3 font-semibold ${isApp ? "text-[18px] leading-snug" : "mt-4 text-[24px]"}`}>
+            <Bilingual k="dropPages" lang={uiLang} />
+          </span>
+          <span className="muted mt-2 text-[15px] leading-snug">
+            <Bilingual k="addOnePage" lang={uiLang} />
+          </span>
         </button>
 
-        <div className="flex flex-col items-start justify-center gap-4">
-          <p className="font-kannada muted">ಡಾಕ್ಟರ್ ಬರೆದದ್ದನ್ನೇ ತೋರಿಸುತ್ತೇವೆ.</p>
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={() => cameraRef.current?.click()}>Photograph page</Button>
+        <div className={`flex flex-col ${isApp ? "gap-3" : "items-start justify-center gap-4"}`}>
+          <p className="muted text-[15px] leading-snug">
+            <Bilingual k="showPaper" lang={uiLang} />
+          </p>
+          <div className={isApp ? "app-actions" : "flex flex-wrap gap-3"}>
+            <Button onClick={() => cameraRef.current?.click()}>
+              <Bilingual k="photographPage" lang={uiLang} />
+            </Button>
             <Button variant="ghost" onClick={() => galleryRef.current?.click()}>
-              Add another page
+              <Bilingual k="addPage" lang={uiLang} />
+            </Button>
+            <Button onClick={extract} disabled={pages.length === 0}>
+              <Bilingual k="readPages" lang={uiLang} />
             </Button>
           </div>
-          <Button variant="secondary" onClick={extract}>
-            {pages.length > 0 ? "Read these pages" : "Use demo summary"}
-          </Button>
-          <p className="muted">
-            Demo mode loads the cardiac fixture so you can review, activate, and run Box Check without
-            a live backend.
-          </p>
         </div>
       </div>
 
       <input
         ref={cameraRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png"
         capture="environment"
         className="sr-only"
         aria-label="Photograph discharge summary"
         onChange={(event) => {
-          if (event.target.files) addPages(event.target.files);
+          if (event.target.files) setError(addPages(event.target.files));
           event.target.value = "";
         }}
       />
       <input
         ref={galleryRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png"
         multiple
         className="sr-only"
         aria-label="Choose discharge summary photos"
         onChange={(event) => {
-          if (event.target.files) addPages(event.target.files);
+          if (event.target.files) setError(addPages(event.target.files));
           event.target.value = "";
         }}
       />
 
       {pages.length > 0 ? (
-        <ul className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <ul className={`mt-8 grid grid-cols-2 gap-4 ${isApp ? "" : "md:grid-cols-4"}`}>
           {pages.map((page, index) => (
             <li key={page.id} className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={page.previewUrl}
-                alt={`Page ${index + 1}`}
-                className="h-40 w-full rounded-2xl object-cover"
-              />
+              <img src={page.previewUrl} alt={`Page ${index + 1}`} className="h-40 w-full rounded-2xl object-cover" />
               <button
                 type="button"
                 onClick={() => removePage(page.id)}
                 className="absolute right-2 top-2 rounded-full bg-primary px-3 py-1 text-[16px] text-white"
               >
-                Remove
+                {bi("remove", uiLang)}
               </button>
             </li>
           ))}
@@ -119,4 +163,3 @@ export default function UploadPage() {
     </section>
   );
 }
-

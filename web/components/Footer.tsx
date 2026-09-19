@@ -1,33 +1,41 @@
+"use client";
+
 import Link from "next/link";
 import { Disclaimer } from "@/components/Disclaimer";
+import { VersionSwitch } from "@/components/VersionSwitch";
+import { useApp } from "@/lib/app/store";
+import { useAppView } from "@/lib/app/view";
+import { COPY, type CopyKey, scriptClass } from "@/lib/copy";
 
-const COLUMNS = [
+const COLUMNS: { title: CopyKey; links: { href: string; k: CopyKey }[] }[] = [
   {
-    title: "Start here",
+    title: "footerStartHere",
     links: [
-      { href: "/upload/", label: "Photograph the paper" },
-      { href: "/review/", label: "Review the extraction" },
-      { href: "/schedule/", label: "See the day" },
+      { href: "/setup/", k: "startACircle" },
+      { href: "/upload/", k: "photographPaper" },
+      { href: "/review/", k: "reviewExtraction" },
+      { href: "/schedule/", k: "seeTheDay" },
     ],
   },
   {
-    title: "At home",
+    title: "footerAtHome",
     links: [
-      { href: "/box-check/", label: "Check the box" },
-      { href: "/fridge-sheet/", label: "Fridge sheet" },
-      { href: "/join/", label: "Join a family circle" },
+      { href: "/box-check/", k: "checkTheBox" },
+      { href: "/fridge-sheet/", k: "fridgeSheet" },
+      { href: "/family/", k: "familyView" },
+      { href: "/join/", k: "joinFamilyCircle" },
     ],
   },
   {
-    title: "Guide",
+    title: "footerGuide",
     links: [
-      { href: "/#how-aftercare-works", label: "How AfterCare works" },
-      { href: "/red-flags/", label: "Red flags" },
-      { href: "/#promises", label: "What we will not do" },
-      { href: "/settings/", label: "Settings" },
+      { href: "/#how-aftercare-works", k: "howAftercareWorks" },
+      { href: "/red-flags/", k: "redFlags" },
+      { href: "/#promises", k: "whatWeWillNotDo" },
+      { href: "/settings/", k: "settings" },
     ],
   },
-] as const;
+];
 
 const SOCIAL = [
   { label: "Instagram", icon: InstagramIcon },
@@ -38,6 +46,9 @@ const SOCIAL = [
 ] as const;
 
 export function Footer() {
+  const { uiLang } = useApp();
+  const { enterApp } = useAppView();
+
   return (
     <footer className="site-footer print:hidden">
       <div className="site-footer-inner">
@@ -45,9 +56,7 @@ export function Footer() {
           <Link href="/" className="site-footer-logo">
             AfterCare
           </Link>
-          <p className="site-footer-tagline">
-            Photograph the paper. Check the pill box.
-          </p>
+          <p className={`site-footer-tagline ${scriptClass(uiLang)}`}>{COPY.footerTagline[uiLang]}</p>
           <div className="site-footer-social" aria-hidden="true">
             {SOCIAL.map((item) => (
               <span key={item.label}>
@@ -60,12 +69,14 @@ export function Footer() {
 
         <div className="site-footer-navs">
           {COLUMNS.map((column) => (
-            <nav key={column.title} className="site-footer-col" aria-label={column.title}>
-              <h2>{column.title}</h2>
+            <nav key={column.title} className="site-footer-col" aria-label={COPY[column.title][uiLang]}>
+              <h2 className={scriptClass(uiLang)}>{COPY[column.title][uiLang]}</h2>
               <ul>
                 {column.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href}>{link.label}</Link>
+                    <Link href={link.href} className={scriptClass(uiLang)}>
+                      {COPY[link.k][uiLang]}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -76,11 +87,15 @@ export function Footer() {
 
       <div className="site-footer-legal">
         <Disclaimer />
-        <p>
-          AfterCare is not a hospital, pharmacy, or official government service. It is an
-          independent prototype. For medical advice, contact your doctor or nearest hospital
-          directly.
-        </p>
+        <p className={scriptClass(uiLang)}>{COPY.footerLegal[uiLang]}</p>
+      </div>
+      <div className="site-footer-switch">
+        <VersionSwitch
+          href="/app/"
+          label={COPY.seeAppVersion[uiLang]}
+          className={scriptClass(uiLang)}
+          onClick={enterApp}
+        />
       </div>
     </footer>
   );

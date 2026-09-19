@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
   output: "export",
   images: { unoptimized: true },
   trailingSlash: true,
+  transpilePackages: [
+    "aws-amplify",
+    "@aws-amplify/auth",
+    "@aws-amplify/core",
+  ],
   turbopack: {
     root: dir,
   },

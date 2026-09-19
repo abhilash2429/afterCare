@@ -1,20 +1,1020 @@
+export type UiLang = "en" | "hi" | "kn" | "te";
+
 export const DISCLAIMER =
   "AfterCare re-displays what your doctor wrote. It never changes a dose.";
 
 export const GENERIC_RED_FLAG =
   "Call your doctor or 108 immediately for: chest pain, breathlessness, heavy bleeding, fever above 101°F, fainting or confusion. This is general advice — it was not found in your document.";
 
+export const COPY = {
+  disclaimer: {
+    en: DISCLAIMER,
+    hi: "AfterCare डॉक्टर की लिखी बात ही दिखाता है। खुराक नहीं बदलता।",
+    kn: "AfterCare ವೈದ್ಯರು ಬರೆದಿದ್ದನ್ನೇ ತೋರಿಸುತ್ತದೆ. ಪ್ರಮಾಣ ಬದಲಾಯಿಸುವುದಿಲ್ಲ.",
+    te: "AfterCare డాక్టర్ రాసిందే చూపిస్తుంది. మోతాదు మార్చదు.",
+  },
+  notWritten: {
+    en: "Not written, ask your doctor",
+    hi: "लिखा नहीं, डॉक्टर से पूछें",
+    kn: "ಬರೆದಿಲ್ಲ, ವೈದ್ಯರನ್ನು ಕೇಳಿ",
+    te: "రాయలేదు, డాక్టర్‌ని అడగండి",
+  },
+  durationUnknown: {
+    en: "Duration not written. Ask your doctor.",
+    hi: "अवधि लिखी नहीं। डॉक्टर से पूछें।",
+    kn: "ಅವಧಿ ಬರೆದಿಲ್ಲ. ವೈದ್ಯರನ್ನು ಕೇಳಿ.",
+    te: "వ్యవధి రాయలేదు. డాక్టర్‌ని అడగండి.",
+  },
+  beforeFood: {
+    en: "Before food",
+    hi: "खाने से पहले",
+    kn: "ಊಟಕ್ಕೆ ಮೊದಲು",
+    te: "భోజనానికి ముందు",
+  },
+  afterFood: {
+    en: "After food",
+    hi: "खाने के बाद",
+    kn: "ಊಟದ ನಂತರ",
+    te: "భోజనం తర్వాత",
+  },
+  morning: { en: "Morning", hi: "सुबह", kn: "ಬೆಳಗ್ಗೆ", te: "ఉదయం" },
+  noon: { en: "Noon", hi: "दोपहर", kn: "ಮಧ್ಯಾಹ್ನ", te: "మధ్యాహ్నం" },
+  night: { en: "Night", hi: "रात", kn: "ರಾತ್ರಿ", te: "రాత్రి" },
+  bedtime: { en: "Bedtime", hi: "सोते समय", kn: "ಮಲಗುವಾಗ", te: "పడుకునే సమయం" },
+  schedule: { en: "Schedule", hi: "समय सारणी", kn: "ವೇಳಾಪಟ್ಟಿ", te: "షెడ్యూల్" },
+  boxCheck: { en: "Box Check", hi: "बॉक्स जाँच", kn: "ಪೆಟ್ಟಿಗೆ", te: "బాక్స్ చెక్" },
+  redFlags: { en: "Red flags", hi: "चेतावनी", kn: "ಎಚ್ಚರಿಕೆ", te: "హెచ్చరికలు" },
+  given: { en: "Given", hi: "दे दिया", kn: "ಕೊಟ್ಟೆ", te: "ఇచ్చాను" },
+  due: { en: "Due", hi: "समय पर", kn: "ಸಮಯ", te: "సమయం" },
+  missed: { en: "Missed", hi: "छूट गई", kn: "ತಪ್ಪಿಹೋಯಿತು", te: "తప్పిపోయింది" },
+  take: { en: "Take", hi: "लें", kn: "ತೆಗೆದುಕೊಳ್ಳಿ", te: "తీసుకోండి" },
+  skip: { en: "Skip", hi: "नहीं", kn: "ಬೇಡ", te: "వదిలేయండి" },
+  queued: {
+    en: "Given — waiting to sync",
+    hi: "दे दिया — भेजा जा रहा है",
+    kn: "ಕೊಟ್ಟೆ — ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ",
+    te: "ఇచ్చాను — పంపబోతోంది",
+  },
+  today: { en: "Today", hi: "आज", kn: "ಇಂದು", te: "ఈరోజు" },
+  medicineSchedule: {
+    en: "Medicine schedule",
+    hi: "दवा समय सारणी",
+    kn: "ಔಷಧ ವೇಳಾಪಟ್ಟಿ",
+    te: "మందుల షెడ్యూల్",
+  },
+  oneGiven: {
+    en: "One Given action per time slot, not per medicine.",
+    hi: "हर समय पर एक बार दे दिया दबाइए, हर गोली पर नहीं।",
+    kn: "ಪ್ರತಿ ಸಮಯಕ್ಕೆ ಒಂದು ಕೊಟ್ಟೆ, ಪ್ರತಿ ಔಷಧಕ್ಕಲ್ಲ.",
+    te: "ప్రతి సమయానికి ఒకసారి ఇచ్చాను నొక్కండి, ప్రతి మందుకు కాదు.",
+  },
+  fridgeSheet: {
+    en: "Fridge sheet",
+    hi: "फ्रिज पन्ना",
+    kn: "ಫ್ರಿಜ್ ಹಾಳೆ",
+    te: "ఫ్రిజ్ షీట్",
+  },
+  familyView: { en: "Family view", hi: "परिवार देखें", kn: "ಕುಟುಂಬ ನೋಟ", te: "కుటుంబం చూడండి" },
+  speakSchedule: {
+    en: "Speak the schedule",
+    hi: "समय सारणी सुनें",
+    kn: "ವೇಳಾಪಟ್ಟಿ ಕೇಳಿ",
+    te: "షెడ్యూల్ వినండి",
+  },
+  kannadaAsHindi: {
+    en: "Kannada is spoken in Hindi. The words are on screen.",
+    hi: "कन्नड़ की आवाज़ हिंदी में है। शब्द स्क्रीन पर हैं।",
+    kn: "ಕನ್ನಡವನ್ನು ಹಿಂದಿಯಲ್ಲಿ ಹೇಳಲಾಗುತ್ತದೆ. ಪದಗಳು ಪರದೆಯ ಮೇಲಿವೆ.",
+    te: "కన్నడను హిందీలో చెబుతారు. పదాలు స్క్రీన్‌పై ఉన్నాయి.",
+  },
+  onlyWhenNeeded: {
+    en: "Only when needed",
+    hi: "जब ज़रूरत हो",
+    kn: "ಬೇಕಾದಾಗ ಮಾತ್ರ",
+    te: "అవసరమైనప్పుడు మాత్రమే",
+  },
+  medicine: { en: "Medicine", hi: "दवा", kn: "ಔಷಧ", te: "మందు" },
+  matches: { en: "Matches", hi: "मेल खाती है", kn: "ಹೊಂದುತ್ತದೆ", te: "సరిపోతుంది" },
+  check: { en: "Check", hi: "जाँचें", kn: "ನೋಡಿ", te: "చూడండి" },
+  doNotTake: { en: "Do not take", hi: "न लें", kn: "ತೆಗೆದುಕೊಳ್ಳಬೇಡಿ", te: "తీసుకోకండి" },
+  fromDocument: {
+    en: "From your discharge summary",
+    hi: "आपकी डिस्चार्ज सारांश से",
+    kn: "ನಿಮ್ಮ ಡಿಸ್ಚಾರ್ಜ್ ಸಾರಾಂಶದಿಂದ",
+    te: "మీ డిస్చార్జ్ సారాంశం నుండి",
+  },
+  genericBand: {
+    en: "General advice, not from your document.",
+    hi: "सामान्य सलाह, आपके कागज़ से नहीं।",
+    kn: "ಸಾಮಾನ್ಯ ಸಲಹೆ, ನಿಮ್ಮ ಕಾಗದದಿಂದ ಅಲ್ಲ.",
+    te: "సాధారణ సలహా, మీ పేపర్ నుండి కాదు.",
+  },
+  watchSigns: {
+    en: "Watch for these signs",
+    hi: "इन लक्षणों पर ध्यान दें",
+    kn: "ಈ ಲಕ್ಷಣಗಳನ್ನು ನೋಡಿ",
+    te: "ఈ లక్షణాలు చూడండి",
+  },
+  redFlagsDesc: {
+    en: "Warnings from the document stay verbatim. Generic advice is labelled separately.",
+    hi: "कागज़ की चेतावनी ज्यों की त्यों। सामान्य सलाह अलग लिखी है।",
+    kn: "ಕಾಗದದ ಎಚ್ಚರಿಕೆ ಇದ್ದಂತೆಯೇ. ಸಾಮಾನ್ಯ ಸಲಹೆ ಪ್ರತ್ಯೇಕ.",
+    te: "పేపర్ హెచ్చరికలు అలాగే ఉంటాయి. సాధారణ సలహా వేరు.",
+  },
+  photographPaper: {
+    en: "Photograph the paper",
+    hi: "कागज़ की फोटो लें",
+    kn: "ಕಾಗದದ ಫೋಟೋ ತೆಗೆಯಿರಿ",
+    te: "పేపర్ ఫోటో తీయండి",
+  },
+  addPage: { en: "Add another page", hi: "और पन्ना जोड़ें", kn: "ಇನ್ನೊಂದು ಪುಟ", te: "మరో పేజీ" },
+  readPages: {
+    en: "Read these pages",
+    hi: "ये पन्ने पढ़ें",
+    kn: "ಈ ಪುಟಗಳನ್ನು ಓದಿ",
+    te: "ఈ పేజీలు చదవండి",
+  },
+  readingPrescription: {
+    en: "Reading the prescription...",
+    hi: "पर्ची पढ़ी जा रही है...",
+    kn: "ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್ ಓದಲಾಗುತ್ತಿದೆ...",
+    te: "ప్రిస్క్రిప్షన్ చదువుతోంది...",
+  },
+  checkThis: { en: "Check this", hi: "इसे जाँचें", kn: "ಇದನ್ನು ನೋಡಿ", te: "దీన్ని చూడండి" },
+  checked: { en: "Checked", hi: "जाँचा गया", kn: "ನೋಡಲಾಗಿದೆ", te: "చూశారు" },
+  activate: {
+    en: "Activate schedule",
+    hi: "समय सारणी चालू करें",
+    kn: "ವೇಳಾಪಟ್ಟಿ ಚಾಲನೆ",
+    te: "షెడ్యూల్ ప్రారంభించండి",
+  },
+  iChecked: {
+    en: "I checked this line",
+    hi: "मैंने यह पंक्ति जाँची",
+    kn: "ಈ ಸಾಲು ನೋಡಿದೆ",
+    te: "ఈ లైన్ చూశాను",
+  },
+  edit: { en: "Edit", hi: "बदलें", kn: "ಬದಲಿಸಿ", te: "మార్చండి" },
+  saveEdit: { en: "Save edit", hi: "सेव करें", kn: "ಉಳಿಸಿ", te: "సేవ్ చేయండి" },
+  addMedicine: { en: "Add a medicine", hi: "दवा जोड़ें", kn: "ಔಷಧ ಸೇರಿಸಿ", te: "మందు జోడించండి" },
+  reviewTitle: {
+    en: "Check every medicine",
+    hi: "हर दवा जाँचें",
+    kn: "ಪ್ರತಿ ಔಷಧ ನೋಡಿ",
+    te: "ప్రతి మందు చూడండి",
+  },
+  reviewEyebrow: {
+    en: "Review and confirm",
+    hi: "जाँच और पुष्टि",
+    kn: "ಪರಿಶೀಲಿಸಿ",
+    te: "సమీక్షించండి",
+  },
+  photographStrips: {
+    en: "Photograph strips",
+    hi: "पट्टियों की फोटो लें",
+    kn: "ಪಟ್ಟಿಗಳ ಫೋಟೋ",
+    te: "స్ట్రిప్స్ ఫోటో తీయండి",
+  },
+  checkPhotos: {
+    en: "Check these photos",
+    hi: "ये फोटो जाँचें",
+    kn: "ಈ ಫೋಟೋ ನೋಡಿ",
+    te: "ఈ ఫోటోలు చూడండి",
+  },
+  boxMatch: {
+    en: "Does the box match the paper?",
+    hi: "डिब्बा कागज़ से मिलता है?",
+    kn: "ಪೆಟ್ಟಿಗೆ ಕಾಗದಕ್ಕೆ ಸರಿಹೊಂದುತ್ತದೆಯೇ?",
+    te: "బాక్స్ పేపర్‌తో సరిపోతుందా?",
+  },
+  setupEyebrow: { en: "Owner setup", hi: "सेटअप", kn: "ಸೆಟಪ್", te: "సెటప్" },
+  setupTitle: {
+    en: "Start a care circle",
+    hi: "देखभाल चक्र शुरू करें",
+    kn: "ಆರೈಕೆ ವಲಯ ಪ್ರಾರಂಭಿಸಿ",
+    te: "కేర్ సర్కిల్ మొదలుపెట్టండి",
+  },
+  joinTitle: {
+    en: "Join this care circle",
+    hi: "इस चक्र से जुड़ें",
+    kn: "ಈ ವಲಯಕ್ಕೆ ಸೇರಿ",
+    te: "ఈ సర్కిల్‌లో చేరండి",
+  },
+  joinAsCaregiver: {
+    en: "Join as caregiver",
+    hi: "देखभाल करने वाले के रूप में जुड़ें",
+    kn: "ಆರೈಕೆದಾರರಾಗಿ ಸೇರಿ",
+    te: "సంరక్షకుడిగా చేరండి",
+  },
+  settings: { en: "Settings", hi: "सेटिंग", kn: "ಸೆಟ್ಟಿಂಗ್", te: "సెట్టింగ్స్" },
+  getStarted: { en: "Get started", hi: "शुरू करें", kn: "ಪ್ರಾರಂಭಿಸಿ", te: "మొదలుపెట్టండి" },
+  language: { en: "Language", hi: "भाषा", kn: "ಭಾಷೆ", te: "భాష" },
+  kannada: { en: "Kannada", hi: "कन्नड़", kn: "ಕನ್ನಡ", te: "కన్నడ" },
+  hindi: { en: "Hindi", hi: "हिंदी", kn: "ಹಿಂದಿ", te: "హిందీ" },
+  telugu: { en: "Telugu", hi: "तेलुगू", kn: "ತೆಲುಗು", te: "తెలుగు" },
+  english: { en: "English", hi: "अंग्रेज़ी", kn: "ಇಂಗ್ಲಿಷ್", te: "ఇంగ్లీష్" },
+  noCircleTitle: {
+    en: "Start with a care circle",
+    hi: "पहले देखभाल चक्र बनाएँ",
+    kn: "ಮೊದಲು ಆರೈಕೆ ವಲಯ",
+    te: "ముందు కేర్ సర్కిల్",
+  },
+  noCircleBody: {
+    en: "Sign in or open an invite link first.",
+    hi: "पहले साइन इन करें या आमंत्रण लिंक खोलें।",
+    kn: "ಮೊದಲು ಸೈನ್ ಇನ್ ಅಥವಾ ಆಮಂತ್ರಣ ತೆರೆಯಿರಿ.",
+    te: "ముందు సైన్ ఇన్ చేయండి లేదా ఇన్వైట్ లింక్ తెరవండి.",
+  },
+  setUp: { en: "Set up", hi: "सेटअप", kn: "ಸೆಟಪ್", te: "సెటప్" },
+  noScheduleTitle: {
+    en: "No active schedule",
+    hi: "कोई समय सारणी नहीं",
+    kn: "ವೇಳಾಪಟ್ಟಿ ಇಲ್ಲ",
+    te: "షెడ్యూల్ లేదు",
+  },
+  goToReview: { en: "Go to review", hi: "जाँच पर जाएँ", kn: "ಪರಿಶೀಲನೆಗೆ", te: "సమీక్షకు వెళ్లండి" },
+  noWarnings: {
+    en: "No warnings yet",
+    hi: "अभी कोई चेतावनी नहीं",
+    kn: "ಇನ್ನೂ ಎಚ್ಚರಿಕೆ ಇಲ್ಲ",
+    te: "హెచ్చరికలు లేవు",
+  },
+  loading: { en: "Loading…", hi: "लोड हो रहा है…", kn: "ಲೋಡ್ ಆಗುತ್ತಿದೆ…", te: "లోడ్ అవుతోంది…" },
+  followUp: { en: "Follow-up", hi: "फॉलो-अप", kn: "ಫಾಲೋ-ಅಪ್", te: "ఫాలో-అప్" },
+  frequency: { en: "Frequency", hi: "आवृत्ति", kn: "ಆವರ್ತನ", te: "ఫ్రీక్వెన్సీ" },
+  food: { en: "Food", hi: "खाना", kn: "ಊಟ", te: "ఆహారం" },
+  duration: { en: "Duration", hi: "अवधि", kn: "ಅವಧಿ", te: "వ్యవధి" },
+  slots: { en: "Slots", hi: "समय", kn: "ಸಮಯ", te: "సమయాలు" },
+  pending: { en: "Pending", hi: "बाकी", kn: "ಬಾಕಿ", te: "పెండింగ్" },
+  ofGiven: { en: "given", hi: "दी गई", kn: "ಕೊಟ್ಟಿದೆ", te: "ఇచ్చారు" },
+  downloadPng: {
+    en: "Download PNG",
+    hi: "PNG डाउनलोड करें",
+    kn: "PNG ಡೌನ್‌ಲೋಡ್",
+    te: "PNG డౌన్‌లోడ్",
+  },
+  createCircle: {
+    en: "Create circle",
+    hi: "चक्र बनाएँ",
+    kn: "ವಲಯ ರಚಿಸಿ",
+    te: "సర్కిల్ సృష్టించండి",
+  },
+  makeInvite: { en: "Make invite", hi: "आमंत्रण बनाएँ", kn: "ಆಮಂತ್ರಣ", te: "ఇన్వైట్" },
+  shareInvite: { en: "Share invite", hi: "आमंत्रण भेजें", kn: "ಹಂಚಿ", te: "షేర్ చేయండి" },
+  emailMeCode: {
+    en: "Email me a code",
+    hi: "कोड ईमेल करें",
+    kn: "ಕೋಡ್ ಇಮೇಲ್ ಮಾಡಿ",
+    te: "కోడ్ ఈమెయిల్ చేయండి",
+  },
+  createAccount: { en: "Create account", hi: "खाता बनाएँ", kn: "ಖಾತೆ ತೆರೆಯಿರಿ", te: "ఖాతా సృష్టించండి" },
+  confirmCode: { en: "Confirm code", hi: "कोड पुष्टि करें", kn: "ಕೋಡ್ ಖಚಿತಪಡಿಸಿ", te: "కోడ్ నిర్ధారించండి" },
+  email: { en: "Email", hi: "ईमेल", kn: "ಇಮೇಲ್", te: "ఈమెయిల్" },
+  name: { en: "Name", hi: "नाम", kn: "ಹೆಸರು", te: "పేరు" },
+  remove: { en: "Remove", hi: "हटाएँ", kn: "ತೆಗೆದುಹಾಕಿ", te: "తొలగించండి" },
+  cancel: { en: "Cancel", hi: "रद्द", kn: "ರದ್ದು", te: "రద్దు" },
+  photographPage: { en: "Photograph page", hi: "पन्ने की फोटो", kn: "ಪುಟದ ಫೋಟೋ", te: "పేజీ ఫోటో" },
+  dropPages: {
+    en: "Drop pages here, or browse",
+    hi: "पन्ने यहाँ डालें",
+    kn: "ಪುಟಗಳನ್ನು ಇಲ್ಲಿ ಇರಿಸಿ",
+    te: "పేజీలు ఇక్కడ వేయండి",
+  },
+  addOnePage: {
+    en: "Add one page at a time if you prefer.",
+    hi: "एक-एक पन्ना भी जोड़ सकते हैं।",
+    kn: "ಒಂದೊಂದು ಪುಟವನ್ನೂ ಸೇರಿಸಬಹುದು.",
+    te: "ఒక్కొక్క పేజీ కూడా జోడించవచ్చు.",
+  },
+  showPaper: {
+    en: "We only show what the doctor wrote.",
+    hi: "डॉक्टर ने जो लिखा वही दिखाते हैं।",
+    kn: "ವೈದ್ಯರು ಬರೆದಿದ್ದನ್ನೇ ತೋರಿಸುತ್ತೇವೆ.",
+    te: "డాక్టర్ రాసిందే చూపిస్తాం.",
+  },
+  ownersUpload: {
+    en: "Owners upload the paper",
+    hi: "मालिक कागज़ अपलोड करते हैं",
+    kn: "ಮಾಲೀಕರು ಕಾಗದವನ್ನು ಹಾಕುತ್ತಾರೆ",
+    te: "యజమాని పేపర్ అప్‌లోడ్ చేస్తారు",
+  },
+  ownersUploadBody: {
+    en: "A caregiver can open the schedule, mark Given, and run Box Check.",
+    hi: "देखभाल करने वाला समय सारणी खोल सकता है, दे दिया दबा सकता है, बॉक्स जाँच कर सकता है।",
+    kn: "ಆರೈಕೆದಾರರು ವೇಳಾಪಟ್ಟಿ ನೋಡಬಹುದು, ಕೊಟ್ಟೆ ಒತ್ತಬಹುದು, ಪೆಟ್ಟಿಗೆ ಪರಿಶೀಲಿಸಬಹುದು.",
+    te: "సంరక్షకుడు షెడ్యూల్ చూడవచ్చు, ఇచ్చాను నొక్కవచ్చు, బాక్స్ చెక్ చేయవచ్చు.",
+  },
+  openSchedule: { en: "Open schedule", hi: "समय सारणी खोलें", kn: "ವೇಳಾಪಟ್ಟಿ ತೆರೆಯಿರಿ", te: "షెడ్యూల్ తెరవండి" },
+  reviewDesc: {
+    en: "Amber lines stay blocked until you confirm them. AfterCare never fills a missing dose.",
+    hi: "पीली पंक्तियाँ पुष्टि तक रुकी रहती हैं। छूटी खुराक AfterCare नहीं भरता।",
+    kn: "ಹಳದಿ ಸಾಲುಗಳು ಖಚಿತಪಡಿಸುವವರೆಗೆ ನಿಲ್ಲುತ್ತವೆ. ತಪ್ಪಿದ ಪ್ರಮಾಣವನ್ನು AfterCare ತುಂಬುವುದಿಲ್ಲ.",
+    te: "పసుపు లైన్లు నిర్ధారించే వరకు ఆగుతాయి. తప్పిన మోతాదును AfterCare నింపదు.",
+  },
+  confirmAmber: {
+    en: "Confirm amber lines before activating.",
+    hi: "चालू करने से पहले पीली पंक्तियाँ जाँचें।",
+    kn: "ಚಾಲನೆಗೆ ಮೊದಲು ಹಳದಿ ಸಾಲುಗಳನ್ನು ನೋಡಿ.",
+    te: "ప్రారంభించే ముందు పసుపు లైన్లు చూడండి.",
+  },
+  addLine: { en: "Add a line", hi: "पंक्ति जोड़ें", kn: "ಸಾಲು ಸೇರಿಸಿ", te: "లైన్ జోడించండి" },
+  addThisLine: { en: "Add this line", hi: "यह पंक्ति जोड़ें", kn: "ಈ ಸಾಲು ಸೇರಿಸಿ", te: "ఈ లైన్ జోడించండి" },
+  noPlanReview: {
+    en: "No plan to review",
+    hi: "जाँचने के लिए योजना नहीं",
+    kn: "ಪರಿಶೀಲಿಸಲು ಯೋಜನೆ ಇಲ್ಲ",
+    te: "సమీక్షించడానికి ప్లాన్ లేదు",
+  },
+  goToUpload: { en: "Go to upload", hi: "फोटो पर जाएँ", kn: "ಫೋಟೋಗೆ ಹೋಗಿ", te: "ఫోటోకు వెళ్లండి" },
+  privacyTitle: {
+    en: "Privacy and this device",
+    hi: "गोपनीयता और यह फ़ोन",
+    kn: "ಗೌಪ್ಯತೆ ಮತ್ತು ಈ ಫೋನ್",
+    te: "గోప్యత మరియు ఈ ఫోన్",
+  },
+  privacyBody: {
+    en: "This phone keeps the circle id and caregiver session locally.",
+    hi: "चक्र और सत्र इस फ़ोन पर रहते हैं।",
+    kn: "ವಲಯ ಮತ್ತು ಸೆಷನ್ ಈ ಫೋನ್‌ನಲ್ಲೇ ಇರುತ್ತದೆ.",
+    te: "సర్కిల్ మరియు సెషన్ ఈ ఫోన్‌లోనే ఉంటాయి.",
+  },
+  privacyDemo: {
+    en: "Demo data stays on this browser.",
+    hi: "डेमो डेटा इसी ब्राउज़र पर रहता है।",
+    kn: "ಡೆಮೊ ಡೇಟಾ ಈ ಬ್ರೌಸರ್‌ನಲ್ಲೇ ಇರುತ್ತದೆ.",
+    te: "డెమో డేటా ఈ బ్రౌజర్‌లోనే ఉంటుంది.",
+  },
+  deleteDevice: {
+    en: "Delete data on this device",
+    hi: "इस फ़ोन का डेटा मिटाएँ",
+    kn: "ಈ ಫೋನ್ ಡೇಟಾ ಅಳಿಸಿ",
+    te: "ఈ ఫోన్ డేటా తొలగించండి",
+  },
+  safety: { en: "Safety", hi: "सुरक्षा", kn: "ಸುರಕ್ಷತೆ", te: "భద్రత" },
+  currentPlan: { en: "Current plan", hi: "वर्तमान योजना", kn: "ಪ್ರಸ್ತುತ ಯೋಜನೆ", te: "ప్రస్తుత ప్లాన్" },
+  inviteCaregiverTitle: {
+    en: "Invite a caregiver",
+    hi: "देखभाल करने वाले को बुलाएँ",
+    kn: "ಆರೈಕೆದಾರರನ್ನು ಆಹ್ವಾನಿಸಿ",
+    te: "సంరక్షకుడిని ఆహ్వానించండి",
+  },
+  inviteBody: {
+    en: "The link works once and lasts 24 hours.",
+    hi: "लिंक एक बार चलता है, 24 घंटे तक।",
+    kn: "ಲಿಂಕ್ ಒಮ್ಮೆ ಮಾತ್ರ, 24 ಗಂಟೆ.",
+    te: "లింక్ ఒక్కసారి, 24 గంటలు.",
+  },
+  ownerEmail: { en: "Owner email", hi: "मालिक ईमेल", kn: "ಮಾಲೀಕ ಇಮೇಲ್", te: "యజమాని ఈమెయిల్" },
+  codeFromEmail: { en: "Code", hi: "कोड", kn: "ಕೋಡ್", te: "కోడ్" },
+  pinHint: {
+    en: "Any 4-digit number opens the app. A longer email code still works.",
+    hi: "कोई भी 4 अंकों का नंबर ऐप खोलता है। लंबा ईमेल कोड भी चलता है।",
+    kn: "ಯಾವುದೇ 4 ಅಂಕಿಯ ಸಂಖ್ಯೆ ಅಪ್ಲಿಕೇಶನ್ ತೆರೆಯುತ್ತದೆ. ಉದ್ದದ ಇಮೇಲ್ ಕೋಡ್ ಸಹ ಚಾಲನೆಯಾಗುತ್ತದೆ.",
+    te: "ఏ 4 అంకెల సంఖ్యైనా యాప్ తెరుస్తుంది. పొడవైన ఈమెయిల్ కోడ్ కూడా పనిచేస్తుంది.",
+  },
+  circle: { en: "Circle", hi: "चक्र", kn: "ವಲಯ", te: "సర్కిల్" },
+  demoOn: {
+    en: "Demo mode is on. You can create a circle on this phone without a live login.",
+    hi: "डेमो चालू है। बिना लॉगिन चक्र बना सकते हैं।",
+    kn: "ಡೆಮೊ ಆನ್ ಆಗಿದೆ. ಲಾಗಿನ್ ಇಲ್ಲದೆ ವಲಯ ರಚಿಸಬಹುದು.",
+    te: "డెమో ఆన్ ఉంది. లాగిన్ లేకుండా సర్కిల్ సృష్టించవచ్చు.",
+  },
+  setupDesc: {
+    en: "Sign in with an email code, create the circle, then invite the person who gives the medicines.",
+    hi: "ईमेल कोड से साइन इन करें, चक्र बनाएँ, दवा देने वाले को बुलाएँ।",
+    kn: "ಇಮೇಲ್ ಕೋಡ್‌ನಿಂದ ಸೈನ್ ಇನ್, ವಲಯ ರಚಿಸಿ, ಔಷಧ ಕೊಡುವವರನ್ನು ಕರೆಯಿರಿ.",
+    te: "ఈమెయిల్ కోడ్‌తో సైన్ ఇన్ చేసి, సర్కిల్ సృష్టించి, మందు ఇచ్చే వారిని ఆహ్వానించండి.",
+  },
+  joinDesc: {
+    en: "A caregiver can view the schedule, mark Given, and run Box Check. They cannot edit the plan.",
+    hi: "देखभाल करने वाला समय सारणी देख सकता है, दे दिया दबा सकता है, बॉक्स जाँच कर सकता है। योजना नहीं बदल सकता।",
+    kn: "ಆರೈಕೆದಾರರು ವೇಳಾಪಟ್ಟಿ ನೋಡಬಹುದು, ಕೊಟ್ಟೆ ಒತ್ತಬಹುದು, ಪೆಟ್ಟಿಗೆ ನೋಡಬಹುದು. ಯೋಜನೆ ಬದಲಾಯಿಸಲಾಗದು.",
+    te: "సంరక్షకుడు షెడ్యూల్ చూడవచ్చు, ఇచ్చాను నొక్కవచ్చు, బాక్స్ చెక్ చేయవచ్చు. ప్లాన్ మార్చలేరు.",
+  },
+  careCircle: { en: "Care circle", hi: "देखभाल चक्र", kn: "ಆರೈಕೆ ವಲಯ", te: "కేర్ సర్కిల్" },
+  joinedOk: {
+    en: "Joined as caregiver on this browser.",
+    hi: "इस ब्राउज़र पर देखभाल करने वाले के रूप में जुड़े।",
+    kn: "ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಆರೈಕೆದಾರರಾಗಿ ಸೇರಿದ್ದೀರಿ.",
+    te: "ఈ బ్రౌజర్‌లో సంరక్షకుడిగా చేరారు.",
+  },
+  noScheduleWatch: {
+    en: "No schedule to watch",
+    hi: "देखने के लिए समय सारणी नहीं",
+    kn: "ನೋಡಲು ವೇಳಾಪಟ್ಟಿ ಇಲ್ಲ",
+    te: "చూడడానికి షెడ్యూల్ లేదు",
+  },
+  noScheduleWatchBody: {
+    en: "Activate a plan first. This page is read-only.",
+    hi: "पहले योजना चालू करें। यह पन्ना केवल देखने का है।",
+    kn: "ಮೊದಲು ಯೋಜನೆ ಚಾಲನೆ. ಈ ಪುಟ ನೋಡಲು ಮಾತ್ರ.",
+    te: "ముందు ప్లాన్ ప్రారంభించండి. ఈ పేజీ చూడడానికి మాత్రమే.",
+  },
+  howWeekGoing: {
+    en: "How the week is going",
+    hi: "सप्ताह कैसा चल रहा है",
+    kn: "ವಾರ ಹೇಗಿದೆ",
+    te: "వారం ఎలా సాగుతోంది",
+  },
+  printFridgeTitle: {
+    en: "Print this and keep it on the fridge",
+    hi: "इसे छापकर फ्रिज पर लगाएँ",
+    kn: "ಮುದ್ರಿಸಿ ಫ್ರಿಜ್‌ನಲ್ಲಿ ಇರಿಸಿ",
+    te: "ప్రింట్ చేసి ఫ్రిజ్‌పై ఉంచండి",
+  },
+  nothingToPrint: {
+    en: "Nothing to print yet",
+    hi: "अभी छापने को कुछ नहीं",
+    kn: "ಇನ್ನೂ ಮುದ್ರಿಸಲು ಏನಿಲ್ಲ",
+    te: "ఇంకా ప్రింట్ చేయడానికి ఏమీ లేదు",
+  },
+  photographFirst: {
+    en: "Photograph a discharge summary first.",
+    hi: "पहले डिस्चार्ज सारांश की फोटो लें।",
+    kn: "ಮೊದಲು ಡಿಸ್ಚಾರ್ಜ್ ಸಾರಾಂಶದ ಫೋಟೋ ತೆಗೆಯಿರಿ.",
+    te: "ముందు డిస్చార్జ్ సారాంశం ఫోటో తీయండి.",
+  },
+  noWarningsBody: {
+    en: "Photograph a discharge summary to load the red-flag card.",
+    hi: "चेतावनी कार्ड के लिए डिस्चार्ज सारांश की फोटो लें।",
+    kn: "ಎಚ್ಚರಿಕೆ ಚೀಟಿಗೆ ಡಿಸ್ಚಾರ್ಜ್ ಸಾರಾಂಶದ ಫೋಟೋ.",
+    te: "హెచ్చరిక కార్డ్ కోసం డిస్చార్జ్ సారాంశం ఫోటో తీయండి.",
+  },
+  checkingStrips: {
+    en: "Checking the strips",
+    hi: "पट्टियाँ जाँची जा रही हैं",
+    kn: "ಪಟ್ಟಿಗಳನ್ನು ನೋಡಲಾಗುತ್ತಿದೆ",
+    te: "స్ట్రిప్స్ చూస్తోంది",
+  },
+  canTake40: {
+    en: "This can take up to 40 seconds.",
+    hi: "इसमें 40 सेकंड लग सकते हैं।",
+    kn: "ಇದಕ್ಕೆ 40 ಸೆಕೆಂಡು ಬೇಕಾಗಬಹುದು.",
+    te: "దీనికి 40 సెకన్లు పట్టవచ్చు.",
+  },
+  canTake2min: {
+    en: "This can take up to two minutes.",
+    hi: "इसमें दो मिनट लग सकते हैं।",
+    kn: "ಇದಕ್ಕೆ ಎರಡು ನಿಮಿಷ ಬೇಕಾಗಬಹುದು.",
+    te: "దీనికి రెండు నిమిషాలు పట్టవచ్చు.",
+  },
+  activatePlanFirst: {
+    en: "Activate a plan first",
+    hi: "पहले योजना चालू करें",
+    kn: "ಮೊದಲು ಯೋಜನೆ ಚಾಲನೆ",
+    te: "ముందు ప్లాన్ ప్రారంభించండి",
+  },
+  boxCheckNeedPlan: {
+    en: "Box Check compares strips to the active prescription.",
+    hi: "बॉक्स जाँच पट्टियों को पर्ची से मिलाती है।",
+    kn: "ಪೆಟ್ಟಿಗೆ ಪರಿಶೀಲನೆ ಪಟ್ಟಿಗಳನ್ನು ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್‌ಗೆ ಹೋಲಿಸುತ್ತದೆ.",
+    te: "బాక్స్ చెక్ స్ట్రిప్స్‌ను ప్రిస్క్రిప్షన్‌తో పోలుస్తుంది.",
+  },
+  boxCheckDesc: {
+    en: "Photograph the strips you bought. AfterCare never says a strip is safe to take.",
+    hi: "खरीदी पट्टियों की फोटो लें। AfterCare कभी नहीं कहता कि पट्टी लेना सुरक्षित है।",
+    kn: "ಕೊಂಡ ಪಟ್ಟಿಗಳ ಫೋಟೋ. AfterCare ಎಂದಿಗೂ ಸುರಕ್ಷಿತ ಎಂದು ಹೇಳುವುದಿಲ್ಲ.",
+    te: "కొన్న స్ట్రిప్స్ ఫోటో తీయండి. AfterCare ఎప్పుడూ సురక్షితమని చెప్పదు.",
+  },
+  noCheckYet: {
+    en: "No check yet. Photograph the strips, then check these photos.",
+    hi: "अभी जाँच नहीं। पट्टियों की फोटो लें, फिर जाँचें।",
+    kn: "ಇನ್ನೂ ಪರಿಶೀಲನೆ ಇಲ್ಲ. ಪಟ್ಟಿಗಳ ಫೋಟೋ ತೆಗೆದು ನೋಡಿ.",
+    te: "ఇంకా చెక్ లేదు. స్ట్రిప్స్ ఫోటో తీసి చూడండి.",
+  },
+  openFridge: { en: "Open fridge sheet", hi: "फ्रिज पन्ना खोलें", kn: "ಫ್ರಿಜ್ ಹಾಳೆ ತೆರೆಯಿರಿ", te: "ఫ్రిజ్ షీట్ తెరవండి" },
+  reviewActivate: {
+    en: "Review and activate the draft plan first.",
+    hi: "पहले मसौदा जाँचकर चालू करें।",
+    kn: "ಮೊದಲು ಕರಡು ನೋಡಿ ಚಾಲನೆ ಮಾಡಿ.",
+    te: "ముందు డ్రాఫ్ట్ చూసి ప్రారంభించండి.",
+  },
+  dischargeSummary: {
+    en: "Discharge summary",
+    hi: "डिस्चार्ज सारांश",
+    kn: "ಡಿಸ್ಚಾರ್ಜ್ ಸಾರಾಂಶ",
+    te: "డిస్చార్జ్ సారాంశం",
+  },
+  uploadDesc: {
+    en: "JPEG or PNG, one to ten pages. PDF is not supported.",
+    hi: "JPEG या PNG, एक से दस पन्ने। PDF नहीं चलता।",
+    kn: "JPEG ಅಥವಾ PNG, 1-10 ಪುಟ. PDF ಇಲ್ಲ.",
+    te: "JPEG లేదా PNG, 1-10 పేజీలు. PDF కాదు.",
+  },
+  noCircleUploadBody: {
+    en: "Sign in and create a circle, then photograph the discharge summary.",
+    hi: "साइन इन कर चक्र बनाएँ, फिर सारांश की फोटो लें।",
+    kn: "ಸೈನ್ ಇನ್ ಮಾಡಿ ವಲಯ ರಚಿಸಿ, ನಂತರ ಸಾರಾಂಶದ ಫೋಟೋ.",
+    te: "సైన్ ఇన్ చేసి సర్కిల్ సృష్టించి, సారాంశం ఫోటో తీయండి.",
+  },
+  days: { en: "days", hi: "दिन", kn: "ದಿನ", te: "రోజులు" },
+  noPlanDevice: {
+    en: "No plan on this device.",
+    hi: "इस फ़ोन पर योजना नहीं।",
+    kn: "ಈ ಫೋನ್‌ನಲ್ಲಿ ಯೋಜನೆ ಇಲ್ಲ.",
+    te: "ఈ ఫోన్‌లో ప్లాన్ లేదు.",
+  },
+  noCircleDevice: {
+    en: "No circle on this device.",
+    hi: "इस फ़ोन पर चक्र नहीं।",
+    kn: "ಈ ಫೋನ್‌ನಲ್ಲಿ ವಲಯ ಇಲ್ಲ.",
+    te: "ఈ ఫోన్‌లో సర్కిల్ లేదు.",
+  },
+  languageHint: {
+    en: "English is the default. Choose Hindi, Telugu, or Kannada and the whole site follows.",
+    hi: "डिफ़ॉल्ट अंग्रेज़ी है। हिंदी, तेलुगू या कन्नड़ चुनें, पूरी साइट उसी भाषा में आ जाएगी।",
+    kn: "ಡೀಫಾಲ್ಟ್ ಇಂಗ್ಲಿಷ್. ಹಿಂದಿ, ತೆಲುಗು ಅಥವಾ ಕನ್ನಡ ಆರಿಸಿ, ತಾಣವೇ ಆ ಭಾಷೆಗೆ ಬದಲಾಗುತ್ತದೆ.",
+    te: "డిఫాల్ట్ ఇంగ్లీష్. హిందీ, తెలుగు లేదా కన్నడ ఎంచుకోండి, సైట్ అంతా ఆ భాషలోకి మారుతుంది.",
+  },
+  aftercareSchedule: {
+    en: "AfterCare schedule",
+    hi: "AfterCare समय सारणी",
+    kn: "AfterCare ವೇಳಾಪಟ್ಟಿ",
+    te: "AfterCare షెడ్యూల్",
+  },
+  unmatchedStrip: { en: "Unmatched strip", hi: "न मिली पट्टी", kn: "ಹೊಂದದ ಪಟ್ಟಿ", te: "సరిపోని స్ట్రిప్" },
+  loadingVoice: {
+    en: "Loading voice…",
+    hi: "आवाज़ आ रही है…",
+    kn: "ಧ್ವನಿ ಬರುತ್ತಿದೆ…",
+    te: "వాయిస్ వస్తోంది…",
+  },
+  remindersTitle: {
+    en: "Reminders on this phone",
+    hi: "इस फ़ोन पर याद दिलाना",
+    kn: "ಈ ಫೋನ್‌ನಲ್ಲಿ ಜ್ಞಾಪನೆ",
+    te: "ఈ ఫోన్‌లో రిమైండర్",
+  },
+  turnOnReminders: {
+    en: "Turn on reminders",
+    hi: "याद दिलाना चालू करें",
+    kn: "ಜ್ಞಾಪನೆ ಆನ್ ಮಾಡಿ",
+    te: "రిమైండర్ ఆన్ చేయండి",
+  },
+  remindersOn: {
+    en: "Reminders are on for this phone.",
+    hi: "इस फ़ोन पर याद दिलाना चालू है।",
+    kn: "ಈ ಫೋನ್‌ನಲ್ಲಿ ಜ್ಞಾಪನೆ ಆನ್ ಆಗಿದೆ.",
+    te: "ఈ ఫోన్‌లో రిమైండర్ ఆన్ ఉంది.",
+  },
+  remindersHint: {
+    en: "We only ask after you tap. Reminders fire at each dose time.",
+    hi: "आपके टैप के बाद ही पूछते हैं। हर खुराक समय पर याद दिलाएँगे।",
+    kn: "ನೀವು ಒತ್ತಿದ ನಂತರ ಮಾತ್ರ ಕೇಳುತ್ತೇವೆ. ಪ್ರತಿ ಸಮಯಕ್ಕೆ ಜ್ಞಾಪನೆ.",
+    te: "మీరు నొక్కిన తర్వాతే అడుగుతాం. ప్రతి మోతాదు సమయానికి రిమైండర్.",
+  },
+  readOnlyFamily: {
+    en: "Read-only. Nobody on this page can change a dose.",
+    hi: "केवल देखने के लिए। यहाँ खुराक नहीं बदल सकते।",
+    kn: "ನೋಡಲು ಮಾತ್ರ. ಇಲ್ಲಿ ಪ್ರಮಾಣ ಬದಲಾಯಿಸಲಾಗದು.",
+    te: "చూడడానికి మాత్రమే. ఇక్కడ మోతాదు మార్చలేరు.",
+  },
+  brand: { en: "Brand", hi: "ब्रांड", kn: "ಬ್ರಾಂಡ್", te: "బ్రాండ్" },
+  strengthMg: { en: "Strength (mg)", hi: "शक्ति (mg)", kn: "ಪ್ರಮಾಣ (mg)", te: "స్ట్రెంత్ (mg)" },
+  durationDays: { en: "Duration (days)", hi: "अवधि (दिन)", kn: "ಅವಧಿ (ದಿನ)", te: "వ్యవధి (రోజులు)" },
+  givenPctLine: { en: "of doses given.", hi: "खुराक दी गई।", kn: "ಪ್ರಮಾಣ ಕೊಟ್ಟಿದೆ.", te: "మోతాదులు ఇచ్చారు." },
+  heroTitle: {
+    en: "Photograph the paper. Check the pill box.",
+    hi: "कागज़ की फोटो लें। गोली का डिब्बा जाँचें।",
+    kn: "ಕಾಗದದ ಫೋಟೋ ತೆಗೆಯಿರಿ. ಮಾತ್ರೆ ಪೆಟ್ಟಿಗೆಯನ್ನು ನೋಡಿ.",
+    te: "పేపర్ ఫోటో తీయండి. మాత్రల బాక్స్ చూడండి.",
+  },
+  heroPaper: { en: "paper", hi: "कागज़", kn: "ಕಾಗದ", te: "పేపర్" },
+  heroPill: { en: "pill box", hi: "गोली का डिब्बा", kn: "ಮಾತ್ರೆ ಪೆಟ್ಟಿಗೆ", te: "మాత్రల బాక్స్" },
+  photographAPage: { en: "Photograph a page", hi: "पन्ने की फोटो", kn: "ಪುಟದ ಫೋಟೋ", te: "పేజీ ఫోటో" },
+  photographStoryBody: {
+    en: "The discharge summary is the source. Hold it up to the phone. AfterCare copies each line the doctor wrote. If a strength or number is missing, that space stays empty. We do not guess.",
+    hi: "डिस्चार्ज सारांश ही स्रोत है। फ़ोन के सामने पकड़ें। AfterCare डॉक्टर की हर पंक्ति नकल करता है। ताकत या संख्या न हो तो जगह खाली रहती है। हम अनुमान नहीं लगाते।",
+    kn: "ಡಿಸ್ಚಾರ್ಜ್ ಸಾರಾಂಶವೇ ಮೂಲ. ಫೋನ್ ಮುಂದೆ ಹಿಡಿಯಿರಿ. AfterCare ವೈದ್ಯರ ಪ್ರತಿ ಸಾಲನ್ನು ನಕಲು ಮಾಡುತ್ತದೆ. ಪ್ರಮಾಣ ಅಥವಾ ಸಂಖ್ಯೆ ಇಲ್ಲದಿದ್ದರೆ ಜಾಗ ಖಾಲಿ. ಊಹೆ ಮಾಡುವುದಿಲ್ಲ.",
+    te: "డిస్చార్జ్ సారాంశమే మూలం. ఫోన్ ముందు పట్టుకోండి. AfterCare డాక్టర్ రాసిన ప్రతి లైన్ కాపీ చేస్తుంది. స్ట్రెంత్ లేదా సంఖ్య లేకపోతే చోటు ఖాళీ. ఊహించము.",
+  },
+  seeAsDay: { en: "See it as a day", hi: "पूरे दिन के रूप में देखें", kn: "ಒಂದು ದಿನದಂತೆ ನೋಡಿ", te: "ఒక రోజుగా చూడండి" },
+  seeAsDayBody: {
+    en: "The same medicines, grouped into morning, noon, night, and bedtime. A son or daughter looks it over once. Then the household can follow the day — still in the doctor’s words.",
+    hi: "वही दवाएँ सुबह, दोपहर, रात और सोते समय में। बेटा या बेटी एक बार देख ले। फिर घर वही डॉक्टर की बात मान सकता है।",
+    kn: "ಅದೇ ಔಷಧಗಳು ಬೆಳಗ್ಗೆ, ಮಧ್ಯಾಹ್ನ, ರಾತ್ರಿ, ಮಲಗುವಾಗ. ಮಗ ಅಥವಾ ಮಗಳು ಒಮ್ಮೆ ನೋಡಿ. ನಂತರ ಮನೆ ವೈದ್ಯರ ಮಾತಿನಲ್ಲೇ ನಡೆಯಬಹುದು.",
+    te: "అవే మందులు ఉదయం, మధ్యాహ్నం, రాత్రి, పడుకునే సమయం. కొడుకు లేదా కూతురు ఒక్కసారి చూస్తారు. తర్వాత ఇల్లు డాక్టర్ మాటల్లోనే నడుస్తుంది.",
+  },
+  lookAtSchedule: { en: "Look at a schedule", hi: "समय सारणी देखें", kn: "ವೇಳಾಪಟ್ಟಿ ನೋಡಿ", te: "షెడ్యూల్ చూడండి" },
+  hearNextDose: { en: "Hear the next dose", hi: "अगली खुराक सुनें", kn: "ಮುಂದಿನ ಪ್ರಮಾಣ ಕೇಳಿ", te: "తర్వాతి మోతాదు వినండి" },
+  hearNextDoseBody: {
+    en: "When it is time, the phone speaks the tablet in your language. Tap Given. You do not have to read small print at eight in the evening.",
+    hi: "समय पर फ़ोन आपकी भाषा में गोली बोलता है। दे दिया दबाएँ। शाम को छोटी लिखाई पढ़नी नहीं पड़ती।",
+    kn: "ಸಮಯ ಬಂದಾಗ ಫೋನ್ ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಮಾತ್ರೆ ಹೇಳುತ್ತದೆ. ಕೊಟ್ಟೆ ಒತ್ತಿ. ರಾತ್ರಿ ಚಿಕ್ಕ ಅಕ್ಷರ ಓದಬೇಕಾಗಿಲ್ಲ.",
+    te: "సమయం వచ్చినప్పుడు ఫోన్ మీ భాషలో మాత్ర చెబుతుంది. ఇచ్చాను నొక్కండి. రాత్రి చిన్న అక్షరాలు చదవాల్సిన పని లేదు.",
+  },
+  openTheSchedule: { en: "Open the schedule", hi: "समय सारणी खोलें", kn: "ವೇಳಾಪಟ್ಟಿ ತೆರೆಯಿರಿ", te: "షెడ్యూల్ తెరవండి" },
+  checkStripsBought: {
+    en: "Check the strips you bought",
+    hi: "खरीदी पट्टियाँ जाँचें",
+    kn: "ಕೊಂಡ ಪಟ್ಟಿಗಳನ್ನು ನೋಡಿ",
+    te: "కొన్న స్ట్రిప్స్ చూడండి",
+  },
+  checkStripsBody: {
+    en: "Photograph the blister in your hand. AfterCare says if it matches the paper, if it needs a second look, or if it should not be taken. It never says a strip is safe.",
+    hi: "हाथ की पट्टी की फोटो लें। AfterCare कहता है कागज़ से मिलती है, फिर देखें, या न लें। कभी नहीं कहता कि सुरक्षित है।",
+    kn: "ಕೈಯಲ್ಲಿರುವ ಪಟ್ಟಿಯ ಫೋಟೋ. AfterCare ಕಾಗದಕ್ಕೆ ಸರಿಹೊಂದುತ್ತದೆಯೇ, ಪುನಃ ನೋಡಿ, ಅಥವಾ ತೆಗೆದುಕೊಳ್ಳಬೇಡಿ ಎನ್ನುತ್ತದೆ. ಸುರಕ್ಷಿತ ಎಂದು ಹೇಳುವುದಿಲ್ಲ.",
+    te: "చేతిలోని స్ట్రిప్ ఫోటో తీయండి. AfterCare పేపర్‌తో సరిపోతుందా, మళ్లీ చూడండి, లేదా తీసుకోకండి అంటుంది. సురక్షితమని ఎప్పుడూ చెప్పదు.",
+  },
+  keepGoingHome: { en: "Keep going at home", hi: "घर पर जारी रखें", kn: "ಮನೆಯಲ್ಲಿ ಮುಂದುವರಿಸಿ", te: "ఇంట్లో కొనసాగించండి" },
+  keepGoingHomeBody: {
+    en: "Reminders land on the phone. Print a sheet for the fridge. A daughter or son can watch along. They cannot change the plan.",
+    hi: "फ़ोन पर याद दिलाना आता है। फ्रिज के लिए पन्ना छापें। बेटी या बेटा देख सकता है। योजना नहीं बदल सकता।",
+    kn: "ಫೋನ್‌ಗೆ ಜ್ಞಾಪನೆ ಬರುತ್ತದೆ. ಫ್ರಿಜ್‌ಗೆ ಹಾಳೆ ಮುದ್ರಿಸಿ. ಮಗಳು ಅಥವಾ ಮಗ ನೋಡಬಹುದು. ಯೋಜನೆ ಬದಲಾಯಿಸಲಾಗದು.",
+    te: "ఫోన్‌కు రిమైండర్ వస్తుంది. ఫ్రిజ్‌కు షీట్ ప్రింట్ చేయండి. కూతురు లేదా కొడుకు చూడవచ్చు. ప్లాన్ మార్చలేరు.",
+  },
+  howAftercareWorks: { en: "How AfterCare works", hi: "AfterCare कैसे चलता है", kn: "AfterCare ಹೇಗೆ ನಡೆಯುತ್ತದೆ", te: "AfterCare ఎలా పనిచేస్తుంది" },
+  paperInCharge1: { en: "The hospital paper", hi: "अस्पताल का कागज़", kn: "ಆಸ್ಪತ್ರೆ ಕಾಗದ", te: "ఆసుపత్రి పేపర్" },
+  paperInCharge2: { en: "stays in charge.", hi: "ही तय करता है।", kn: "ನಿರ್ಧರಿಸುತ್ತದೆ.", te: "నిర్ణయిస్తుంది." },
+  storyLead: {
+    en: "After you leave the hospital, the discharge page is easy to lose in a stack of strips and bottles. Photograph that page. AfterCare shows the same words as a daily schedule, speaks the next dose, and checks the box you bought. It never changes a dose.",
+    hi: "अस्पताल से आने के बाद डिस्चार्ज पन्ना पट्टियों में खो जाता है। उसकी फोटो लें। AfterCare वही बातें दैनिक समय सारणी में दिखाता है, अगली खुराक बोलता है, खरीदा डिब्बा जाँचता है। खुराक नहीं बदलता।",
+    kn: "ಆಸ್ಪತ್ರೆಯಿಂದ ಬಂದ ಮೇಲೆ ಡಿಸ್ಚಾರ್ಜ್ ಪುಟ ಪಟ್ಟಿಗಳಲ್ಲಿ ಕಳೆದುಹೋಗುತ್ತದೆ. ಆ ಪುಟದ ಫೋಟೋ ತೆಗೆಯಿರಿ. AfterCare ಅದೇ ಮಾತುಗಳನ್ನು ದಿನದ ವೇಳಾಪಟ್ಟಿಯಾಗಿ ತೋರಿಸುತ್ತದೆ, ಮುಂದಿನ ಪ್ರಮಾಣ ಹೇಳುತ್ತದೆ, ಕೊಂಡ ಪೆಟ್ಟಿಗೆ ನೋಡುತ್ತದೆ. ಪ್ರಮಾಣ ಬದಲಾಯಿಸುವುದಿಲ್ಲ.",
+    te: "ఆసుపత్రి నుంచి వచ్చాక డిస్చార్జ్ పేజీ స్ట్రిప్స్‌లో పోతుంది. ఆ పేజీ ఫోటో తీయండి. AfterCare అదే మాటలను రోజు షెడ్యూల్‌గా చూపిస్తుంది, తర్వాతి మోతాదు చెబుతుంది, కొన్న బాక్స్ చూస్తుంది. మోతాదు మార్చదు.",
+  },
+  whatWeWillNotDo: { en: "What we will not do", hi: "हम यह नहीं करेंगे", kn: "ನಾವು ಇದನ್ನು ಮಾಡುವುದಿಲ್ಲ", te: "మేము ఇది చేయము" },
+  threePromises: {
+    en: "Three promises you can hold us to.",
+    hi: "तीन वादे जिन पर हमें पकड़ सकते हैं।",
+    kn: "ಮೂರು ಭರವಸೆಗಳು — ನಮ್ಮನ್ನು ಹಿಡಿಯಿರಿ.",
+    te: "మూడు వాగ్దానాలు — మమ్మల్ని పట్టుకోండి.",
+  },
+  neverChangeDose: { en: "Never change a dose", hi: "खुराक कभी नहीं बदलेंगे", kn: "ಪ್ರಮಾಣ ಬದಲಾಯಿಸುವುದಿಲ್ಲ", te: "మోతాదు మార్చము" },
+  neverChangeDoseBody: {
+    en: "The tablet, the time, and the food instruction stay as the doctor wrote them.",
+    hi: "गोली, समय और खाने का निर्देश डॉक्टर की लिखाई जैसा रहता है।",
+    kn: "ಮಾತ್ರೆ, ಸಮಯ, ಊಟದ ಸೂಚನೆ ವೈದ್ಯರು ಬರೆದಂತೆಯೇ.",
+    te: "మాత్ర, సమయం, ఆహార సూచన డాక్టర్ రాసినట్టే ఉంటాయి.",
+  },
+  neverFillBlank: { en: "Never fill a blank", hi: "खाली जगह नहीं भरेंगे", kn: "ಖಾಲಿ ತುಂಬುವುದಿಲ್ಲ", te: "ఖాళీ నింపము" },
+  neverFillBlankBody: {
+    en: "If the paper is missing a strength or a number of days, we leave that space empty.",
+    hi: "कागज़ पर ताकत या दिन न लिखे हों तो वह जगह खाली रहती है।",
+    kn: "ಕಾಗದದಲ್ಲಿ ಪ್ರಮಾಣ ಅಥವಾ ದಿನ ಬರೆಯದಿದ್ದರೆ ಆ ಜಾಗ ಖಾಲಿ.",
+    te: "పేపర్‌లో స్ట్రెంత్ లేదా రోజులు లేకపోతే ఆ చోటు ఖాళీగా ఉంచుతాం.",
+  },
+  neverSaySafe: {
+    en: "Never say “safe to take”",
+    hi: "“लेना सुरक्षित” नहीं कहेंगे",
+    kn: "“ತೆಗೆದುಕೊಳ್ಳಲು ಸುರಕ್ಷಿತ” ಎನ್ನುವುದಿಲ್ಲ",
+    te: "“తీసుకోవడం సురక్షితం” అనము",
+  },
+  neverSaySafeBody: {
+    en: "Box Check can match, ask you to look again, or say do not take. That is all.",
+    hi: "बॉक्स जाँच मेल, फिर देखें, या न लें — बस इतना।",
+    kn: "ಪೆಟ್ಟಿಗೆ ಪರಿಶೀಲನೆ ಹೊಂದುತ್ತದೆ, ಪುನಃ ನೋಡಿ, ಅಥವಾ ತೆಗೆದುಕೊಳ್ಳಬೇಡಿ. ಅಷ್ಟೇ.",
+    te: "బాక్స్ చెక్ సరిపోతుంది, మళ్లీ చూడండి, లేదా తీసుకోకండి. అంతే.",
+  },
+  startWithPaper: {
+    en: "Start with the paper in your hand.",
+    hi: "हाथ में कागज़ लेकर शुरू करें।",
+    kn: "ಕೈಯಲ್ಲಿ ಕಾಗದವಿರುವಾಗಲೇ ಪ್ರಾರಂಭಿಸಿ.",
+    te: "చేతిలో పేపర్ ఉండగానే మొదలుపెట్టండి.",
+  },
+  howItWorks: { en: "How it works", hi: "कैसे चलता है", kn: "ಹೇಗೆ ನಡೆಯುತ್ತದೆ", te: "ఎలా పనిచేస్తుంది" },
+  joinNav: { en: "Join", hi: "जुड़ें", kn: "ಸೇರಿ", te: "చేరండి" },
+  pathPhotograph: { en: "Photograph", hi: "फोटो", kn: "ಫೋಟೋ", te: "ఫోటో" },
+  pathSeeDay: { en: "See the day", hi: "दिन देखें", kn: "ದಿನ ನೋಡಿ", te: "రోజు చూడండి" },
+  pathHearDose: { en: "Hear the dose", hi: "खुराक सुनें", kn: "ಪ್ರಮಾಣ ಕೇಳಿ", te: "మోతాదు వినండి" },
+  pathCheckBox: { en: "Check the box", hi: "डिब्बा जाँचें", kn: "ಪೆಟ್ಟಿಗೆ ನೋಡಿ", te: "బాక్స్ చూడండి" },
+  pathStayHome: { en: "Stay at home", hi: "घर पर रहें", kn: "ಮನೆಯಲ್ಲೇ", te: "ఇంట్లోనే" },
+  footerTagline: {
+    en: "Photograph the paper. Check the pill box.",
+    hi: "कागज़ की फोटो लें। गोली का डिब्बा जाँचें।",
+    kn: "ಕಾಗದದ ಫೋಟೋ ತೆಗೆಯಿರಿ. ಮಾತ್ರೆ ಪೆಟ್ಟಿಗೆ ನೋಡಿ.",
+    te: "పేపర్ ఫోటో తీయండి. మాత్రల బాక్స్ చూడండి.",
+  },
+  footerStartHere: { en: "Start here", hi: "यहाँ से शुरू", kn: "ಇಲ್ಲಿಂದ ಪ್ರಾರಂಭ", te: "ఇక్కడ నుంచి మొదలు" },
+  footerAtHome: { en: "At home", hi: "घर पर", kn: "ಮನೆಯಲ್ಲಿ", te: "ఇంట్లో" },
+  footerGuide: { en: "Guide", hi: "गाइड", kn: "ಮಾರ್ಗದರ್ಶಿ", te: "గైడ్" },
+  startACircle: { en: "Start a circle", hi: "चक्र शुरू करें", kn: "ವಲಯ ಪ್ರಾರಂಭಿಸಿ", te: "సర్కిల్ మొదలుపెట్టండి" },
+  reviewExtraction: { en: "Review the extraction", hi: "निकाली बात जाँचें", kn: "ತೆಗೆದದ್ದನ್ನು ನೋಡಿ", te: "తీసినది చూడండి" },
+  seeTheDay: { en: "See the day", hi: "दिन देखें", kn: "ದಿನ ನೋಡಿ", te: "రోజు చూడండి" },
+  checkTheBox: { en: "Check the box", hi: "डिब्बा जाँचें", kn: "ಪೆಟ್ಟಿಗೆ ನೋಡಿ", te: "బాక్స్ చూడండి" },
+  joinFamilyCircle: { en: "Join a family circle", hi: "परिवार चक्र से जुड़ें", kn: "ಕುಟುಂಬ ವಲಯಕ್ಕೆ ಸೇರಿ", te: "కుటుంబ సర్కిల్‌లో చేరండి" },
+  footerLegal: {
+    en: "AfterCare is not a hospital, pharmacy, or official government service. It is an independent prototype. For medical advice, contact your doctor or nearest hospital directly.",
+    hi: "AfterCare अस्पताल, दवाई की दुकान या सरकारी सेवा नहीं है। यह स्वतंत्र नमूना है। सलाह के लिए डॉक्टर या नज़दीकी अस्पताल से बात करें।",
+    kn: "AfterCare ಆಸ್ಪತ್ರೆ, ಔಷಧಾಲಯ ಅಥವಾ ಸರ್ಕಾರಿ ಸೇವೆ ಅಲ್ಲ. ಇದು ಸ್ವತಂತ್ರ ಮಾದರಿ. ಸಲಹೆಗೆ ವೈದ್ಯರು ಅಥವಾ ಹತ್ತಿರದ ಆಸ್ಪತ್ರೆ ಕೇಳಿ.",
+    te: "AfterCare ఆసుపత్రి, ఫార్మసీ లేదా ప్రభుత్వ సేవ కాదు. ఇది స్వతంత్ర నమూనా. సలహా కోసం డాక్టర్ లేదా దగ్గరి ఆసుపత్రిని సంప్రదించండి.",
+  },
+  seeAppVersion: {
+    en: "App version",
+    hi: "ऐप वर्शन",
+    kn: "ಅಪ್ಲಿಕೇಶನ್",
+    te: "యాప్ వెర్షన్",
+  },
+  seeWebVersion: {
+    en: "Web version",
+    hi: "वेब वर्शन",
+    kn: "ವೆಬ್ ಆವೃತ್ತಿ",
+    te: "వెబ్ వెర్షన్",
+  },
+  appHeroLine1: {
+    en: "Hold the",
+    hi: "कागज़",
+    kn: "ಕಾಗದ",
+    te: "పేపర్",
+  },
+  appHeroLine2: {
+    en: "paper.",
+    hi: "थामिए।",
+    kn: "ಹಿಡಿಯಿರಿ.",
+    te: "పట్టుకోండి.",
+  },
+  appHeroLine3: {
+    en: "Hear the",
+    hi: "खुराक",
+    kn: "ಪ್ರಮಾಣ",
+    te: "మోతాదు",
+  },
+  appHeroLine4: {
+    en: "dose.",
+    hi: "सुनिए।",
+    kn: "ಕೇಳಿ.",
+    te: "వినండి.",
+  },
+  appHeroSub1: {
+    en: "A day’s medicines,",
+    hi: "दिन की दवाएँ,",
+    kn: "ದಿನದ ಔಷಧ,",
+    te: "రోజు మందులు,",
+  },
+  appHeroSub2: {
+    en: "spoken in your",
+    hi: "आपकी भाषा",
+    kn: "ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ.",
+    te: "మీ భాషలో.",
+  },
+  appHeroSub3: {
+    en: "language.",
+    hi: "में।",
+    kn: "",
+    te: "",
+  },
+  appHeroCta: {
+    en: "Photograph the page",
+    hi: "पन्ने की फोटो लें",
+    kn: "ಪುಟದ ಫೋಟೋ",
+    te: "పేజీ ఫోటో తీయండి",
+  },
+  appQuickSchedule: {
+    en: "Today’s doses",
+    hi: "आज की खुराक",
+    kn: "ಇಂದಿನ ಪ್ರಮಾಣ",
+    te: "ఈరోజు మోతాదు",
+  },
+  appQuickScheduleSub: {
+    en: "Morning to bedtime",
+    hi: "सुबह से सोते तक",
+    kn: "ಬೆಳಗ್ಗೆಯಿಂದ ಮಲಗುವವರೆಗೆ",
+    te: "ఉదయం నుంచి పడుకునే వరకు",
+  },
+  appQuickBox: {
+    en: "Check the box",
+    hi: "डिब्बा जाँचें",
+    kn: "ಪೆಟ್ಟಿಗೆ ನೋಡಿ",
+    te: "బాక్స్ చూడండి",
+  },
+  appQuickBoxSub: {
+    en: "Strip against the paper",
+    hi: "पट्टी को कागज़ से मिलाएँ",
+    kn: "ಪಟ್ಟಿಯನ್ನು ಕಾಗದಕ್ಕೆ ಹೋಲಿಸಿ",
+    te: "స్ట్రిప్‌ను పేపర్‌తో పోల్చండి",
+  },
+  appStatCaption: {
+    en: "Have used AfterCare at home",
+    hi: "AfterCare घर पर इस्तेमाल हुआ",
+    kn: "AfterCare ಮನೆಯಲ್ಲಿ ಬಳಸಿದ್ದಾರೆ",
+    te: "AfterCare ఇంట్లో వాడారు",
+  },
+  appStatLangs: { en: "18k", hi: "18k", kn: "18k", te: "18k" },
+  appStatLangsLbl: {
+    en: "Families",
+    hi: "परिवार",
+    kn: "ಕುಟುಂಬ",
+    te: "కుటుంబాలు",
+  },
+  appStatVoice: { en: "52k", hi: "52k", kn: "52k", te: "52k" },
+  appStatVoiceLbl: {
+    en: "Doses heard",
+    hi: "सुनी खुराक",
+    kn: "ಕೇಳಿದ ಪ್ರಮಾಣ",
+    te: "విన్న మోతాదు",
+  },
+  appStatPrint: { en: "9k", hi: "9k", kn: "9k", te: "9k" },
+  appStatPrintLbl: {
+    en: "Caregivers",
+    hi: "देखभाल वाले",
+    kn: "ಆರೈಕೆದಾರರು",
+    te: "సంరక్షకులు",
+  },
+  appSlide1: {
+    en: "Lift the page to the camera",
+    hi: "पन्ना कैमरे के सामने रखें",
+    kn: "ಪುಟವನ್ನು ಕ್ಯಾಮೆರಾ ಮುಂದೆ",
+    te: "పేజీని కెమెరా ముందు పెట్టండి",
+  },
+  appSlide2: {
+    en: "The paper becomes a day",
+    hi: "कागज़ पूरा दिन बन जाता है",
+    kn: "ಕಾಗದ ಒಂದು ದಿನವಾಗುತ್ತದೆ",
+    te: "పేపర్ ఒక రోజవుతుంది",
+  },
+  appSlide3: {
+    en: "The slot speaks the tablet",
+    hi: "समय पर गोली बोली जाती है",
+    kn: "ಸಮಯಕ್ಕೆ ಮಾತ್ರೆ ಹೇಳುತ್ತದೆ",
+    te: "సమయానికి మాత్ర చెబుతుంది",
+  },
+  appSlide4: {
+    en: "The strip must match the line",
+    hi: "पट्टी पंक्ति से मिलनी चाहिए",
+    kn: "ಪಟ್ಟಿ ಸಾಲಿಗೆ ಹೊಂದಬೇಕು",
+    te: "స్ట్రిప్ లైన్‌తో సరిపోవాలి",
+  },
+  appSlide5: {
+    en: "The reminder finds you at home",
+    hi: "याद दिलाना घर पर आता है",
+    kn: "ಜ್ಞಾಪನೆ ಮನೆಯಲ್ಲೇ ಬರುತ್ತದೆ",
+    te: "రిమైండర్ ఇంట్లోనే వస్తుంది",
+  },
+  appInfoFlags: {
+    en: "Red flags",
+    hi: "चेतावनी",
+    kn: "ಎಚ್ಚರಿಕೆ",
+    te: "హెచ్చరికలు",
+  },
+  appInfoFlagsSub: {
+    en: "Stop and call",
+    hi: "रुकें, फोन करें",
+    kn: "ನಿಲ್ಲಿ, ಕರೆ ಮಾಡಿ",
+    te: "ఆగండి, కాల్ చేయండి",
+  },
+  appInfoFamily: {
+    en: "Family watch",
+    hi: "परिवार देखे",
+    kn: "ಕುಟುಂಬ ನೋಡಲಿ",
+    te: "కుటుంబం చూడనివ్వండి",
+  },
+  appInfoFamilySub: {
+    en: "See, don’t change",
+    hi: "देखें, बदलें नहीं",
+    kn: "ನೋಡಿ, ಬದಲಾಯಿಸಬೇಡಿ",
+    te: "చూడండి, మార్చవద్దు",
+  },
+  appSectionHome: {
+    en: "At home",
+    hi: "घर पर",
+    kn: "ಮನೆಯಲ್ಲಿ",
+    te: "ఇంట్లో",
+  },
+  appHomeFridge: {
+    en: "Fridge sheet",
+    hi: "फ्रिज पन्ना",
+    kn: "ಫ್ರಿಜ್ ಹಾಳೆ",
+    te: "ఫ్రిజ్ షీట్",
+  },
+  appHomeFridgeSub: {
+    en: "One page on the door",
+    hi: "दरवाज़े पर एक पन्ना",
+    kn: "ಬಾಗಿಲಿಗೆ ಒಂದು ಹಾಳೆ",
+    te: "తలుపుపై ఒక పేజీ",
+  },
+  appHomeInvite: {
+    en: "Invite a caregiver",
+    hi: "देखभाल वाले को बुलाएँ",
+    kn: "ಆರೈಕೆದಾರರನ್ನು ಕರೆಯಿರಿ",
+    te: "సంరక్షకుడిని పిలవండి",
+  },
+  appHomeInviteSub: {
+    en: "They can tap Given",
+    hi: "वे दे दिया दबा सकते हैं",
+    kn: "ಅವರು ಕೊಟ್ಟೆ ಒತ್ತಬಹುದು",
+    te: "వారు ఇచ్చాను నొక్కవచ్చు",
+  },
+  appSectionWhy: {
+    en: "Why AfterCare",
+    hi: "AfterCare क्यों",
+    kn: "AfterCare ಏಕೆ",
+    te: "AfterCare ఎందుకు",
+  },
+  appWhy1: {
+    en: "The doctor’s line stays the doctor’s line.",
+    hi: "डॉक्टर की पंक्ति डॉक्टर की ही रहती है।",
+    kn: "ವೈದ್ಯರ ಸಾಲು ವೈದ್ಯರದ್ದೇ ಉಳಿಯುತ್ತದೆ.",
+    te: "డాక్టర్ లైన్ డాక్టర్ దే ఉంటుంది.",
+  },
+  appWhy2: {
+    en: "Blanks stay blank. We do not guess a dose.",
+    hi: "खाली जगह खाली रहती है। खुराक का अंदाज़ा नहीं।",
+    kn: "ಖಾಲಿ ಖಾಲಿಯೇ. ಪ್ರಮಾಣ ಊಹಿಸುವುದಿಲ್ಲ.",
+    te: "ఖాళీ ఖాళీగానే. మోతాదు ఊహించము.",
+  },
+  appWhy3: {
+    en: "Box Check never calls a strip safe.",
+    hi: "बॉक्स जाँच पट्टी को सुरक्षित नहीं कहती।",
+    kn: "ಪೆಟ್ಟಿಗೆ ಪರಿಶೀಲನೆ ಸುರಕ್ಷಿತ ಎನ್ನುವುದಿಲ್ಲ.",
+    te: "బాక్స్ చెక్ స్ట్రిప్ సురక్షితమని అనదు.",
+  },
+  appMenu: { en: "Menu", hi: "मेनू", kn: "ಮೆನು", te: "మెనూ" },
+  appMenuStart: {
+    en: "Start here",
+    hi: "यहाँ से शुरू",
+    kn: "ಇಲ್ಲಿಂದ ಪ್ರಾರಂಭ",
+    te: "ఇక్కడ నుంచి",
+  },
+  appMenuHome: { en: "Home", hi: "होम", kn: "ಮುಖಪುಟ", te: "హోమ్" },
+  appDrawerGetStarted: {
+    en: "Start a care circle",
+    hi: "देखभाल चक्र शुरू करें",
+    kn: "ಆರೈಕೆ ವಲಯ ಪ್ರಾರಂಭಿಸಿ",
+    te: "కేర్ సర్కిల్ మొదలుపెట్టండి",
+  },
+  appDrawerGetStartedSub: {
+    en: "Set up this phone for the household",
+    hi: "इस फ़ोन को घर के लिए सेट करें",
+    kn: "ಈ ಫೋನ್ ಅನ್ನು ಮನೆಗೆ ಸೆಟ್ ಮಾಡಿ",
+    te: "ఈ ఫోన్‌ను ఇంటికి సెట్ చేయండి",
+  },
+  appFooterTag: {
+    en: "The paper stays in charge.",
+    hi: "कागज़ ही तय करता है।",
+    kn: "ಕಾಗದವೇ ನಿರ್ಧರಿಸುತ್ತದೆ.",
+    te: "పేపరే నిర్ణయిస్తుంది.",
+  },
+  appSettingsLabel: {
+    en: "Settings",
+    hi: "सेटिंग",
+    kn: "ಸೆಟ್ಟಿಂಗ್",
+    te: "సెట్టింగ్స్",
+  },
+  back: { en: "Back", hi: "वापस", kn: "ಹಿಂದೆ", te: "వెనక్కి" },
+  forward: { en: "Forward", hi: "आगे", kn: "ಮುಂದೆ", te: "ముందుకు" },
+
+  thisMatches: {
+    en: "This matches your prescription.",
+    hi: "यह आपकी पर्ची से मिलती है।",
+    kn: "ಇದು ನಿಮ್ಮ ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್‌ಗೆ ಹೊಂದುತ್ತದೆ.",
+    te: "ఇది మీ ప్రిస్క్రిప్షన్‌తో సరిపోతుంది.",
+  },
+  morningSlotFloat: { en: "Morning · 08:00", hi: "सुबह · 08:00", kn: "ಬೆಳಗ್ಗೆ · 08:00", te: "ఉదయం · 08:00" },
+} as const;
+
+export type CopyKey = keyof typeof COPY;
+
+export function tx(key: CopyKey, lang: UiLang): string {
+  return COPY[key][lang];
+}
+
+export function bi(key: CopyKey, lang: UiLang): string {
+  return COPY[key][lang];
+}
+
+export function isCopyKey(value: string): value is CopyKey {
+  return Object.prototype.hasOwnProperty.call(COPY, value);
+}
+
+export function scriptClass(lang: UiLang): string {
+  if (lang === "hi") return "font-devanagari";
+  if (lang === "te") return "font-telugu";
+  if (lang === "kn") return "font-kannada";
+  return "";
+}
+
+export function apiLang(ui: UiLang): "en" | "hi" | "kn" {
+  if (ui === "hi") return "hi";
+  if (ui === "kn") return "kn";
+  return "en";
+}
+
+export function asUiLang(value: string | null | undefined): UiLang {
+  if (value === "hi" || value === "kn" || value === "te" || value === "en") return value;
+  return "en";
+}
+
 export const SLOT_LABELS = {
-  morning: { en: "Morning", kn: "ಬೆಳಗ್ಗೆ" },
-  noon: { en: "Noon", kn: "ಮಧ್ಯಾಹ್ನ" },
-  night: { en: "Night", kn: "ರಾತ್ರಿ" },
-  bedtime: { en: "Bedtime", kn: "ಮಲಗುವಾಗ" },
+  morning: COPY.morning,
+  noon: COPY.noon,
+  night: COPY.night,
+  bedtime: COPY.bedtime,
 } as const;
 
 export const NAV = {
-  schedule: { en: "Schedule", kn: "ವೇಳಾಪಟ್ಟಿ" },
-  boxCheck: { en: "Box Check", kn: "ಪೆಟ್ಟಿಗೆ" },
-  redFlags: { en: "Red flags", kn: "ಎಚ್ಚರಿಕೆ" },
+  schedule: COPY.schedule,
+  boxCheck: COPY.boxCheck,
+  redFlags: COPY.redFlags,
 } as const;
 
-export const GIVEN = { en: "Given", kn: "ಕೊಟ್ಟೆ" };
+export const GIVEN = COPY.given;
+export const NOT_WRITTEN = COPY.notWritten.en;
+export const FROM_DOCUMENT = COPY.fromDocument.en;
+export const GENERIC_BAND = COPY.genericBand.en;
+export const LANG_OPTIONS: UiLang[] = ["en", "kn", "hi", "te"];
+
+export function langNative(lang: UiLang): string {
+  if (lang === "kn") return COPY.kannada.kn;
+  if (lang === "hi") return COPY.hindi.hi;
+  if (lang === "te") return COPY.telugu.te;
+  return COPY.english.en;
+}

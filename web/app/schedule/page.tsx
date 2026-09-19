@@ -1,29 +1,47 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { AudioPlayer } from "@/components/AudioPlayer";
+import { Bilingual } from "@/components/Bilingual";
 import { Button } from "@/components/Button";
+import { DoseMatrix } from "@/components/DoseMatrix";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorNote } from "@/components/ErrorNote";
 import { PageHeader } from "@/components/PageHeader";
-import { ILLUSTRATIONS, ScenePhoto } from "@/components/marketing/illustrations";
+import { PlateMark } from "@/components/PlateMark";
 import { StatusChip } from "@/components/StatusChip";
-import { GIVEN, SLOT_LABELS } from "@/lib/copy";
-import { brandLabel, foodLabel } from "@/lib/format";
-import { useDemo } from "@/lib/demo/store";
+import { ILLUSTRATIONS, ScenePhoto } from "@/components/marketing/illustrations";
+import { bi, COPY, type CopyKey } from "@/lib/copy";
+import { brandLabel, foodKey } from "@/lib/format";
+import { useApp } from "@/lib/app/store";
+import { useAppView } from "@/lib/app/view";
 import type { Slot } from "@/lib/api/types";
 
 const SLOTS: Slot[] = ["morning", "noon", "night", "bedtime"];
 
 export default function SchedulePage() {
   const router = useRouter();
-  const { ready, plan, doses, markGiven } = useDemo();
+  const { isApp } = useAppView();
+  const { ready, plan, doses, markGiven, queuedDoseIds, audio, loadAudio, error, circleId, uiLang } = useApp();
 
-  if (!ready) return <p>Loading schedule…</p>;
+  if (!ready) return <p>{bi("loading", uiLang)}</p>;
+  if (!circleId) {
+    return (
+      <EmptyState
+        title="noCircleTitle"
+        body="noCircleBody"
+        action="setUp"
+        href="/setup/"
+        illustration={<ScenePhoto src={ILLUSTRATIONS.schedule} />}
+      />
+    );
+  }
   if (!plan || plan.status !== "active") {
     return (
       <EmptyState
-        title="No active schedule"
-        body={plan ? "Review and activate the draft plan first." : "Photograph a discharge summary first."}
-        action={plan ? "Go to review" : "Photograph paper"}
+        title="noScheduleTitle"
+        body={plan ? "reviewActivate" : "photographFirst"}
+        action={plan ? "goToReview" : "photographPaper"}
         href={plan ? "/review/" : "/upload/"}
         illustration={<ScenePhoto src={ILLUSTRATIONS.schedule} />}
       />
@@ -36,90 +54,103 @@ export default function SchedulePage() {
   return (
     <section>
       <PageHeader
-        eyebrow="Today"
-        title="Medicine schedule"
-        description="One Given action per time slot, not per medicine."
+        eyebrow="today"
+        title="medicineSchedule"
+        description="oneGiven"
         actions={
-          <Button variant="ghost" onClick={() => router.push("/fridge-sheet/")}>
-            Open fridge sheet
-          </Button>
+          <div className={isApp ? "app-actions" : "flex flex-wrap gap-3"}>
+            <Button variant="ghost" onClick={() => router.push("/fridge-sheet/")}>
+              <Bilingual k="openFridge" lang={uiLang} />
+            </Button>
+            <Button variant="ghost" onClick={() => router.push("/family/")}>
+              <Bilingual k="familyView" lang={uiLang} />
+            </Button>
+          </div>
         }
       />
-      <div className="page-scene mb-8">
-        <ScenePhoto src={ILLUSTRATIONS.schedule} />
+      <ErrorNote message={error} />
+      {isApp ? null : (
+        <div className="page-scene mb-8">
+          <ScenePhoto src={ILLUSTRATIONS.schedule} />
+        </div>
+      )}
+
+      <div className="mb-8">
+        <AudioPlayer clip={audio} onLoad={loadAudio} />
       </div>
 
-      <div className="overflow-hidden rounded-[28px] border border-card">
-        <table className="w-full text-left">
-          <thead className="bg-card">
-            <tr>
-              <th className="px-5 py-4 font-semibold">Medicine</th>
-              {SLOTS.map((slot) => (
-                <th key={slot} className="px-5 py-4 text-center font-semibold">
-                  <span className="block">{SLOT_LABELS[slot].en}</span>
-                  <span className="muted block font-normal">{plan.slotTimes[slot]}</span>
+      {isApp ? (
+        <DoseMatrix medicines={scheduled} slotTimes={plan.slotTimes} />
+      ) : (
+        <div className="overflow-x-auto overflow-hidden rounded-[28px] border border-card">
+          <table className="w-full text-left">
+            <thead className="bg-card">
+              <tr>
+                <th className="px-5 py-4 font-semibold">
+                  <Bilingual k="medicine" lang={uiLang} stacked />
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {scheduled.map((medicine) => (
-              <tr key={medicine.lineId} className="border-t border-card">
-                <th className="px-5 py-4 align-top">
-                  <p className="font-semibold">{brandLabel(medicine.brand)}</p>
-                  <p className="muted font-normal">
-                    {foodIcon(medicine.foodRelation)} {foodLabel(medicine.foodRelation)}
-                  </p>
-                </th>
-                {SLOTS.map((slot) => {
-                  const on = medicine.slots.includes(slot);
-                  return (
-                    <td key={slot} className="px-5 py-4 text-center">
-                      <span className="sr-only">
-                        {on ? `Take in the ${slot}` : `Not scheduled in the ${slot}`}
-                      </span>
-                      <span
-                        aria-hidden="true"
-                        className={`inline-block h-5 w-5 rounded-full ${
-                          on ? "bg-secondary" : "border-2 border-primary/25 bg-white"
-                        }`}
-                      />
-                    </td>
-                  );
-                })}
+                {SLOTS.map((slot) => (
+                  <th key={slot} className="px-5 py-4 text-center font-semibold">
+                    <Bilingual k={slot} lang={uiLang} stacked />
+                    <span className="muted block font-normal">{plan.slotTimes[slot]}</span>
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {scheduled.map((medicine) => (
+                <tr key={medicine.lineId} className="border-t border-card">
+                  <th className="px-5 py-4 align-top">
+                    <p className="font-semibold">{brandLabel(medicine.brand)}</p>
+                    <p className="muted font-normal">
+                      <PlateMark relation={medicine.foodRelation} />{" "}
+                      <Bilingual k={foodKey(medicine.foodRelation)} lang={uiLang} />
+                    </p>
+                  </th>
+                  {SLOTS.map((slot) => {
+                    const on = medicine.slots.includes(slot);
+                    return (
+                      <td key={slot} className="px-5 py-4 text-center">
+                        <span className="take-skip">
+                          <span className={`take-skip-dot ${on ? "is-take" : "is-skip"}`} />
+                          <Bilingual k={on ? "take" : "skip"} lang={uiLang} />
+                        </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      <div className="mt-8 grid gap-5 md:grid-cols-3">
+      <div className={`mt-8 grid gap-5 ${isApp ? "" : "md:grid-cols-3"}`}>
         {doses.map((dose) => {
           const names = dose.medicineLineIds
             .map((id) => brandLabel(plan.medicines.find((medicine) => medicine.lineId === id)?.brand ?? null))
             .join(", ");
           const given = dose.status === "given";
           const missed = dose.status === "missed";
+          const queued = queuedDoseIds.includes(dose.doseId);
+          const statusKey: CopyKey = queued ? "queued" : given ? "given" : missed ? "missed" : "due";
           return (
-            <article key={dose.doseId} className="rounded-3xl bg-card p-6">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="font-display text-[28px]">
-                  {SLOT_LABELS[dose.slot].en} · {plan.slotTimes[dose.slot]}
+            <article key={dose.doseId} className="app-panel rounded-3xl bg-card p-6">
+              <div className="flex flex-col gap-2">
+                <h2 className={isApp ? "font-display text-[22px] leading-snug" : "font-display text-[28px]"}>
+                  {COPY[dose.slot][uiLang]} · {plan.slotTimes[dose.slot]}
                 </h2>
-                {given ? (
-                  <StatusChip icon="✓" label={GIVEN.en} tone="ok" />
-                ) : missed ? (
-                  <StatusChip icon="✕" label="Missed" tone="danger" />
-                ) : (
-                  <StatusChip icon="○" label="Due" />
-                )}
+                <StatusChip
+                  icon={given ? "✓" : missed ? "✕" : "○"}
+                  label={bi(statusKey, uiLang)}
+                  tone={given ? "ok" : missed ? "danger" : "neutral"}
+                />
               </div>
               <p className="mt-3">{names}</p>
-              <p className="font-kannada muted mt-1">{SLOT_LABELS[dose.slot].kn}</p>
               {!given ? (
                 <div className="mt-5">
                   <Button onClick={() => markGiven(dose.doseId)}>
-                    {GIVEN.en} · {GIVEN.kn}
+                    <Bilingual k="given" lang={uiLang} />
                   </Button>
                 </div>
               ) : null}
@@ -130,14 +161,14 @@ export default function SchedulePage() {
 
       {prn.length > 0 ? (
         <section className="mt-10">
-          <h2 className="font-display text-[32px]">Only when needed</h2>
-          <ul className="mt-4 grid gap-4 md:grid-cols-2">
+          <h2 className={isApp ? "font-display text-[22px] leading-snug" : "font-display text-[32px]"}>
+            <Bilingual k="onlyWhenNeeded" lang={uiLang} />
+          </h2>
+          <ul className={`mt-4 grid gap-4 ${isApp ? "" : "md:grid-cols-2"}`}>
             {prn.map((medicine) => (
-              <li key={medicine.lineId} className="rounded-3xl bg-card p-6">
+              <li key={medicine.lineId} className="app-panel rounded-3xl bg-card p-6">
                 <p className="font-semibold">{brandLabel(medicine.brand)}</p>
-                <p className="muted mt-1">
-                  {medicine.prnCondition ?? "Condition not stated. Ask your doctor."}
-                </p>
+                <p className="muted mt-1">{medicine.prnCondition ?? bi("notWritten", uiLang)}</p>
               </li>
             ))}
           </ul>
@@ -145,10 +176,4 @@ export default function SchedulePage() {
       ) : null}
     </section>
   );
-}
-
-function foodIcon(relation: string): string {
-  if (relation === "before") return "○";
-  if (relation === "after") return "◉";
-  return "–";
 }

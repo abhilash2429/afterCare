@@ -2,84 +2,105 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { AppHome } from "@/components/app/AppHome";
+import { BtnArrow } from "@/components/Button";
 import { ILLUSTRATIONS, PhoneMockup, ScenePhoto } from "@/components/marketing/illustrations";
+import { useApp } from "@/lib/app/store";
+import { COPY, type CopyKey, scriptClass } from "@/lib/copy";
 
 export const PHOTOS = {
   hero: "/photos/hero-care.png",
 };
 
-const STORY = [
+const STORY: {
+  id: string;
+  n: string;
+  path: CopyKey;
+  title: CopyKey;
+  body: CopyKey;
+  src: string;
+  href: string;
+  cta: CopyKey;
+}[] = [
   {
     id: "story-paper",
     n: "01",
-    path: "Photograph",
-    title: "Photograph the paper",
-    body: "The discharge summary is the source. Hold it up to the phone. AfterCare copies each line the doctor wrote. If a strength or number is missing, that space stays empty. We do not guess.",
+    path: "pathPhotograph",
+    title: "photographPaper",
+    body: "photographStoryBody",
     src: ILLUSTRATIONS.upload,
     href: "/upload/",
-    cta: "Photograph a page",
+    cta: "photographAPage",
   },
   {
     id: "story-day",
     n: "02",
-    path: "See the day",
-    title: "See it as a day",
-    body: "The same medicines, grouped into morning, noon, night, and bedtime. A son or daughter looks it over once. Then the household can follow the day — still in the doctor’s words.",
+    path: "pathSeeDay",
+    title: "seeAsDay",
+    body: "seeAsDayBody",
     src: ILLUSTRATIONS.review,
     href: "/review/",
-    cta: "Look at a schedule",
+    cta: "lookAtSchedule",
   },
   {
     id: "story-voice",
     n: "03",
-    path: "Hear the dose",
-    title: "Hear the next dose",
-    body: "When it is time, the phone speaks the tablet in your language. Tap Given. You do not have to read small print at eight in the evening.",
+    path: "pathHearDose",
+    title: "hearNextDose",
+    body: "hearNextDoseBody",
     src: ILLUSTRATIONS.schedule,
     href: "/schedule/",
-    cta: "Open the schedule",
+    cta: "openTheSchedule",
   },
   {
     id: "story-box",
     n: "04",
-    path: "Check the box",
-    title: "Check the strips you bought",
-    body: "Photograph the blister in your hand. AfterCare says if it matches the paper, if it needs a second look, or if it should not be taken. It never says a strip is safe.",
+    path: "pathCheckBox",
+    title: "checkStripsBought",
+    body: "checkStripsBody",
     src: ILLUSTRATIONS.boxCheck,
     href: "/box-check/",
-    cta: "Check the box",
+    cta: "checkTheBox",
   },
   {
     id: "story-home",
     n: "05",
-    path: "Stay at home",
-    title: "Keep going at home",
-    body: "Reminders land on the phone. Print a sheet for the fridge. A daughter or son can watch along. They cannot change the plan.",
+    path: "pathStayHome",
+    title: "keepGoingHome",
+    body: "keepGoingHomeBody",
     src: ILLUSTRATIONS.reminder,
     href: "/fridge-sheet/",
-    cta: "Open the fridge sheet",
+    cta: "openFridge",
   },
-] as const;
+];
 
 export function Landing() {
+  const { uiLang } = useApp();
+
   return (
     <div className="landing">
       <section className="landing-hero">
-        <h1>
-          <span className="hero-phrase">
-            Photograph the <HeroMark variant="paper">paper</HeroMark>.
-          </span>{" "}
-          Check the <HeroMark variant="pill">pill box</HeroMark>.
+        <h1 className={scriptClass(uiLang)}>
+          {uiLang === "en" ? (
+            <>
+              <span className="hero-phrase">
+                Photograph the <HeroMark variant="paper">paper</HeroMark>.
+              </span>{" "}
+              Check the <HeroMark variant="pill">pill box</HeroMark>.
+            </>
+          ) : (
+            COPY.heroTitle[uiLang]
+          )}
         </h1>
-        <p className="landing-lead">
-          AfterCare re-displays what the doctor wrote. It never changes a dose.
-        </p>
+        <p className={`landing-lead ${scriptClass(uiLang)}`}>{COPY.disclaimer[uiLang]}</p>
         <div className="landing-hero-actions">
-          <Link href="/upload/" className="btn-filled">
-            Photograph the paper
+          <Link href="/setup/" className="btn-filled">
+            {COPY.photographPaper[uiLang]}
+            <BtnArrow />
           </Link>
           <Link href="/box-check/" className="btn-outline">
-            Check the box
+            {COPY.checkTheBox[uiLang]}
+            <BtnArrow />
           </Link>
         </div>
       </section>
@@ -89,67 +110,69 @@ export function Landing() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={PHOTOS.hero} alt="Daughter and mother checking the discharge summary and pill box together" />
           <article className="landing-float landing-float-a">
-            <p className="landing-float-kicker">Morning · 08:00</p>
+            <p className="landing-float-kicker">{COPY.morningSlotFloat[uiLang]}</p>
             <p>Ecosprin, Pan, Glycomet GP1</p>
           </article>
           <article className="landing-float landing-float-c">
-            <p className="landing-float-kicker">From your document</p>
+            <p className="landing-float-kicker">{COPY.fromDocument[uiLang]}</p>
             <p>Report chest pain, breathlessness or bleeding.</p>
           </article>
           <div className="landing-phone">
             <article className="landing-float landing-float-b">
-              <p className="landing-float-kicker">Box Check</p>
-              <p>This matches your prescription.</p>
+              <p className="landing-float-kicker">{COPY.boxCheck[uiLang]}</p>
+              <p>{COPY.thisMatches[uiLang]}</p>
             </article>
-            <PhoneMockup />
+            <PhoneMockup>
+              <AppHome preview />
+            </PhoneMockup>
           </div>
         </div>
       </section>
 
       <section className="story" id="how-aftercare-works">
         <Reveal className="story-intro">
-          <p className="landing-eyebrow">How AfterCare works</p>
-          <h2>
-            The hospital paper
+          <p className={`landing-eyebrow ${scriptClass(uiLang)}`}>{COPY.howAftercareWorks[uiLang]}</p>
+          <h2 className={scriptClass(uiLang)}>
+            {COPY.paperInCharge1[uiLang]}
             <br />
-            stays in charge.
+            {COPY.paperInCharge2[uiLang]}
           </h2>
-          <p className="story-lead">
-            After you leave the hospital, the discharge page is easy to lose in a stack of strips
-            and bottles. Photograph that page. AfterCare shows the same words as a daily schedule,
-            speaks the next dose, and checks the box you bought. It never changes a dose.
-          </p>
+          <p className={`story-lead ${scriptClass(uiLang)}`}>{COPY.storyLead[uiLang]}</p>
         </Reveal>
 
         <StoryFlow />
 
         <Reveal className="story-guard">
-          <p className="landing-eyebrow" id="promises">What we will not do</p>
-          <h2>Three promises you can hold us to.</h2>
+          <p className={`landing-eyebrow ${scriptClass(uiLang)}`} id="promises">
+            {COPY.whatWeWillNotDo[uiLang]}
+          </p>
+          <h2 className={scriptClass(uiLang)}>{COPY.threePromises[uiLang]}</h2>
           <div className="story-guard-grid">
             <article>
-              <p className="story-guard-title">Never change a dose</p>
-              <p>The tablet, the time, and the food instruction stay as the doctor wrote them.</p>
+              <p className={`story-guard-title ${scriptClass(uiLang)}`}>{COPY.neverChangeDose[uiLang]}</p>
+              <p className={scriptClass(uiLang)}>{COPY.neverChangeDoseBody[uiLang]}</p>
             </article>
             <article>
-              <p className="story-guard-title">Never fill a blank</p>
-              <p>If the paper is missing a strength or a number of days, we leave that space empty.</p>
+              <p className={`story-guard-title ${scriptClass(uiLang)}`}>{COPY.neverFillBlank[uiLang]}</p>
+              <p className={scriptClass(uiLang)}>{COPY.neverFillBlankBody[uiLang]}</p>
             </article>
             <article>
-              <p className="story-guard-title">Never say “safe to take”</p>
-              <p>Box Check can match, ask you to look again, or say do not take. That is all.</p>
+              <p className={`story-guard-title ${scriptClass(uiLang)}`}>{COPY.neverSaySafe[uiLang]}</p>
+              <p className={scriptClass(uiLang)}>{COPY.neverSaySafeBody[uiLang]}</p>
             </article>
           </div>
         </Reveal>
 
         <Reveal className="story-close">
-          <h2>Start with the paper in your hand.</h2>
+          <h2 className={scriptClass(uiLang)}>{COPY.startWithPaper[uiLang]}</h2>
           <div className="landing-hero-actions">
             <Link href="/upload/" className="btn-filled">
-              Photograph the paper
+              {COPY.photographPaper[uiLang]}
+              <BtnArrow />
             </Link>
             <Link href="/join/" className="btn-outline">
-              Join a family circle
+              {COPY.joinFamilyCircle[uiLang]}
+              <BtnArrow />
             </Link>
           </div>
         </Reveal>
@@ -190,6 +213,7 @@ function HeroMark({
 function StoryFlow() {
   const [active, setActive] = useState(0);
   const [fill, setFill] = useState(0);
+  const { uiLang } = useApp();
 
   useEffect(() => {
     const update = () => {
@@ -233,7 +257,7 @@ function StoryFlow() {
               <li key={beat.id}>
                 <a href={`#${beat.id}`} className={state}>
                   <span>{beat.n}</span>
-                  {beat.path}
+                  {COPY[beat.path][uiLang]}
                 </a>
               </li>
             );
@@ -244,15 +268,16 @@ function StoryFlow() {
       <div className="story-beats">
         {STORY.map((beat, index) => (
           <Reveal key={beat.id} className="story-beat" delay={index * 40}>
-            <article id={beat.id}>
+            <article id={beat.id} className={index % 2 === 1 ? "is-flip" : undefined}>
               <div className="story-art">
                 <ScenePhoto src={beat.src} className="story-illu" />
               </div>
               <div className="story-copy">
-                <h3>{beat.title}</h3>
-                <p className="story-body">{beat.body}</p>
-                <Link href={beat.href} className="btn-outline btn-small">
-                  {beat.cta} →
+                <h3 className={scriptClass(uiLang)}>{COPY[beat.title][uiLang]}</h3>
+                <p className={`story-body ${scriptClass(uiLang)}`}>{COPY[beat.body][uiLang]}</p>
+                <Link href={beat.href} className="btn-filled btn-small">
+                  {COPY[beat.cta][uiLang]}
+                  <BtnArrow />
                 </Link>
               </div>
             </article>

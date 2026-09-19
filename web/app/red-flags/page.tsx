@@ -3,19 +3,19 @@
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusChip } from "@/components/StatusChip";
-import { GENERIC_RED_FLAGS } from "@/lib/demo/fixtures";
-import { useDemo } from "@/lib/demo/store";
+import { bi } from "@/lib/copy";
+import { useApp } from "@/lib/app/store";
 
 export default function RedFlagsPage() {
-  const { ready, plan } = useDemo();
+  const { ready, plan, uiLang } = useApp();
 
-  if (!ready) return <p>Loading red flags…</p>;
+  if (!ready) return <p>{bi("loading", uiLang)}</p>;
   if (!plan) {
     return (
       <EmptyState
-        title="No warnings yet"
-        body="Photograph a discharge summary to load the red-flag card."
-        action="Photograph paper"
+        title="noWarnings"
+        body="noWarningsBody"
+        action="photographPaper"
         href="/upload/"
       />
     );
@@ -26,29 +26,16 @@ export default function RedFlagsPage() {
 
   return (
     <section>
-      <PageHeader
-        eyebrow="Red flags"
-        title="Watch for these signs"
-        description="Warnings from the document stay verbatim. Generic advice is labelled separately."
-      />
+      <PageHeader eyebrow="redFlags" title="watchSigns" description="redFlagsDesc" />
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <article className="rounded-3xl bg-danger-soft p-8">
-          {fromDocument ? (
-            <StatusChip icon="📄" label="From your document" tone="danger" />
-          ) : (
-            <StatusChip icon="ℹ" label="General advice. Not from your document." tone="warn" />
-          )}
-          <p className="mt-5 text-[22px] leading-snug">{flags.text}</p>
-        </article>
-
+      <article className={`app-panel rounded-3xl p-8 ${fromDocument ? "bg-danger-soft" : "bg-warn-soft"}`}>
         {fromDocument ? (
-          <article className="rounded-3xl bg-card p-8">
-            <StatusChip icon="ℹ" label="General advice. Not from your document." tone="warn" />
-            <p className="mt-5 text-[20px] leading-snug">{GENERIC_RED_FLAGS.text}</p>
-          </article>
-        ) : null}
-      </div>
+          <StatusChip icon="📄" label={bi("fromDocument", uiLang)} tone="danger" />
+        ) : (
+          <StatusChip icon="ℹ" label={bi("genericBand", uiLang)} tone="warn" />
+        )}
+        <p className="mt-5 text-[18px] leading-snug">{flags.text}</p>
+      </article>
     </section>
   );
 }

@@ -2,22 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useApp } from "@/lib/app/store";
+import { COPY, type CopyKey } from "@/lib/copy";
 
-const ITEMS = [
-  { href: "/upload/", label: "Upload", match: (path: string) => path.startsWith("/upload") },
-  { href: "/review/", label: "Review", match: (path: string) => path.startsWith("/review") },
-  { href: "/schedule/", label: "Schedule", match: (path: string) => path.startsWith("/schedule") },
-  { href: "/box-check/", label: "Box Check", match: (path: string) => path.startsWith("/box-check") },
-  { href: "/red-flags/", label: "Red flags", match: (path: string) => path.startsWith("/red-flags") },
+const ITEMS: { href: string; k: CopyKey }[] = [
+  { href: "/#how-aftercare-works", k: "howItWorks" },
+  { href: "/setup/", k: "setUp" },
+  { href: "/join/", k: "joinNav" },
 ];
 
 export function TopNav() {
   const pathname = usePathname();
+  const { uiLang } = useApp();
 
   return (
     <nav aria-label="Main" className="site-nav">
       {ITEMS.map((item) => {
-        const active = item.match(pathname);
+        const active = item.href.startsWith("/#") ? false : pathname.startsWith(item.href.replace(/\/$/, ""));
         return (
           <Link
             key={item.href}
@@ -25,7 +26,7 @@ export function TopNav() {
             aria-current={active ? "page" : undefined}
             className={active ? "is-active" : ""}
           >
-            {item.label}
+            {COPY[item.k][uiLang]}
           </Link>
         );
       })}
