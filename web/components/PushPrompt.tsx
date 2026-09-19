@@ -17,10 +17,26 @@ export function PushPrompt() {
   const standalone = isStandalone();
 
   if (!circleId || demo) return null;
+  // iOS Safari has no Notification API outside an installed PWA, so this
+  // check must run before the Notification/serviceWorker guard below, or
+  // the Add to Home Screen instructions can never render.
+  if (ios && !standalone) {
+    return (
+      <article className="app-panel rounded-3xl bg-card p-6">
+        <h2 className="font-semibold">
+          <Bilingual k="remindersTitle" lang={uiLang} />
+        </h2>
+        <p className="mt-2">
+          On iPhone, add AfterCare to the Home Screen first (Share → Add to Home Screen), then open
+          it from the icon. iOS only allows reminders from an installed app.
+        </p>
+      </article>
+    );
+  }
   if (!("Notification" in window) || !("serviceWorker" in navigator)) return null;
 
   async function onTap() {
-    if (!circleId || (ios && !standalone)) return;
+    if (!circleId) return;
     setBusy(true);
     try {
       const permission = await Notification.requestPermission();
@@ -43,12 +59,7 @@ export function PushPrompt() {
       <h2 className="font-semibold">
         <Bilingual k="remindersTitle" lang={uiLang} />
       </h2>
-      {ios && !standalone ? (
-        <p className="mt-2">
-          On iPhone, add AfterCare to the Home Screen first (Share → Add to Home Screen), then open
-          it from the icon. iOS only allows reminders from an installed app.
-        </p>
-      ) : done ? (
+      {done ? (
         <p className="mt-2 text-ok">{bi("remindersOn", uiLang)}</p>
       ) : (
         <>
