@@ -11,6 +11,8 @@ export const FORBIDDEN = "You don't have access to this.";
 
 export const AUTH_DOWN = "Sign-in check is down, try again in a minute.";
 
+export const RETRYABLE_SUFFIX = "This is safe to retry.";
+
 export function messageForCode(code: ApiErrorCode, fallback: string, context?: "invite"): string {
   if (code === "unauthorized") {
     return "Sign in again, or ask for a new invite.";
@@ -19,6 +21,7 @@ export function messageForCode(code: ApiErrorCode, fallback: string, context?: "
   if (code === "not_found" && context === "invite") return INVITE_USED;
   if (code === "extraction_failed") return EXTRACTION_FAILED;
   if (code === "auth_unavailable") return AUTH_DOWN;
+  if (code === "retryable") return `Something went wrong on our side. ${RETRYABLE_SUFFIX}`;
   return fallback;
 }
 
@@ -32,6 +35,9 @@ export function explainError(error: unknown, action: string): string {
     }
     if (error.code === "forbidden") return FORBIDDEN;
     if (error.code === "auth_unavailable") return AUTH_DOWN;
+    if (error.code === "retryable") {
+      return `${action} didn't go through because of a server or network problem. ${RETRYABLE_SUFFIX}`;
+    }
     if (error.message) return `${action} failed. ${error.message}`;
   }
   if (error instanceof DOMException && error.name === "AbortError") {

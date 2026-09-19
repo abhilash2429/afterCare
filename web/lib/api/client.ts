@@ -92,11 +92,20 @@ async function request<T>(path: string, init: RequestOptions = {}): Promise<T> {
     const payload = (await response.json().catch(() => null)) as T | ApiError | null;
     if (!response.ok) {
       const error = payload as ApiError | null;
+      let code = error?.code;
+      if (!code) {
+        if (response.status === 401) code = "unauthorized";
+        else if (response.status === 404) code = "not_found";
+        else code = "retryable";
+      }
       throw new ApiRequestError({
-        code: error?.code ?? (response.status === 401 ? "unauthorized" : "not_found"),
+        code,
         message: error?.message ?? `Request failed for ${path}`,
         details: error?.details,
       });
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("aftercare:api-success"));
     }
     return payload as T;
   } finally {
