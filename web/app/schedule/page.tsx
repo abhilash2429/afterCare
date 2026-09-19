@@ -12,7 +12,7 @@ import { PlateMark } from "@/components/PlateMark";
 import { StatusChip } from "@/components/StatusChip";
 import { ILLUSTRATIONS, ScenePhoto } from "@/components/marketing/illustrations";
 import { bi, COPY, type CopyKey } from "@/lib/copy";
-import { brandLabel, foodKey } from "@/lib/format";
+import { brandLabel, durationLabel, foodKey } from "@/lib/format";
 import { useApp } from "@/lib/app/store";
 import { useAppView } from "@/lib/app/view";
 import type { Slot } from "@/lib/api/types";
@@ -106,6 +106,7 @@ export default function SchedulePage() {
                       <PlateMark relation={medicine.foodRelation} />{" "}
                       <Bilingual k={foodKey(medicine.foodRelation)} lang={uiLang} />
                     </p>
+                    <p className="muted font-normal">{durationLabel(medicine.durationDays, uiLang)}</p>
                   </th>
                   {SLOTS.map((slot) => {
                     const on = medicine.slots.includes(slot);

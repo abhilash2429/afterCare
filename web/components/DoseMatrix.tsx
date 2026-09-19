@@ -4,7 +4,7 @@ import { Bilingual } from "@/components/Bilingual";
 import { PlateMark } from "@/components/PlateMark";
 import { useApp } from "@/lib/app/store";
 import type { FoodRelation, Slot } from "@/lib/api/types";
-import { brandLabel, foodKey } from "@/lib/format";
+import { brandLabel, durationLabel, foodKey } from "@/lib/format";
 
 const SLOTS: Slot[] = ["morning", "noon", "night", "bedtime"];
 
@@ -13,6 +13,7 @@ export type DoseMatrixMedicine = {
   brand: string | null;
   foodRelation: FoodRelation;
   slots: Slot[];
+  durationDays?: number | null;
 };
 
 export function DoseMatrix({
@@ -33,6 +34,9 @@ export function DoseMatrix({
             <PlateMark relation={medicine.foodRelation} />
             <Bilingual k={foodKey(medicine.foodRelation)} lang={uiLang} />
           </p>
+          {medicine.durationDays !== undefined ? (
+            <p className="dose-matrix-food">{durationLabel(medicine.durationDays, uiLang)}</p>
+          ) : null}
           <ul className="dose-matrix-slots">
             {SLOTS.map((slot) => {
               const on = medicine.slots.includes(slot);
