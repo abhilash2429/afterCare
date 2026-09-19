@@ -319,6 +319,32 @@ export const COPY = {
   },
   addLine: { en: "Add a line", hi: "पंक्ति जोड़ें", kn: "ಸಾಲು ಸೇರಿಸಿ", te: "లైన్ జోడించండి" },
   addThisLine: { en: "Add this line", hi: "यह पंक्ति जोड़ें", kn: "ಈ ಸಾಲು ಸೇರಿಸಿ", te: "ఈ లైన్ జోడించండి" },
+  moleculeName: { en: "Medicine name", hi: "दवा का नाम", kn: "ಔಷಧದ ಹೆಸರು", te: "మందు పేరు" },
+  unit: { en: "Unit", hi: "इकाई", kn: "ಘಟಕ", te: "యూనిట్" },
+  needMoleculeName: {
+    en: "Add the medicine name.",
+    hi: "दवा का नाम लिखें।",
+    kn: "ಔಷಧದ ಹೆಸರು ಬರೆಯಿರಿ.",
+    te: "మందు పేరు రాయండి.",
+  },
+  needFrequency: {
+    en: "Add how often it is taken.",
+    hi: "कितनी बार लेनी है, यह लिखें।",
+    kn: "ಎಷ್ಟು ಬಾರಿ ತೆಗೆದುಕೊಳ್ಳಬೇಕು ಎಂದು ಬರೆಯಿರಿ.",
+    te: "ఎన్నిసార్లు తీసుకోవాలో రాయండి.",
+  },
+  needSlotsOrPrn: {
+    en: "Pick at least one time, or mark it only when needed.",
+    hi: "कम से कम एक समय चुनें, या 'जब ज़रूरत हो' चुनें।",
+    kn: "ಕನಿಷ್ಠ ಒಂದು ಸಮಯ ಆರಿಸಿ, ಅಥವಾ 'ಬೇಕಾದಾಗ ಮಾತ್ರ' ಆರಿಸಿ.",
+    te: "కనీసం ఒక సమయం ఎంచుకోండి, లేదా 'అవసరమైనప్పుడు మాత్రమే' ఎంచుకోండి.",
+  },
+  reviewLocked: {
+    en: "This plan is already active or archived, so it is read-only here.",
+    hi: "यह योजना पहले से चालू या पुरानी है, इसलिए यहाँ केवल देखने को है।",
+    kn: "ಈ ಯೋಜನೆ ಈಗಾಗಲೇ ಚಾಲನೆಯಲ್ಲಿದೆ ಅಥವಾ ಹಳೆಯದು, ಆದ್ದರಿಂದ ಇಲ್ಲಿ ನೋಡಲು ಮಾತ್ರ.",
+    te: "ఈ ప్లాన్ ఇప్పటికే యాక్టివ్‌గా లేదా పాతదిగా ఉంది, కాబట్టి ఇక్కడ చూడడానికి మాత్రమే.",
+  },
   noPlanReview: {
     en: "No plan to review",
     hi: "जाँचने के लिए योजना नहीं",
@@ -366,12 +392,6 @@ export const COPY = {
   },
   ownerEmail: { en: "Owner email", hi: "मालिक ईमेल", kn: "ಮಾಲೀಕ ಇಮೇಲ್", te: "యజమాని ఈమెయిల్" },
   codeFromEmail: { en: "Code", hi: "कोड", kn: "ಕೋಡ್", te: "కోడ్" },
-  pinHint: {
-    en: "Any 4-digit number opens the app. A longer email code still works.",
-    hi: "कोई भी 4 अंकों का नंबर ऐप खोलता है। लंबा ईमेल कोड भी चलता है।",
-    kn: "ಯಾವುದೇ 4 ಅಂಕಿಯ ಸಂಖ್ಯೆ ಅಪ್ಲಿಕೇಶನ್ ತೆರೆಯುತ್ತದೆ. ಉದ್ದದ ಇಮೇಲ್ ಕೋಡ್ ಸಹ ಚಾಲನೆಯಾಗುತ್ತದೆ.",
-    te: "ఏ 4 అంకెల సంఖ్యైనా యాప్ తెరుస్తుంది. పొడవైన ఈమెయిల్ కోడ్ కూడా పనిచేస్తుంది.",
-  },
   circle: { en: "Circle", hi: "चक्र", kn: "ವಲಯ", te: "సర్కిల్" },
   demoOn: {
     en: "Demo mode is on. You can create a circle on this phone without a live login.",
@@ -1011,6 +1031,9 @@ export const NOT_WRITTEN = COPY.notWritten.en;
 export const FROM_DOCUMENT = COPY.fromDocument.en;
 export const GENERIC_BAND = COPY.genericBand.en;
 export const LANG_OPTIONS: UiLang[] = ["en", "kn", "hi", "te"];
+// The backend circle only accepts en | hi | kn, so the circle-language picker
+// (setup) must not offer Telugu even though it's a valid UI-only language.
+export const CIRCLE_LANG_OPTIONS: UiLang[] = ["en", "kn", "hi"];
 
 export function langNative(lang: UiLang): string {
   if (lang === "kn") return COPY.kannada.kn;
