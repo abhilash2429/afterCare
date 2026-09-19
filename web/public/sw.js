@@ -39,7 +39,8 @@ self.addEventListener("message", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-  if (request.method !== "GET") return;
+  // Dev chunk URLs are not content-hashed; caching them serves stale code on localhost.
+  if (request.method !== "GET" || self.location.hostname === "localhost") return;
   const url = new URL(request.url);
 
   if (request.mode === "navigate") {

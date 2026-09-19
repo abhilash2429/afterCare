@@ -105,6 +105,15 @@ function newPage(file: File, contentType: ImageType): PageFile {
   };
 }
 
+const SLOT_ORDER = ["morning", "noon", "night", "bedtime"];
+
+// Adherence returns newest first, which also reverses slots within a day; keep days
+// newest first but slots in the order they happen.
+function orderDoses(doses: Dose[]): Dose[] {
+  return [...doses].sort((a, b) =>
+    a.date === b.date ? SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot) : b.date.localeCompare(a.date));
+}
+
 function todayDoses(doses: Dose[]): Dose[] {
   const today = todayIst();
   return doses.filter((dose) => dose.date === today);
@@ -146,7 +155,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const persistDoses = useCallback((next: Dose[], pct?: number | null) => {
+  const persistDoses = useCallback((raw: Dose[], pct?: number | null) => {
+    const next = orderDoses(raw);
     setDoses(todayDoses(next));
     setWeekDoses(next);
     if (pct !== undefined) setGivenPct(pct);
