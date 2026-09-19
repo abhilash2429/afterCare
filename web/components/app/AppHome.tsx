@@ -8,7 +8,7 @@ import { LogoMark, ILLUSTRATIONS } from "@/components/marketing/illustrations";
 import { SiteIntro } from "@/components/SiteIntro";
 import { introAlreadySeen } from "@/lib/app/intro";
 import { useApp } from "@/lib/app/store";
-import { COPY, LANG_OPTIONS, langNative, scriptClass, type CopyKey, type UiLang } from "@/lib/copy";
+import { COPY, LANG_OPTIONS, scriptClass, type CopyKey, type UiLang } from "@/lib/copy";
 
 const SLIDES: { src: string; k: CopyKey }[] = [
   { src: ILLUSTRATIONS.upload, k: "appSlide1" },
@@ -26,10 +26,9 @@ const LANG_CHIP: Record<UiLang, string> = {
 };
 
 export function AppHome({ preview = false }: { preview?: boolean }) {
-  const { uiLang, setUiLang } = useApp();
+  const { demo, uiLang, setUiLang } = useApp();
   const firstVisit = preview ? false : !introAlreadySeen();
   const [splash, setSplash] = useState(firstVisit);
-  const [menu, setMenu] = useState(false);
   const [slide, setSlide] = useState(0);
 
   useEffect(() => {
@@ -44,15 +43,6 @@ export function AppHome({ preview = false }: { preview?: boolean }) {
     const t = window.setInterval(() => setSlide((n) => (n + 1) % SLIDES.length), 4200);
     return () => window.clearInterval(t);
   }, [splash]);
-
-  useEffect(() => {
-    if (!menu) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenu(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [menu]);
 
   const cycleLang = () => {
     const i = LANG_OPTIONS.indexOf(uiLang);
@@ -70,17 +60,9 @@ export function AppHome({ preview = false }: { preview?: boolean }) {
         {preview ? null : <HistoryBar />}
         <span className="appv-brand-name">AfterCare</span>
         <span className="appv-spacer" />
+        {!preview && demo ? <span className="demo-chip">Demo</span> : null}
         <button type="button" className="appv-icon-btn" onClick={cycleLang} aria-label={COPY.language[uiLang]}>
           {LANG_CHIP[uiLang]}
-        </button>
-        <button
-          type="button"
-          className="appv-icon-btn"
-          onClick={() => setMenu(true)}
-          aria-label={COPY.appMenu[uiLang]}
-          aria-expanded={menu}
-        >
-          <MenuIcon />
         </button>
       </header>
 
@@ -263,90 +245,7 @@ export function AppHome({ preview = false }: { preview?: boolean }) {
         <p className="appv-foot-copy">© 2026 AfterCare — a demo project.</p>
       </footer>
       </div>
-
-      {preview || !menu ? null : (
-        <div className="appv-drawer-root">
-          <button type="button" className="appv-drawer-back" aria-label="Close" onClick={() => setMenu(false)} />
-          <aside className="appv-drawer" role="dialog" aria-label={COPY.appMenu[uiLang]}>
-            <div className="appv-drawer-head">
-              <h2 className={sc}>{COPY.appMenu[uiLang]}</h2>
-              <button type="button" className="appv-icon-btn" onClick={() => setMenu(false)} aria-label="Close">
-                <CloseIcon />
-              </button>
-            </div>
-            <Link href="/setup/" className="appv-drawer-card" onClick={() => setMenu(false)}>
-              <span className="appv-ic-wrap">
-                <CameraIcon />
-              </span>
-              <span>
-                <span className={`appv-drawer-label ${sc}`}>{COPY.appDrawerGetStarted[uiLang]}</span>
-                <span className={`appv-tiny ${sc}`}>{COPY.appDrawerGetStartedSub[uiLang]}</span>
-              </span>
-            </Link>
-            <nav className="appv-drawer-nav">
-              <DrawerLink href="/app/" k="appMenuHome" uiLang={uiLang} onClick={() => setMenu(false)} />
-              <p className={`appv-drawer-group ${sc}`}>{COPY.appMenuStart[uiLang]}</p>
-              <DrawerLink href="/upload/" k="photographPaper" uiLang={uiLang} onClick={() => setMenu(false)} />
-              <DrawerLink href="/review/" k="reviewExtraction" uiLang={uiLang} onClick={() => setMenu(false)} />
-              <DrawerLink href="/schedule/" k="appQuickSchedule" uiLang={uiLang} onClick={() => setMenu(false)} />
-              <p className={`appv-drawer-group ${sc}`}>{COPY.appSectionHome[uiLang]}</p>
-              <DrawerLink href="/box-check/" k="appQuickBox" uiLang={uiLang} onClick={() => setMenu(false)} />
-              <DrawerLink href="/fridge-sheet/" k="appHomeFridge" uiLang={uiLang} onClick={() => setMenu(false)} />
-              <DrawerLink href="/family/" k="appInfoFamily" uiLang={uiLang} onClick={() => setMenu(false)} />
-              <DrawerLink href="/join/" k="joinFamilyCircle" uiLang={uiLang} onClick={() => setMenu(false)} />
-              <DrawerLink href="/settings/" k="appSettingsLabel" uiLang={uiLang} onClick={() => setMenu(false)} />
-            </nav>
-            <p className={`appv-drawer-group ${sc}`}>{COPY.language[uiLang]}</p>
-            <div className="appv-lang-row">
-              {LANG_OPTIONS.map((lang) => (
-                <button
-                  key={lang}
-                  type="button"
-                  className={lang === uiLang ? "is-on" : ""}
-                  onClick={() => setUiLang(lang)}
-                >
-                  {langNative(lang)}
-                </button>
-              ))}
-            </div>
-          </aside>
-        </div>
-      )}
     </div>
-  );
-}
-
-function DrawerLink({
-  href,
-  k,
-  uiLang,
-  onClick,
-}: {
-  href: string;
-  k: CopyKey;
-  uiLang: UiLang;
-  onClick: () => void;
-}) {
-  return (
-    <Link href={href} className={scriptClass(uiLang)} onClick={onClick}>
-      {COPY[k][uiLang]}
-    </Link>
-  );
-}
-
-function MenuIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 7h14M5 12h14M5 17h14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M7 7l10 10M17 7 7 17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
   );
 }
 
