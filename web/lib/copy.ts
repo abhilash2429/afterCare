@@ -802,33 +802,6 @@ export const COPY = {
     kn: "ಪಟ್ಟಿಯನ್ನು ಕಾಗದಕ್ಕೆ ಹೋಲಿಸಿ",
     te: "స్ట్రిప్‌ను పేపర్‌తో పోల్చండి",
   },
-  appStatCaption: {
-    en: "Have used AfterCare at home",
-    hi: "AfterCare घर पर इस्तेमाल हुआ",
-    kn: "AfterCare ಮನೆಯಲ್ಲಿ ಬಳಸಿದ್ದಾರೆ",
-    te: "AfterCare ఇంట్లో వాడారు",
-  },
-  appStatLangs: { en: "18k", hi: "18k", kn: "18k", te: "18k" },
-  appStatLangsLbl: {
-    en: "Families",
-    hi: "परिवार",
-    kn: "ಕುಟುಂಬ",
-    te: "కుటుంబాలు",
-  },
-  appStatVoice: { en: "52k", hi: "52k", kn: "52k", te: "52k" },
-  appStatVoiceLbl: {
-    en: "Doses heard",
-    hi: "सुनी खुराक",
-    kn: "ಕೇಳಿದ ಪ್ರಮಾಣ",
-    te: "విన్న మోతాదు",
-  },
-  appStatPrint: { en: "9k", hi: "9k", kn: "9k", te: "9k" },
-  appStatPrintLbl: {
-    en: "Caregivers",
-    hi: "देखभाल वाले",
-    kn: "ಆರೈಕೆದಾರರು",
-    te: "సంరక్షకులు",
-  },
   appSlide1: {
     en: "Lift the page to the camera",
     hi: "पन्ना कैमरे के सामने रखें",

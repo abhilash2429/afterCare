@@ -118,22 +118,6 @@ export function AppHome({ preview = false }: { preview?: boolean }) {
         </Link>
       </div>
 
-      <p className={`appv-trust-kicker ${sc}`}>{COPY.appStatCaption[uiLang]}</p>
-      <div className="appv-trust">
-        <div className="appv-card">
-          <p className="appv-trust-num">{COPY.appStatLangs[uiLang]}</p>
-          <p className={`appv-trust-lbl ${sc}`}>{COPY.appStatLangsLbl[uiLang]}</p>
-        </div>
-        <div className="appv-card">
-          <p className="appv-trust-num">{COPY.appStatVoice[uiLang]}</p>
-          <p className={`appv-trust-lbl ${sc}`}>{COPY.appStatVoiceLbl[uiLang]}</p>
-        </div>
-        <div className="appv-card">
-          <p className="appv-trust-num">{COPY.appStatPrint[uiLang]}</p>
-          <p className={`appv-trust-lbl ${sc}`}>{COPY.appStatPrintLbl[uiLang]}</p>
-        </div>
-      </div>
-
       <div className="appv-carousel">
         <div className="appv-carousel-view">
           <div className="appv-carousel-track" style={{ transform: `translateX(-${slide * 100}%)` }}>
