@@ -456,3 +456,68 @@ def test_unflagged_low_confidence_line_is_still_rejected(table, monkeypatch):
     body = {"circleId": "ci_1", "userEdited": False,
             "medicines": [_med_dict(confidence=0.6, needsConfirmation=False)]}
     assert lambda_handler(_event("PATCH", "/plans/pl_1", body), None)["statusCode"] == 422
+
+
+def test_patch_active_plan_is_409(table, monkeypatch):
+    _stub_owner(monkeypatch)
+    _store_plan(table, _plan(status="active"))
+    res = lambda_handler(_event("PATCH", "/plans/pl_1", {
+        "circleId": "ci_1", "medicines": [_med_dict(slots=["night"])], "userEdited": True}), None)
+    assert res["statusCode"] == 409
+
+
+def test_patch_bad_slot_time_is_422(table, monkeypatch):
+    _stub_owner(monkeypatch)
+    _store_plan(table, _plan())
+    res = lambda_handler(_event("PATCH", "/plans/pl_1", {
+        "circleId": "ci_1", "slotTimes": {"morning": "25:99"}}), None)
+    assert res["statusCode"] == 422
+
+
+def test_audit_records_a_deleted_line(table, monkeypatch):
+    _stub_owner(monkeypatch)
+    _store_plan(table, _plan(medicines=[_med("m1"), _med("m2")]))
+    res = lambda_handler(_event("PATCH", "/plans/pl_1", {
+        "circleId": "ci_1", "medicines": [_med_dict("m1")], "userEdited": True}), None)
+    assert res["statusCode"] == 200
+    audit = table.query(KeyConditionExpression="PK = :p AND begins_with(SK, :s)",
+                        ExpressionAttributeValues={":p": "CIRCLE#ci_1", ":s": "AUDIT#"})["Items"][0]
+    assert audit["lineIds"] == ["m2"]
+    assert [b["lineId"] for b in audit["before"]] == ["m2"] and audit["after"] == []
+
+
+def test_activate_all_prn_plan_is_422(table, monkeypatch):
+    _stub_owner(monkeypatch)
+    _stub_scheduler(monkeypatch)
+    _store_plan(table, _plan(medicines=[_med(slots=[], prn=True, frequency=None)]))
+    res = lambda_handler(_event("POST", "/plans/pl_1/activate", {"circleId": "ci_1"}), None)
+    assert res["statusCode"] == 422
+
+
+def test_second_plan_replaces_pending_doses_of_the_first(table, monkeypatch):
+    _stub_owner(monkeypatch)
+    _stub_scheduler(monkeypatch)
+    deleted = []
+    monkeypatch.setattr(plans, "delete_dose_schedule", lambda plan, d: deleted.append(d.doseId))
+    _store_plan(table, _plan())
+    assert lambda_handler(_event("POST", "/plans/pl_1/activate", {"circleId": "ci_1"}),
+                          None)["statusCode"] == 200
+    table.update_item(Key={"PK": "CIRCLE#ci_1", "SK": "DOSE#2026-09-20#morning"},
+                      UpdateExpression="SET #s = :g", ExpressionAttributeNames={"#s": "status"},
+                      ExpressionAttributeValues={":g": "given"})
+    _store_plan(table, _plan(planId="pl_2", medicines=[_med(slots=["night"])]))
+    res = lambda_handler(_event("POST", "/plans/pl_2/activate", {"circleId": "ci_1"}), None)
+    assert res["statusCode"] == 200
+    assert json.loads(res["body"])["dosesCreated"] == 7
+    doses = table.query(KeyConditionExpression="PK = :p AND begins_with(SK, :s)",
+                        ExpressionAttributeValues={":p": "CIRCLE#ci_1", ":s": "DOSE#"})["Items"]
+    by_slot = {}
+    for d in doses:
+        by_slot.setdefault(d["slot"], []).append(d)
+    assert len(by_slot["morning"]) == 1 and by_slot["morning"][0]["status"] == "given"
+    assert len(by_slot["night"]) == 7 and all(d["planId"] == "pl_2" for d in by_slot["night"])
+    assert len(deleted) == 6
+    old = table.get_item(Key={"PK": "CIRCLE#ci_1", "SK": "PLAN#pl_1"})["Item"]
+    assert old["status"] == "archived"
+    meta = table.get_item(Key={"PK": "CIRCLE#ci_1", "SK": "META"})["Item"]
+    assert meta["activePlanId"] == "pl_2"

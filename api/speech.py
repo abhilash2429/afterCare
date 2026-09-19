@@ -30,7 +30,8 @@ def translate_text(text, lang):
                                      TargetLanguageCode=lang)["TranslatedText"]
 
 
-def spoken_schedule(plan):
+def spoken_schedule(plan, tr=lambda text: text):
+    """`tr` translates only the slot/food wording; drug names are spliced in untranslated."""
     lines = []
     for slot, word in SLOT_WORDS.items():
         meds = [m for m in plan.medicines if slot in m.slots]
@@ -42,7 +43,8 @@ def spoken_schedule(plan):
             if not group:
                 continue
             names = ", ".join(m.brand or (m.molecules[0].name if m.molecules else "") for m in group)
-            lines.append("In the %s%s: %s." % (word, ", " + food if food else "", names))
+            lines.append("%s: %s." % (tr("In the %s%s" % (word, ", " + food if food else "")),
+                                      names))
     return " ".join(lines)
 
 
@@ -94,10 +96,16 @@ def audio(event, params):
         return respond(404, {"code": "not_found", "message": "plan not found"})
 
     plan = Plan.from_dict(json.loads(json.dumps(item, default=str)))
-    text = spoken_schedule(plan)
     # Polly has no Kannada voice: Kannada users hear Hindi audio (spec section 4).
     speak_lang = "hi" if lang in ("hi", "kn") else "en"
-    spoken = translate_text(text, "hi") if speak_lang == "hi" else text
+    cache = {}
+
+    def tr(text):
+        if text not in cache:
+            cache[text] = translate_text(text, speak_lang)
+        return cache[text]
+
+    spoken = spoken_schedule(plan, tr)
 
     key = "audio/%s-%s.mp3" % (params["planId"],
                                hashlib.sha256(spoken.encode()).hexdigest()[:10])

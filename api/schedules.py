@@ -49,3 +49,10 @@ def create_dose_schedules(plan, doses):
         except _scheduler.exceptions.ConflictException:
             pass
     return created
+
+
+def delete_dose_schedule(plan, dose):
+    try:
+        _scheduler.delete_schedule(Name=schedule_name_for_dose(plan, dose), GroupName=GROUP)
+    except _scheduler.exceptions.ResourceNotFoundException:
+        pass

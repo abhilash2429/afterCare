@@ -51,6 +51,7 @@ def table(monkeypatch):
             AttributeDefinitions=[{"AttributeName": "PK", "AttributeType": "S"},
                                   {"AttributeName": "SK", "AttributeType": "S"}])
         monkeypatch.setattr(auth, "_table_cache", t)
+        t.put_item(Item={"PK": "CIRCLE#ci_1", "SK": "PLAN#pl_1", "planId": "pl_1"})
         import api.reminder as reminder
         import api.dose_routes as dosesmod
         monkeypatch.setattr(reminder, "_ddb",
@@ -424,3 +425,21 @@ def test_infra_gives_reminder_scheduler_perms():
     assert "iam:PassRole" in src
     assert "scheduler.amazonaws.com" in src
     assert "schedule/aftercare/*" in src
+
+
+def test_adherence_unknown_plan_is_404(table, monkeypatch):
+    _stub_doses_auth(monkeypatch)
+    _seed_adherence(table)
+    res = lambda_handler(
+        _event("GET", "/plans/pl_nope/adherence", query={"circleId": "ci_1"}), None)
+    assert res["statusCode"] == 404
+
+
+def test_dose_from_another_circle_is_ignored(table, monkeypatch):
+    import api.reminder as reminder
+    _seed_dose(table, date="2026-09-20", slot="morning", status="pending")
+    sent = []
+    monkeypatch.setattr(reminder, "send_reminder", lambda *a: sent.append(a))
+    out = reminder.lambda_handler({"circleId": "ci_other", "doseId": "ci_1#2026-09-20#morning",
+                                   "phase": "remind"}, None)
+    assert out == {"action": "none"} and sent == []

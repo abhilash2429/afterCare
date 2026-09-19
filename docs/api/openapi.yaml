@@ -86,8 +86,9 @@ components:
           description: Textract WORD block ids. Empty only when source is vision_only.
         source:
           type: string
-          enum: [textract, vision_only]
+          enum: [textract, vision_only, user]
           default: textract
+          description: user = a line the owner added by hand (sourceBlockIds is empty).
         needsConfirmation:
           type: boolean
           description: True when confidence < 0.85 or any required field is null.

@@ -73,6 +73,10 @@ def adherence(event, params):
     query = event.get("queryStringParameters") or {}
     circle_id = _resolve_circle_id(query.get("circleId"), principal)
     require(principal, circle_id)
+    table = _ddb.Table(TABLE)
+    if "Item" not in table.get_item(Key={"PK": "CIRCLE#%s" % circle_id,
+                                         "SK": "PLAN#%s" % params["planId"]}):
+        return respond(404, {"code": "not_found", "message": "plan not found"})
     try:
         days = int(query.get("days", 7))
     except (TypeError, ValueError):
@@ -82,7 +86,6 @@ def adherence(event, params):
     today = now_ist().date()
     cutoff = (today - timedelta(days=days - 1)).isoformat()
     today_iso = today.isoformat()
-    table = _ddb.Table(TABLE)
     items, start = [], None
     while True:
         kw = {"KeyConditionExpression": "PK = :p AND begins_with(SK, :s)",

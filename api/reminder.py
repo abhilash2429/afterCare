@@ -92,9 +92,12 @@ def lambda_handler(event, context):
     if not circle_id or not dose_id:
         return {"action": "none"}
     try:
-        _cid, date, slot = parse_dose_id(dose_id)
+        dose_circle, date, slot = parse_dose_id(dose_id)
     except ValueError:
         log.warning("bad doseId dose=%s", redact(dose_id))
+        return {"action": "none"}
+    if dose_circle != circle_id:
+        log.warning("doseId circle mismatch dose=%s", redact(dose_id))
         return {"action": "none"}
     dose = _get_dose(circle_id, date, slot)
     if dose is None:  # A2: missing dose item -> none, no exception

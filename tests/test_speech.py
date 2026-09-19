@@ -295,3 +295,12 @@ def test_audio_owner_needs_circle_id_query(table, s3, polly, translate, monkeypa
     res2 = lambda_handler(_event("GET", "/plans/pl_1/audio", token,
                                  query={"circleId": "ci_1"}), None)
     assert res2["statusCode"] == 200
+
+
+def test_audio_never_sends_drug_names_to_translate(table, s3, polly, translate):
+    _store_plan(table, _plan())
+    token = issue_circle_token("ci_1", "caregiver")
+    res = lambda_handler(_event("GET", "/plans/pl_1/audio", token, query={"lang": "hi"}), None)
+    body = json.loads(res["body"])
+    assert translate.calls and not any("Ecosprin" in c for c in translate.calls)
+    assert body["text"] == "[hi]In the morning, after food: Ecosprin."

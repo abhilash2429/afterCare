@@ -41,6 +41,7 @@ def _s3_client():
 MIN_WORDS_FOR_TEXTRACT = 20
 CONFIDENCE_FLOOR = 0.85
 UNITS = ("mg", "mcg", "g", "ml", "iu")
+FORMS = ("tablet", "capsule", "syrup", "injection", "drops", "inhaler", "ointment")
 FOOD = ("before", "after", "unspecified")
 IMAGE_FORMATS = {"png": "png", "jpg": "jpeg", "jpeg": "jpeg"}
 _FOOD_WORD = re.compile(r"\b(before|after|empty\s*stomach|ac|pc)\b", re.I)
@@ -155,7 +156,7 @@ def _convert_strength(strength, unit):
     unit = (unit or "").strip().lower()
     if strength is not None and unit in ("mcg", "g"):
         return (strength / 1000.0 if unit == "mcg" else strength * 1000.0), "mg"
-    if strength is None and unit not in UNITS:
+    if strength is None and unit not in ("mg", "iu", "ml"):
         unit = "mg"
     return strength, unit
 
@@ -300,7 +301,8 @@ def _medicine(m, words, source, key):
         crop["s3Key"] = key
     return Medicine(
         lineId="", rawText=raw_text, brand=m.get("brand"), molecules=mols,
-        form=m.get("form"), frequency=frequency, slots=slots,
+        form=m.get("form") if m.get("form") in FORMS else None,
+        frequency=frequency, slots=slots,
         foodRelation=food,
         durationDays=None if duration is None else int(duration), prn=prn,
         prnCondition=m.get("prnCondition"), confidence=confidence,

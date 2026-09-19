@@ -1,3 +1,5 @@
+import re
+
 from api.drugs import normalise_molecule
 from api.models import SLOTS
 
@@ -8,6 +10,7 @@ GENERIC_RED_FLAG_TEXT = (
 )
 
 _CONFIDENCE_FLOOR = 0.85
+_HHMM = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
 
 
 def validate_plan(plan):
@@ -21,6 +24,13 @@ def validate_plan(plan):
             errors.append("redFlags.sourceBlockIds must be non-empty when source is 'document'")
         if rf.source == "generic" and rf.text != GENERIC_RED_FLAG_TEXT:
             errors.append("redFlags.text must be the fixed generic constant")
+
+    if not isinstance(plan.slotTimes, dict):
+        errors.append("slotTimes must be an object")
+    else:
+        for slot, hhmm in plan.slotTimes.items():
+            if slot not in SLOTS or not isinstance(hhmm, str) or not _HHMM.fullmatch(hhmm):
+                errors.append("slotTimes.%s must be a known slot with a 24h HH:MM time" % slot)
 
     line_ids = [m.lineId for m in plan.medicines]
     dupes = sorted({x for x in line_ids if line_ids.count(x) > 1})
