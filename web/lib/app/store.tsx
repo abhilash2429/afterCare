@@ -36,7 +36,7 @@ import {
   loadCachedPlanJson,
   notifyWorkerToCachePlan,
 } from "@/lib/offline/cache";
-import { dequeueGiven, enqueueGiven, loadQueue } from "@/lib/offline/queue";
+import { clearQueue, dequeueGiven, enqueueGiven, loadQueue } from "@/lib/offline/queue";
 import { apiLang, asUiLang, type UiLang } from "@/lib/copy";
 import { todayIst } from "@/lib/format";
 
@@ -69,6 +69,7 @@ type AppState = {
   audio: AudioClip | null;
   error: string | null;
   uiLang: UiLang;
+  authRequired: boolean;
 };
 
 type AppContextValue = AppState & {
@@ -90,7 +91,6 @@ type AppContextValue = AppState & {
   reset: () => void;
   setError: (message: string | null) => void;
   setUiLang: (language: UiLang) => void;
-  unlockOwner: () => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -103,6 +103,15 @@ function newPage(file: File, contentType: ImageType): PageFile {
     file,
     contentType,
   };
+}
+
+const SLOT_ORDER = ["morning", "noon", "night", "bedtime"];
+
+// Adherence returns newest first, which also reverses slots within a day; keep days
+// newest first but slots in the order they happen.
+function orderDoses(doses: Dose[]): Dose[] {
+  return [...doses].sort((a, b) =>
+    a.date === b.date ? SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot) : b.date.localeCompare(a.date));
 }
 
 function todayDoses(doses: Dose[]): Dose[] {
@@ -132,7 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [uiLang, setUiLangState] = useState<UiLang>("en");
   const [ownerAuthed, setOwnerAuthed] = useState(false);
-  const [localAccess, setLocalAccess] = useState(false);
+  const [authRequired, setAuthRequired] = useState(false);
   const flushing = useRef(false);
   const refreshRef = useRef<() => Promise<void>>(async () => {});
 
@@ -146,7 +155,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const persistDoses = useCallback((next: Dose[], pct?: number | null) => {
+  const persistDoses = useCallback((raw: Dose[], pct?: number | null) => {
+    const next = orderDoses(raw);
     setDoses(todayDoses(next));
     setWeekDoses(next);
     if (pct !== undefined) setGivenPct(pct);
@@ -167,20 +177,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     configureAuth();
     const idToken = await getIdToken();
     const session = getSession();
-    const sessionLocal = Boolean(session?.localAccess);
-    setLocalAccess(sessionLocal);
-    setOwnerAuthed(Boolean(idToken) || sessionLocal);
-    const nextRole: Role | null = session?.role ?? (idToken || sessionLocal ? "owner" : null);
+    setOwnerAuthed(Boolean(idToken));
+    const nextRole: Role | null = session?.role ?? (idToken ? "owner" : null);
     setRole(nextRole);
     const cid = session?.circleId ?? null;
     setCircleId(cid);
-    if (!cid || (!idToken && nextRole !== "caregiver" && !sessionLocal)) {
+    if (!cid) {
       setCircle(null);
       return;
     }
-    if (sessionLocal && !idToken) {
+    if (!idToken && nextRole !== "caregiver") {
+      // A circleId is stored from an earlier session, but there's no live
+      // credential to use it with. Send the owner back to sign in rather
+      // than silently keeping stale cached data on screen.
+      setCircle(null);
+      setAuthRequired(true);
       return;
     }
+    setAuthRequired(false);
     try {
       const nextCircle = await api.getCircle(cid);
       setCircle(nextCircle);
@@ -188,22 +202,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const nextPlanId = nextCircle.activePlanId ?? session?.planId ?? null;
       setPlanId(nextPlanId);
       const stored = getSession()?.language ?? session?.language ?? null;
-      if (stored) {
-        const nextUi = asUiLang(stored);
-        setUiLangState(nextUi);
-        patchSession({
-          circleId: cid,
-          planId: nextPlanId,
-          role: nextCircle.role,
-          language: nextUi,
-        });
-      } else {
-        patchSession({
-          circleId: cid,
-          planId: nextPlanId,
-          role: nextCircle.role,
-        });
-      }
+      const nextUi = stored ? asUiLang(stored) : asUiLang(nextCircle.language);
+      setUiLangState(nextUi);
+      patchSession({
+        circleId: cid,
+        planId: nextPlanId,
+        role: nextCircle.role,
+        language: nextUi,
+      });
       if (!nextPlanId) return;
       const [nextPlan, adherence] = await Promise.all([
         api.getPlan(nextPlanId, cid),
@@ -214,12 +220,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         persistDoses(adherence.doses, adherence.givenPct);
       }
     } catch (err) {
+      if (err instanceof ApiRequestError && err.code === "unauthorized" && nextRole !== "caregiver") {
+        setAuthRequired(true);
+      }
       setError(explainError(err, "Loading this circle"));
     }
   }, [demo, persistDoses, persistPlan]);
 
   const flushQueue = useCallback(async () => {
-    if (demo || localAccess || flushing.current || !navigator.onLine) return;
+    if (demo || flushing.current || !navigator.onLine) return;
     const queued = loadQueue();
     if (queued.length === 0) return;
     flushing.current = true;
@@ -243,7 +252,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } finally {
       flushing.current = false;
     }
-  }, [circleId, demo, localAccess, persistDoses, planId]);
+  }, [circleId, demo, persistDoses, planId]);
 
   useEffect(() => {
     const cachedPlan = loadCachedPlanJson();
@@ -272,13 +281,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCircleId(session.circleId);
       setPlanId(session.planId);
       if (session.language) setUiLangState(session.language);
-      if (session.localAccess) {
-        setLocalAccess(true);
-        setOwnerAuthed(true);
-      }
     }
     setQueuedDoseIds(loadQueue().map((item) => item.doseId));
-    void refresh().finally(() => setReady(true));
+    void refresh().finally(() => {
+      setReady(true);
+      void flushQueue();
+    });
     // First paint hydrates from localStorage, then refresh() talks to the API.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -288,9 +296,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       void flushQueue();
       void refresh();
     }
+    function onVisible() {
+      if (document.visibilityState === "visible") void flushQueue();
+    }
+    function onApiSuccess() {
+      void flushQueue();
+    }
     refreshRef.current = refresh;
     window.addEventListener("online", onOnline);
-    return () => window.removeEventListener("online", onOnline);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("aftercare:api-success", onApiSuccess);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("aftercare:api-success", onApiSuccess);
+    };
   }, [flushQueue, refresh]);
 
   const addPages = useCallback((files: FileList | File[], target: "pages" | "strips" = "pages") => {
@@ -319,7 +339,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const startExtract = useCallback(async () => {
     setError(null);
-    if (demo || localAccess) {
+    if (demo) {
       setExtracting(true);
       for (const step of EXTRACT_STEPS) {
         setExtractStep(step);
@@ -371,17 +391,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setError(EXTRACTION_FAILED);
       } else {
         setError(explainError(err, "Reading the prescription"));
+        if (err instanceof ApiRequestError && err.code === "unauthorized" && role !== "caregiver") {
+          setAuthRequired(true);
+        }
       }
       return false;
     } finally {
       setExtracting(false);
     }
-  }, [circleId, demo, localAccess, pages, persistDoses, persistPlan]);
+  }, [circleId, demo, pages, persistDoses, persistPlan, role]);
 
   const saveMedicines = useCallback(
     async (medicines: Medicine[], userEdited: boolean) => {
       if (!plan) return false;
-      if (demo || localAccess) {
+      if (demo) {
         persistPlan({ ...plan, medicines });
         return true;
       }
@@ -397,11 +420,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setError(null);
         return true;
       } catch (err) {
+        if (err instanceof ApiRequestError && err.code === "conflict") {
+          await refresh();
+          setError("This plan changed on the server. Reloaded the latest version.");
+          return false;
+        }
         setError(explainError(err, "Saving the plan"));
+        if (err instanceof ApiRequestError && err.code === "unauthorized" && role !== "caregiver") {
+          setAuthRequired(true);
+        }
         return false;
       }
     },
-    [demo, localAccess, persistPlan, plan],
+    [demo, persistPlan, plan, refresh, role],
   );
 
   const confirmMedicine = useCallback(
@@ -417,8 +448,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const activate = useCallback(async () => {
     if (!plan) return false;
+    if (plan.status !== "draft") return false;
     if (plan.medicines.some((medicine) => medicine.needsConfirmation)) return false;
-    if (demo || localAccess) {
+    if (demo) {
       const next = { ...plan, status: "active" as const };
       persistPlan(next);
       persistDoses(dosesForPlan(next), 0);
@@ -434,9 +466,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return true;
       }
       setError(explainError(err, "Activating the schedule"));
+      if (err instanceof ApiRequestError && err.code === "unauthorized" && role !== "caregiver") {
+        setAuthRequired(true);
+      }
       return false;
     }
-  }, [demo, localAccess, persistDoses, persistPlan, plan, refresh]);
+  }, [demo, persistDoses, persistPlan, plan, refresh, role]);
 
   const markGiven = useCallback(
     async (doseId: string) => {
@@ -450,7 +485,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           givenPct,
         );
       };
-      if (demo || localAccess) {
+      if (demo) {
         applyLocal();
         return;
       }
@@ -463,26 +498,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await api.markGiven(doseId);
         applyLocal();
         if (planId && circleId) {
-          const adherence = await api.adherence(planId, 1, circleId);
-          persistDoses(
-            [...adherence.doses, ...weekDoses.filter((dose) => dose.date !== todayIst())],
-            adherence.givenPct,
-          );
+          const adherence = await api.adherence(planId, 7, circleId);
+          persistDoses(adherence.doses, adherence.givenPct);
         }
       } catch (err) {
+        if (err instanceof ApiRequestError) {
+          // A real rejection from the server (401/403/404/422/...): the dose
+          // was not recorded, so don't fake it locally or queue a retry.
+          setError(explainError(err, "Marking this dose given"));
+          if (err.code === "unauthorized" && role !== "caregiver") setAuthRequired(true);
+          return;
+        }
+        // A genuine network failure (fetch TypeError, timeout, etc.): the
+        // request never reached the server, so it's safe to queue a retry.
         applyLocal();
         setQueuedDoseIds(enqueueGiven(doseId).map((item) => item.doseId));
-        if (!(err instanceof TypeError)) {
-          setError(explainError(err, "Marking this dose given"));
-        }
       }
     },
-    [circleId, demo, givenPct, localAccess, persistDoses, planId, role, weekDoses],
+    [circleId, demo, givenPct, persistDoses, planId, role, weekDoses],
   );
 
   const runBoxCheck = useCallback(async () => {
     setError(null);
-    if (demo || localAccess) {
+    if (demo) {
       setBoxChecking(true);
       setExtractStep("Checking the strips...");
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -520,15 +558,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return true;
     } catch (err) {
       setError(explainError(err, "Checking the box"));
+      if (err instanceof ApiRequestError && err.code === "unauthorized" && role !== "caregiver") {
+        setAuthRequired(true);
+      }
       return false;
     } finally {
       setBoxChecking(false);
     }
-  }, [circleId, demo, localAccess, planId, stripPages]);
+  }, [circleId, demo, planId, role, stripPages]);
 
   const loadAudio = useCallback(async () => {
     if (!plan) return null;
-    if (demo || localAccess) {
+    if (demo) {
       const clip: AudioClip = {
         url: "",
         spokenLanguage: "hi",
@@ -543,20 +584,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return clip;
     } catch (err) {
       setError(explainError(err, "Loading the spoken schedule"));
+      if (err instanceof ApiRequestError && err.code === "unauthorized" && role !== "caregiver") {
+        setAuthRequired(true);
+      }
       return null;
     }
-  }, [demo, localAccess, plan, uiLang]);
+  }, [demo, plan, role, uiLang]);
 
   const createCircle = useCallback(async (name: string, language: UiLang) => {
     setError(null);
     const apiLanguage = apiLang(language);
-    const local = demo || getSession()?.localAccess;
-    if (local) {
+    if (demo) {
       const id = getSession()?.circleId ?? `ci_local_${crypto.randomUUID().slice(0, 8)}`;
       setCircleId(id);
       setRole("owner");
       setOwnerAuthed(true);
-      setLocalAccess(true);
       setUiLangState(language);
       setSession({
         role: "owner",
@@ -564,7 +606,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         planId: null,
         caregiverToken: null,
         language,
-        localAccess: true,
       });
       return id;
     }
@@ -593,32 +634,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setError("Create a care circle first.");
       return null;
     }
-    if (demo || getSession()?.localAccess) {
+    // A1: the backend's own `url` points at a placeholder Amplify origin
+    // (this frontend isn't deployed there), so always build the link from
+    // this browser's own origin and the invite token, and ignore `invite.url`.
+    if (demo) {
       const token = "demo-invite";
       return {
         token,
-        url: `${window.location.origin}/join/?c=${circleId}&t=${token}`,
+        url: `${window.location.origin}/join/?c=${encodeURIComponent(circleId)}&t=${encodeURIComponent(token)}`,
         expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
       };
     }
     try {
-      return await api.invite(circleId);
+      const created = await api.invite(circleId);
+      return {
+        ...created,
+        url: `${window.location.origin}/join/?c=${encodeURIComponent(circleId)}&t=${encodeURIComponent(created.token)}`,
+      };
     } catch (err) {
       setError(explainError(err, "Creating an invite"));
+      if (err instanceof ApiRequestError && err.code === "unauthorized" && role !== "caregiver") {
+        setAuthRequired(true);
+      }
       return null;
     }
-  }, [circleId, demo]);
+  }, [circleId, demo, role]);
 
   const joinInvite = useCallback(async (joinCircleId: string, token: string) => {
     setError(null);
-    if (demo || localAccess || token === "demo-invite") {
+    if (demo) {
       setSession({
         role: "caregiver",
         circleId: joinCircleId,
         planId: DEMO_PLAN.planId,
         caregiverToken: "demo-caregiver-session",
         language: "kn",
-        localAccess: true,
       });
       persistPlan({ ...DEMO_PLAN, status: "active" });
       persistDoses(dosesForPlan({ ...DEMO_PLAN, status: "active" }), 0);
@@ -648,25 +698,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       return false;
     }
-  }, [demo, localAccess, persistDoses, persistPlan, refresh]);
+  }, [demo, persistDoses, persistPlan, refresh]);
 
   const setUiLang = useCallback((language: UiLang) => {
     setUiLangState(language);
     patchSession({ language });
   }, []);
 
-  const unlockOwner = useCallback(() => {
-    setOwnerAuthed(true);
-    setLocalAccess(true);
-    setRole("owner");
-    setError(null);
-    patchSession({ role: "owner", localAccess: true });
-  }, []);
-
   const signOutAll = useCallback(async () => {
     await ownerSignOut();
     clearSession();
     clearCaches();
+    clearQueue();
+    if (typeof caches !== "undefined") {
+      try {
+        const names = await caches.keys();
+        await Promise.all(names.map((name) => caches.delete(name)));
+      } catch {
+        // Best effort: Cache Storage may be unavailable (e.g. private mode).
+      }
+    }
+    setQueuedDoseIds([]);
     setRole(null);
     setCircleId(null);
     setPlanId(null);
@@ -679,7 +731,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAudio(null);
     setUiLangState("en");
     setOwnerAuthed(false);
-    setLocalAccess(false);
+    setAuthRequired(false);
   }, []);
 
   const reset = useCallback(() => {
@@ -689,13 +741,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setStripPages([]);
     setBoxCheckItems(null);
     setError(null);
-    if (demo || localAccess) {
+    if (demo) {
       persistPlan(null);
       persistDoses([]);
       clearCaches();
       clearSession();
     }
-  }, [demo, localAccess, pages, persistDoses, persistPlan, stripPages]);
+  }, [demo, pages, persistDoses, persistPlan, stripPages]);
 
   const value = useMemo<AppContextValue>(
     () => ({
@@ -719,7 +771,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       audio,
       error,
       uiLang,
-      signedIn: Boolean(ownerAuthed || localAccess || (role === "caregiver" && circleId) || (demo && circleId)),
+      authRequired,
+      signedIn: Boolean(ownerAuthed || (role === "caregiver" && circleId) || (demo && circleId)),
       addPages,
       removePage,
       startExtract,
@@ -737,12 +790,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       reset,
       setError,
       setUiLang,
-      unlockOwner,
     }),
     [
       activate,
       addPages,
       audio,
+      authRequired,
       boxCheckItems,
       boxChecking,
       circle,
@@ -760,7 +813,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loadAudio,
       markGiven,
       ownerAuthed,
-      localAccess,
       pages,
       plan,
       planId,
@@ -776,7 +828,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       startExtract,
       stripPages,
       setUiLang,
-      unlockOwner,
       uiLang,
       weekDoses,
     ],

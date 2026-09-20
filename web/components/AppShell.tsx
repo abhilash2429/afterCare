@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AppChrome } from "@/components/app/AppChrome";
 import { AppHome } from "@/components/app/AppHome";
 import { PhoneStage } from "@/components/app/PhoneStage";
 import { Bilingual } from "@/components/Bilingual";
 import { BtnArrow } from "@/components/Button";
 import { BottomNav } from "@/components/BottomNav";
+import { Disclaimer } from "@/components/Disclaimer";
 import { Footer } from "@/components/Footer";
 import { SiteIntro } from "@/components/SiteIntro";
 import { TopNav } from "@/components/TopNav";
@@ -18,13 +19,14 @@ import { scriptClass } from "@/lib/copy";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const home = pathname === "/";
   const appHome = isAppHomePath(pathname);
   const showHome = home || appHome;
   const seenHome = useRef(showHome);
   if (showHome) seenHome.current = true;
   const { isApp } = useAppView();
-  const { circleId, demo, setError, uiLang } = useApp();
+  const { authRequired, circleId, demo, setError, uiLang } = useApp();
   const showBottom = Boolean(circleId) && !home && !appHome;
 
   useEffect(() => {
@@ -34,6 +36,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     document.documentElement.lang = uiLang === "en" ? "en" : uiLang;
   }, [uiLang]);
+
+  useEffect(() => {
+    if (authRequired && pathname !== "/setup/") router.push("/setup/");
+  }, [authRequired, pathname, router]);
 
   if (isApp) {
     return (
@@ -46,7 +52,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {showHome ? null : (
           <div className={`appv-shell appv-shell-page ${scriptClass(uiLang)}`}>
             <AppChrome />
-            <div className="appv-screen appv-screen-page">{children}</div>
+            <div className="appv-screen appv-screen-page">
+              {children}
+              <div className="mt-10 pb-4">
+                <Disclaimer />
+              </div>
+            </div>
             <BottomNav />
           </div>
         )}

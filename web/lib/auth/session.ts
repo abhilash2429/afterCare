@@ -7,7 +7,6 @@ export type Session = {
   planId: string | null;
   caregiverToken: string | null;
   language: UiLang | null;
-  localAccess?: boolean;
 };
 
 const KEY = "aftercare-session";
@@ -18,7 +17,6 @@ const empty: Session = {
   planId: null,
   caregiverToken: null,
   language: null,
-  localAccess: false,
 };
 
 export function getSession(): Session | null {
@@ -26,15 +24,23 @@ export function getSession(): Session | null {
   const raw = window.localStorage.getItem(KEY);
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as Partial<Session> & { token?: string; language?: string | null };
-    return {
+    const parsed = JSON.parse(raw) as Partial<Session> & {
+      token?: string;
+      language?: string | null;
+      localAccess?: boolean;
+    };
+    const session: Session = {
       role: parsed.role === "caregiver" ? "caregiver" : "owner",
       circleId: parsed.circleId ?? null,
       planId: parsed.planId ?? null,
       caregiverToken: parsed.caregiverToken ?? parsed.token ?? null,
       language: parsed.language ? asUiLang(parsed.language) : null,
-      localAccess: Boolean(parsed.localAccess),
     };
+    if (parsed.localAccess) {
+      // Retired fixture-mode backdoor: strip it from storage instead of honouring it.
+      window.localStorage.setItem(KEY, JSON.stringify(session));
+    }
+    return session;
   } catch {
     return null;
   }

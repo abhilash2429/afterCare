@@ -1,28 +1,58 @@
+const STATIC_CACHE = "aftercare-static-v2";
+const PLAN_CACHE = "aftercare-plans-v2";
+const ASSET_CACHE = "aftercare-assets-v2";
+const KNOWN_CACHES = [STATIC_CACHE, PLAN_CACHE, ASSET_CACHE];
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open("aftercare-static-v1").then((cache) =>
-      cache.addAll(["/schedule/", "/box-check/", "/red-flags/", "/icon-192.png", "/icon-512.png"]),
+    caches.open(STATIC_CACHE).then((cache) =>
+      cache.addAll([
+        "/",
+        "/schedule/",
+        "/box-check/",
+        "/red-flags/",
+        "/family/",
+        "/fridge-sheet/",
+        "/settings/",
+        "/icon-192.png",
+        "/icon-512.png",
+      ]),
     ),
   );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches
+      .keys()
+      .then((names) => Promise.all(names.filter((name) => !KNOWN_CACHES.includes(name)).map((name) => caches.delete(name))))
+      .then(() => self.clients.claim()),
+  );
 });
 
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "CACHE_SCHEDULE") {
-    event.waitUntil(caches.open("aftercare-static-v1").then((cache) => cache.add("/schedule/")));
+    event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.add("/schedule/")));
   }
 });
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-  if (request.method !== "GET") return;
+  // Dev chunk URLs are not content-hashed; caching them serves stale code on localhost.
+  if (request.method !== "GET" || self.location.hostname === "localhost") return;
   const url = new URL(request.url);
+
+  if (request.mode === "navigate") {
+    event.respondWith(networkFirst(request, STATIC_CACHE));
+    return;
+  }
+  if (url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(cacheFirst(request, ASSET_CACHE));
+    return;
+  }
   if (url.pathname.includes("/plans/")) {
-    event.respondWith(networkFirst(request, "aftercare-plans-v1"));
+    event.respondWith(networkFirst(request, PLAN_CACHE));
   }
 });
 
@@ -65,4 +95,13 @@ async function networkFirst(request, cacheName) {
     if (cached) return cached;
     throw new Error("offline");
   }
+}
+
+async function cacheFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response.ok) cache.put(request, response.clone());
+  return response;
 }

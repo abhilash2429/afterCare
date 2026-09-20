@@ -15,12 +15,12 @@ import {
   startOwnerSignIn,
   startOwnerSignUp,
 } from "@/lib/auth/cognito";
-import { bi, LANG_OPTIONS, langNative, scriptClass, type UiLang } from "@/lib/copy";
+import { bi, CIRCLE_LANG_OPTIONS, langNative, scriptClass, type UiLang } from "@/lib/copy";
 import type { Invite } from "@/lib/api/types";
 
 export default function SetupPage() {
   const router = useRouter();
-  const { demo, signedIn, circleId, createCircle, inviteCaregiver, error, setError, refresh, role, uiLang, unlockOwner, ready } =
+  const { demo, signedIn, circleId, createCircle, inviteCaregiver, error, setError, refresh, role, uiLang, ready } =
     useApp();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -30,7 +30,7 @@ export default function SetupPage() {
   const [language, setLanguage] = useState<UiLang>("kn");
   const [invite, setInvite] = useState<Invite | null>(null);
 
-  const ownerReady = demo || signedIn || Boolean(circleId);
+  const ownerReady = demo || signedIn;
 
   if (!ready) return <p>{bi("loading", uiLang)}</p>;
 
@@ -62,10 +62,6 @@ export default function SetupPage() {
 
   async function submitCode() {
     const pin = code.trim();
-    if (/^\d{4}$/.test(pin)) {
-      unlockOwner();
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
@@ -139,9 +135,6 @@ export default function SetupPage() {
               onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 8))}
             />
           </label>
-          <p className="muted mt-2">
-            <Bilingual k="pinHint" lang={uiLang} />
-          </p>
           <div className="app-actions mt-5">
             <Button onClick={sendSignIn} disabled={busy || !email.includes("@")}>
               <Bilingual k="emailMeCode" lang={uiLang} />
@@ -172,7 +165,7 @@ export default function SetupPage() {
               <Bilingual k="language" lang={uiLang} />
             </legend>
             <div className="slot-dots">
-              {LANG_OPTIONS.map((item) => (
+              {CIRCLE_LANG_OPTIONS.map((item) => (
                 <button
                   key={item}
                   type="button"

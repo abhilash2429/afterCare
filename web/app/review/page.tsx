@@ -14,7 +14,7 @@ import { emptyUserMedicine, useApp } from "@/lib/app/store";
 import { useAppView } from "@/lib/app/view";
 import { bi, COPY } from "@/lib/copy";
 import { brandLabel, foodKey, medicineMolecules } from "@/lib/format";
-import type { Medicine, Slot } from "@/lib/api/types";
+import type { Medicine, Molecule, Slot } from "@/lib/api/types";
 
 const SLOTS: Slot[] = ["morning", "noon", "night", "bedtime"];
 
@@ -24,6 +24,7 @@ export default function ReviewPage() {
   const { ready, plan, pages, confirmMedicine, saveMedicines, activate, error, role, uiLang } = useApp();
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Medicine | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   if (!ready) return <p>{bi("loading", uiLang)}</p>;
@@ -39,8 +40,9 @@ export default function ReviewPage() {
     );
   }
 
+  const readOnly = plan.status !== "draft" || role === "caregiver";
   const unresolved = plan.medicines.filter((medicine) => medicine.needsConfirmation);
-  const canActivate = unresolved.length === 0 && role !== "caregiver";
+  const canActivate = plan.status === "draft" && unresolved.length === 0 && role !== "caregiver";
 
   async function onActivate() {
     if (!canActivate) return;
@@ -60,19 +62,36 @@ export default function ReviewPage() {
     if (!plan) return;
     setBusy(true);
     const medicines = plan.medicines.map((item) => (item.lineId === medicine.lineId ? medicine : item));
-    await saveMedicines(medicines, userEdited);
-    setDraft(null);
+    const ok = await saveMedicines(medicines, userEdited);
+    if (ok) setDraft(null);
     setBusy(false);
   }
 
   async function onAdd() {
     if (!plan || !draft) return;
-    if (draft.frequency && draft.slots.length === 0 && !draft.prn) return;
+    if (!draft.molecules[0]?.name?.trim()) {
+      setAddError(bi("needMoleculeName", uiLang));
+      return;
+    }
+    if (!draft.frequency?.trim()) {
+      setAddError(bi("needFrequency", uiLang));
+      return;
+    }
+    if (!draft.prn && draft.slots.length === 0) {
+      setAddError(bi("needSlotsOrPrn", uiLang));
+      return;
+    }
+    setAddError(null);
     setBusy(true);
-    await saveMedicines([...plan.medicines, { ...draft, source: "user", sourceBlockIds: [] }], true);
-    setDraft(null);
-    setAdding(false);
+    const ok = await saveMedicines(
+      [...plan.medicines, { ...draft, needsConfirmation: false, source: "user", sourceBlockIds: [], confidence: 1 }],
+      true,
+    );
     setBusy(false);
+    if (ok) {
+      setDraft(null);
+      setAdding(false);
+    }
   }
 
   return (
@@ -93,6 +112,10 @@ export default function ReviewPage() {
           <ScenePhoto src={ILLUSTRATIONS.review} />
         </div>
       )}
+
+      {readOnly && plan.status !== "draft" ? (
+        <p className="mb-6 rounded-2xl bg-warn-soft px-4 py-3 text-warn">{bi("reviewLocked", uiLang)}</p>
+      ) : null}
 
       {unresolved.length > 0 ? (
         <p className="mb-6 rounded-2xl bg-warn-soft px-4 py-3 text-warn">
@@ -129,7 +152,7 @@ export default function ReviewPage() {
                 </div>
                 <SourceCrop crop={medicine.crop} pages={pages} />
                 <p className="mt-2 capitalize">{medicineMolecules(medicine)}</p>
-                {editing && draft ? (
+                {editing && draft && !readOnly ? (
                   <EditFields medicine={draft} onChange={setDraft} />
                 ) : (
                   <dl className="mt-4 grid grid-cols-2 gap-3">
@@ -172,7 +195,7 @@ export default function ReviewPage() {
                   </dl>
                 )}
                 <p className="mt-4 rounded-2xl bg-white px-3 py-2 text-primary/80">{medicine.rawText}</p>
-                {role !== "caregiver" ? (
+                {!readOnly ? (
                   <div className={isApp ? "app-actions mt-5" : "mt-5 flex flex-wrap gap-3"}>
                     {medicine.needsConfirmation ? (
                       <Button onClick={() => onConfirm(medicine.lineId)} disabled={busy}>
@@ -199,7 +222,7 @@ export default function ReviewPage() {
         })}
       </ul>
 
-      {role !== "caregiver" ? (
+      {!readOnly ? (
         <div className="mt-8">
           {adding && draft ? (
             <article className="rounded-3xl bg-card p-6">
@@ -207,6 +230,7 @@ export default function ReviewPage() {
                 <Bilingual k="addLine" lang={uiLang} />
               </h2>
               <EditFields medicine={draft} onChange={setDraft} includeBrand />
+              <ErrorNote message={addError} />
               <div className={isApp ? "app-actions mt-5" : "mt-5 flex flex-wrap gap-3"}>
                 <Button onClick={onAdd} disabled={busy}>
                   <Bilingual k="addThisLine" lang={uiLang} />
@@ -216,6 +240,7 @@ export default function ReviewPage() {
                   onClick={() => {
                     setAdding(false);
                     setDraft(null);
+                    setAddError(null);
                   }}
                 >
                   <Bilingual k="cancel" lang={uiLang} />
@@ -228,6 +253,7 @@ export default function ReviewPage() {
               onClick={() => {
                 setAdding(true);
                 setDraft(emptyUserMedicine());
+                setAddError(null);
               }}
             >
               <Bilingual k="addMedicine" lang={uiLang} />
@@ -249,7 +275,17 @@ function EditFields({
   includeBrand?: boolean;
 }) {
   const { uiLang } = useApp();
-  const strength = medicine.molecules[0]?.strengthMg ?? "";
+  const molecule = medicine.molecules[0];
+  const strength = molecule?.strengthMg ?? "";
+  const unit = molecule?.unit ?? "mg";
+
+  function setMolecule(patch: Partial<Molecule>) {
+    const current: Molecule = medicine.molecules[0] ?? { name: "", strengthMg: null, unit: "mg" };
+    const next = [...medicine.molecules];
+    next[0] = { ...current, ...patch };
+    onChange({ ...medicine, molecules: next });
+  }
+
   return (
     <div className="mt-4 grid gap-4">
       {includeBrand ? (
@@ -264,6 +300,18 @@ function EditFields({
           />
         </label>
       ) : null}
+      {includeBrand ? (
+        <label>
+          <span className="field-label">
+            <Bilingual k="moleculeName" lang={uiLang} />
+          </span>
+          <input
+            className="field-input"
+            value={molecule?.name ?? ""}
+            onChange={(event) => setMolecule({ name: event.target.value })}
+          />
+        </label>
+      ) : null}
       <label>
         <span className="field-label">
           <Bilingual k="frequency" lang={uiLang} />
@@ -274,7 +322,7 @@ function EditFields({
           onChange={(event) => onChange({ ...medicine, frequency: event.target.value || null })}
         />
       </label>
-      {medicine.molecules[0] ? (
+      {includeBrand || molecule ? (
         <label>
           <span className="field-label">
             <Bilingual k="strengthMg" lang={uiLang} />
@@ -285,11 +333,25 @@ function EditFields({
             value={strength}
             onChange={(event) => {
               const value = event.target.value;
-              const next = [...medicine.molecules];
-              next[0] = { ...next[0], strengthMg: value === "" ? null : Number(value) };
-              onChange({ ...medicine, molecules: next });
+              setMolecule({ strengthMg: value === "" ? null : Number(value) });
             }}
           />
+        </label>
+      ) : null}
+      {includeBrand ? (
+        <label>
+          <span className="field-label">
+            <Bilingual k="unit" lang={uiLang} />
+          </span>
+          <select
+            className="field-input"
+            value={unit}
+            onChange={(event) => setMolecule({ unit: event.target.value as Molecule["unit"] })}
+          >
+            <option value="mg">mg</option>
+            <option value="iu">iu</option>
+            <option value="ml">ml</option>
+          </select>
         </label>
       ) : null}
       <label>
@@ -320,6 +382,7 @@ function EditFields({
                 key={slot}
                 type="button"
                 className={`slot-dot${on ? " is-on" : ""}`}
+                disabled={medicine.prn}
                 onClick={() =>
                   onChange({
                     ...medicine,
@@ -332,8 +395,31 @@ function EditFields({
               </button>
             );
           })}
+          {includeBrand ? (
+            <button
+              type="button"
+              className={`slot-dot${medicine.prn ? " is-on" : ""}`}
+              onClick={() =>
+                onChange({ ...medicine, prn: !medicine.prn, slots: medicine.prn ? medicine.slots : [] })
+              }
+            >
+              {bi("onlyWhenNeeded", uiLang)}
+            </button>
+          ) : null}
         </div>
       </div>
+      {includeBrand && medicine.prn ? (
+        <label>
+          <span className="field-label">
+            <Bilingual k="onlyWhenNeeded" lang={uiLang} />
+          </span>
+          <input
+            className="field-input"
+            value={medicine.prnCondition ?? ""}
+            onChange={(event) => onChange({ ...medicine, prnCondition: event.target.value || null })}
+          />
+        </label>
+      ) : null}
     </div>
   );
 }

@@ -35,6 +35,17 @@ export default function FridgeSheetPage() {
       />
     );
   }
+  if (plan.status !== "active") {
+    return (
+      <EmptyState
+        title="nothingToPrint"
+        body="reviewActivate"
+        action="goToReview"
+        href="/review/"
+        illustration={<ScenePhoto src={ILLUSTRATIONS.reminder} />}
+      />
+    );
+  }
 
   const scheduled = plan.medicines.filter((medicine) => !medicine.prn);
   const prn = plan.medicines.filter((medicine) => medicine.prn);

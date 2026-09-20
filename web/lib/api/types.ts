@@ -13,7 +13,8 @@ export type ApiErrorCode =
   | "validation_failed"
   | "extraction_failed"
   | "conflict"
-  | "auth_unavailable";
+  | "auth_unavailable"
+  | "retryable";
 
 export type ApiError = {
   code: ApiErrorCode;
