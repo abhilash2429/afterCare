@@ -30,7 +30,7 @@ MEDS = [
 ]
 
 
-def demo_plan():
+def demo_plan(language="kn"):
     medicines = [Medicine(lineId=i, rawText="T. %s %s %s" % (brand, strength, freq), brand=brand,
                           molecules=[Molecule(mol, strength)], frequency=freq,
                           slots=slots, foodRelation=food, durationDays=days,
@@ -41,7 +41,7 @@ def demo_plan():
                                   text="Report immediately if chest pain returns, "
                                        "breathlessness at rest, bleeding or black stools.",
                                   sourceBlockIds=["b81"]),
-                patientName="Ramesh K.", language="kn", status="active")
+                patientName="Ramesh K.", language=language, status="active")
 
 
 def dose_status(dose, now):
@@ -55,7 +55,7 @@ def dose_status(dose, now):
     return "given"
 
 
-def seed(table, owner_sub=None, now=None):
+def seed(table, owner_sub=None, now=None, language="kn"):
     now = now or now_ist()
     pk = "CIRCLE#%s" % CIRCLE
     old = table.query(KeyConditionExpression="PK = :p", ExpressionAttributeValues={":p": pk})
@@ -63,9 +63,9 @@ def seed(table, owner_sub=None, now=None):
         for item in old.get("Items", []):
             batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
 
-    plan = demo_plan()
+    plan = demo_plan(language)
     table.put_item(Item={"PK": pk, "SK": "META", "circleId": CIRCLE,
-                         "name": "Kulkarni family", "language": "kn",
+                         "name": "Kulkarni family", "language": language,
                          "slotTimes": dict(DEFAULT_SLOT_TIMES), "escalationMinutes": 60, "activePlanId": PLAN})
     if owner_sub:
         table.put_item(Item={"PK": pk, "SK": "MEMBER#%s" % owner_sub, "role": "owner"})
@@ -95,9 +95,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--owner-sub")
     ap.add_argument("--web-origin", default="http://localhost:3000")
+    ap.add_argument("--language", default="kn", choices=["en", "hi", "kn"])
     args = ap.parse_args()
     table = boto3.resource("dynamodb", region_name=REGION).Table(TABLE)
-    count, token = seed(table, args.owner_sub)
+    count, token = seed(table, args.owner_sub, language=args.language)
     print("seeded %s: %d doses" % (CIRCLE, count))
     print("caregiver invite: %s/join?c=%s&t=%s" % (args.web_origin, CIRCLE, token))
 
