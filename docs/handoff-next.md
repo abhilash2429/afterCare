@@ -32,14 +32,19 @@ Live values (also in `web/env.example`):
 | Cognito pool | ap-south-1_UQXeokR8X |
 | Cognito client | 5u4d70pcibfkqq77d3qmccjneh |
 
-**Tested live and passing** on the deployed site (caregiver side, real browser):
-join by invite, schedule in Kannada, Given recorded in the database, Hindi audio with drug
-names left in English letters, family view percentages, red flags, fridge sheet, settings,
-and "delete data on this device" clearing the offline cache.
+**Tested live and passing** on the deployed site, in a real browser:
 
-**Not yet tested live:** everything an owner does, because it needs a real email login.
-That means sign-in, photo upload, extraction, confirming flagged lines, activating a plan,
-and inviting a caregiver. Box Check has also never run on real strip photos.
+Owner: email-code sign-in, create a circle, photograph a discharge summary, extraction
+(7 medicines read, all flagged for confirmation as the brand-name rule requires), confirm
+each line, activate (88 doses and 88 reminder schedules created in AWS), and generate a
+caregiver invite link pointing at the live site. Review is read-only once a plan is active.
+
+Caregiver: join by invite, schedule in Kannada, Given recorded in the database, Hindi audio
+with drug names left in English letters, family view percentages, red flags, fridge sheet,
+settings, and "delete data on this device" clearing the offline cache.
+
+**Not yet tested live:** Box Check on real medicine strips, and push notifications arriving
+on a phone.
 
 ## Code layout
 
@@ -113,20 +118,17 @@ days ago with one deliberate missed dose.
 
 ## What is left, in order
 
-1. **Owner run-through**, the big one. Start the frontend, open `/setup/`, sign in with an
-   email address verified in SES, create a circle, photograph a prescription, let it extract
-   (up to about two minutes), confirm every amber line, activate, then make a caregiver
-   invite. This is the first time the owner path runs end to end, so expect to find things.
-2. **Box Check with real strips.** Photograph 3 or 4 medicine strips, including one that is
+1. **Box Check with real strips.** Photograph 3 or 4 medicine strips, including one that is
    not on the prescription, so the "do not take" result appears on camera.
-3. **Push notifications.** Turn on reminders in `/settings/`, then have someone run the
+2. **Push notifications.** Turn on reminders in `/settings/`, then have someone run the
    reminder function so a real notification arrives.
-4. **Redeploy the backend** with the command above, so server-built links use the real site.
-5. **SES email verification.** The AWS account is still in SES sandbox, so login codes and
+3. **SES email verification.** The AWS account is still in SES sandbox, so login codes and
    alert emails only reach verified addresses. `abhilashreddymand@gmail.com` is verified.
    Every other address used in the demo or video must be verified first, from the SES console
    in ap-south-1, and each person clicks the link AWS emails them.
-6. **Demo video and the Builder Center writeup.**
+4. **Demo video and the Builder Center writeup.** A demo circle already exists with a real
+   activated plan: sign in as `abhilashreddymand@gmail.com` to reach it, or use
+   `scripts/seed_demo.py` for the scripted Kulkarni family circle.
 
 ## Things to know before you change anything
 
