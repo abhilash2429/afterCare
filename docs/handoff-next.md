@@ -1,4 +1,4 @@
-# AfterCare handoff, 2026-09-20 evening
+# AfterCare handoff, 2026-09-20 night
 
 For whoever picks this up next. Plain English, no prior context assumed.
 
@@ -14,6 +14,11 @@ paper does not have, never call a strip "safe".
 
 ## Where things stand
 
+**The frontend is live at https://main.d2nozesb14q5me.amplifyapp.com** (Amplify hosting,
+app id d2nozesb14q5me, branch main, ap-south-1). It is deployed by uploading a built zip, not
+from GitHub, so pushing to GitHub does not redeploy it. Run `.\scripts\deploy_web.ps1` from
+the repo root to build and publish a new version.
+
 **The backend is finished, deployed and working.** Region ap-south-1, account 791725739974,
 CloudFormation stack "Aftercare". Last deployed 2026-09-20 20:31 IST with the final review
 fixes in it.
@@ -27,7 +32,7 @@ Live values (also in `web/env.example`):
 | Cognito pool | ap-south-1_UQXeokR8X |
 | Cognito client | 5u4d70pcibfkqq77d3qmccjneh |
 
-**Tested live and passing** (caregiver side, browser against the deployed backend):
+**Tested live and passing** on the deployed site (caregiver side, real browser):
 join by invite, schedule in Kannada, Given recorded in the database, Hindi audio with drug
 names left in English letters, family view percentages, red flags, fridge sheet, settings,
 and "delete data on this device" clearing the offline cache.
@@ -47,18 +52,19 @@ and inviting a caregiver. Box Check has also never run on real strip photos.
 - `docs/spec.md` product and safety rules.
 - `.superpowers/sdd/2026-09-18-aftercare/` review reports and the work ledger.
 
-## Git state, read this first
+## Git state
 
-- `main` has one commit that is **not pushed**: the backend review fixes (already deployed).
-- The frontend fixes live on branch **`worktree-agent-a130d74c62adbd9f4`**, 10 commits, not
-  merged into `main`. They fix 18 review findings, including a fake-login backdoor that
-  showed invented medicines and invented Box Check verdicts.
-- So: merge that branch into `main`, then push both. Nothing else is in flight.
+Everything is merged and pushed to `main` on GitHub. The frontend review fixes (18 findings,
+including a fake-login backdoor that showed invented medicines and invented Box Check
+verdicts) are in. Nothing is in flight.
 
-```bash
-git checkout main
-git merge worktree-agent-a130d74c62adbd9f4
-git push origin main
+One thing needs a human because automated production deploys are blocked for the assistant:
+`infra/config.py` now carries the real site address, so the backend needs one redeploy to
+pick it up. Only server-built invite links use it, and the app builds its own links from the
+address it runs on, so nothing is broken until then.
+
+```powershell
+.\infrauild.ps1; npx -y aws-cdk@2 deploy Aftercare
 ```
 
 ## Running things
@@ -87,7 +93,12 @@ npm install
 npm run dev
 ```
 
-It talks to the deployed backend, so a Mac needs no AWS credentials.
+It talks to the deployed backend, so a Mac needs no AWS credentials. `.env.local` is
+required: a build without it produces a site with no API address, which fails with
+"Sign-in check is down".
+
+Publishing a new version of the live site needs the AWS credentials, so it runs on the
+Windows laptop: `.\scripts\deploy_web.ps1`.
 
 Reset the demo data and get a fresh caregiver invite link (Windows laptop, AWS creds needed):
 
@@ -95,29 +106,27 @@ Reset the demo data and get a fresh caregiver invite link (Windows laptop, AWS c
 .venv\Scripts\python -m scripts.seed_demo
 ```
 
-Pass `--web-origin https://your-site` when the frontend is deployed. Each invite link works
+Pass `--web-origin https://main.d2nozesb14q5me.amplifyapp.com` so the printed invite link
+points at the live site. Each invite link works
 once. The demo circle is `ci_demo`, plan `pl_demo`, five medicines, doses seeded from three
 days ago with one deliberate missed dose.
 
 ## What is left, in order
 
-1. **Merge and push** the frontend branch as above.
-2. **Owner run-through**, the big one. Start the frontend, open `/setup/`, sign in with an
+1. **Owner run-through**, the big one. Start the frontend, open `/setup/`, sign in with an
    email address verified in SES, create a circle, photograph a prescription, let it extract
    (up to about two minutes), confirm every amber line, activate, then make a caregiver
    invite. This is the first time the owner path runs end to end, so expect to find things.
-3. **Box Check with real strips.** Photograph 3 or 4 medicine strips, including one that is
+2. **Box Check with real strips.** Photograph 3 or 4 medicine strips, including one that is
    not on the prescription, so the "do not take" result appears on camera.
-4. **Push notifications.** Turn on reminders in `/settings/`, then have someone run the
+3. **Push notifications.** Turn on reminders in `/settings/`, then have someone run the
    reminder function so a real notification arrives.
-5. **Deploy the frontend to Amplify.** Afterwards put the real site address into
-   `infra/config.py` as `WEB_ORIGIN` and redeploy the backend, so alert emails link to the
-   real site. The invite link itself is already built from whatever address the app runs on.
-6. **SES email verification.** The AWS account is still in SES sandbox, so login codes and
+4. **Redeploy the backend** with the command above, so server-built links use the real site.
+5. **SES email verification.** The AWS account is still in SES sandbox, so login codes and
    alert emails only reach verified addresses. `abhilashreddymand@gmail.com` is verified.
    Every other address used in the demo or video must be verified first, from the SES console
    in ap-south-1, and each person clicks the link AWS emails them.
-7. **Demo video and the Builder Center writeup.**
+6. **Demo video and the Builder Center writeup.**
 
 ## Things to know before you change anything
 

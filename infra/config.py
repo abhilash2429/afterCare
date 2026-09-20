@@ -12,7 +12,7 @@ BEDROCK_CHEAP_MODEL_ID = "apac.amazon.nova-lite-v1:0"
 SES_FROM_EMAIL = "abhilashreddymand@gmail.com"
 
 # Base URL of the PWA; invite links are built on it. Placeholder until Amplify is set up.
-WEB_ORIGIN = "https://main.example.amplifyapp.com"
+WEB_ORIGIN = "https://main.d2nozesb14q5me.amplifyapp.com"
 
 # SSM parameter names (not values) holding the VAPID keypair. Created out-of-band by
 # scripts/make_vapid.py's printed `aws ssm put-parameter` commands, never by CDK.

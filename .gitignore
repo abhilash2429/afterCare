@@ -10,3 +10,4 @@ data/drugs_raw/
 data/photos/
 .superpowers/
 data/out/
+.claude/
