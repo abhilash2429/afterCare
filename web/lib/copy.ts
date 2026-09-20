@@ -392,6 +392,12 @@ export const COPY = {
   },
   ownerEmail: { en: "Owner email", hi: "मालिक ईमेल", kn: "ಮಾಲೀಕ ಇಮೇಲ್", te: "యజమాని ఈమెయిల్" },
   codeFromEmail: { en: "Code", hi: "कोड", kn: "ಕೋಡ್", te: "కోడ్" },
+  codeSent: {
+    en: "We emailed a code to that address. Enter it below.",
+    hi: "उस पते पर कोड भेज दिया है। उसे नीचे भरें।",
+    kn: "ಆ ವಿಳಾಸಕ್ಕೆ ಕೋಡ್ ಕಳುಹಿಸಿದ್ದೇವೆ. ಕೆಳಗೆ ನಮೂದಿಸಿ.",
+    te: "ఆ చిరునామాకు కోడ్ పంపాము. దాన్ని కింద నమోదు చేయండి.",
+  },
   circle: { en: "Circle", hi: "चक्र", kn: "ವಲಯ", te: "సర్కిల్" },
   demoOn: {
     en: "Demo mode is on. You can create a circle on this phone without a live login.",

@@ -105,6 +105,9 @@ export default function SetupPage() {
         <p className="mb-6 rounded-2xl bg-warn-soft px-4 py-3 text-warn">{bi("demoOn", uiLang)}</p>
       ) : null}
       <ErrorNote message={error} />
+      {!demo && !ownerReady && step !== "email" ? (
+        <p className="mb-6 rounded-2xl bg-card px-4 py-3">{bi("codeSent", uiLang)}</p>
+      ) : null}
 
       {!demo && !ownerReady ? (
         <article className="app-panel mb-6 rounded-3xl bg-card p-6">
