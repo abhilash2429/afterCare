@@ -59,18 +59,12 @@ on a phone.
 
 ## Git state
 
-Everything is merged and pushed to `main` on GitHub. The frontend review fixes (18 findings,
-including a fake-login backdoor that showed invented medicines and invented Box Check
-verdicts) are in. Nothing is in flight.
+Everything is merged, pushed to `main` on GitHub, and deployed. The frontend review fixes
+(18 findings, including a fake-login backdoor that showed invented medicines and invented Box
+Check verdicts) are in, and the backend carries the real site address. Nothing is in flight.
 
-One thing needs a human because automated production deploys are blocked for the assistant:
-`infra/config.py` now carries the real site address, so the backend needs one redeploy to
-pick it up. Only server-built invite links use it, and the app builds its own links from the
-address it runs on, so nothing is broken until then.
-
-```powershell
-.\infra\build.ps1; npx -y aws-cdk@2 deploy Aftercare
-```
+Two docs worth reading next: `docs/demo-script.md` (the 3-minute run, with login details) and
+`docs/submission.md` (the Builder Center answers).
 
 ## Running things
 
