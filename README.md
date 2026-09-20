@@ -1,5 +1,7 @@
 # AfterCare
 
+**Live: https://main.d2nozesb14q5me.amplifyapp.com**
+
 Photograph an Indian hospital discharge summary. Get a picture-and-voice medicine
 schedule in your language. Then photograph the strips you bought and check that the
 pill box matches the paper.
@@ -23,71 +25,167 @@ Built for **First Commit** (WeMakeDevs x AWS Bharat Builds Tour, 17–20 Sep 202
   ([doi:10.4103/ijp.ijp_359_24](https://doi.org/10.4103/ijp.ijp_359_24)).
 
 Every existing product turns clinical documents into structure *for the doctor*.
-This one is for the person holding the pill box.
+This one is for the person holding the pill box: an elderly spouse, a domestic helper,
+a relative who cannot read clinical English.
+
+## What it does
+
+| Screen | What happens |
+|---|---|
+| Upload | Photograph the discharge page. JPEG or PNG, 1–10 pages. |
+| Review | Every medicine the page contains. Amber lines wait for a human to confirm. Tap a line to see the exact crop of your photo it came from. |
+| Schedule | One column per time of day, take or skip per medicine, one **Given** tap per slot. A speaker button reads the day aloud. |
+| Box Check | Photograph the strips you bought. Each one comes back *matches*, *look again*, or *do not take*. Never "safe". |
+| Family | Seven days of adherence. A son in another city sees everything and changes nothing. |
+| Red flags | The warning the document actually contains, or a fixed generic one clearly labelled as such. |
+| Fridge sheet | A printable black-and-white page for households that do not use phones. |
+
+A missed dose escalates to the family by Web Push and email after a window the family sets.
+
+The owner signs in with an emailed code. The caregiver never signs up at all: a one-time
+invite link is the whole login.
+
+## Safety model
+
+Three rules, enforced in code and covered by tests:
+
+1. **Never change a dose.** Values are re-displayed, never adjusted or substituted.
+2. **Never fill a blank.** If the page does not state a strength or a duration, the app
+   shows "not written, ask your doctor" and leaves it empty.
+3. **Never say a strip is safe.** Box Check may say matches, look again, or do not take.
+
+How that is enforced: Textract returns every word with its bounding box. The model may only
+produce values whose tokens appear in those words, and each medicine line carries the block
+IDs it came from. A value the page does not back up is rejected or flagged. Anything flagged
+is amber, and an amber line cannot start a schedule until a human confirms it. Confirmations
+and edits are written to an audit record with before and after.
+
+Measured on a ten-case golden set of synthetic discharge summaries: **91%** accuracy on
+medicine names, **83%** on strengths, and every remaining error was on a line already flagged
+for human confirmation.
+
+## Architecture
+
+```
+Next.js 15 static PWA (Amplify Hosting)
+        |
+        v
+Lambda Function URL  --  single Python 3.12 function, own router
+        |
+        +-- Textract DetectDocumentText     words + bounding boxes
+        +-- Bedrock Converse (Mistral Large 3)  structuring, grounded in those words
+        +-- DynamoDB      one table, single-table design, TTL
+        +-- S3            photos and generated audio, presigned uploads
+        +-- Cognito       owner sign-in by emailed code
+        +-- Polly + Translate   spoken schedule, drug names never translated
+        +-- EventBridge Scheduler  one-shot schedule per dose, Asia/Kolkata
+                |
+                v
+        Reminder Lambda  -->  Web Push + SES escalation to the family
+```
+
+Everything runs in `ap-south-1`. Secrets live in Secrets Manager (caregiver session key) and
+SSM Parameter Store SecureString (Web Push signing key).
+
+Design decisions and their reasons are in [docs/spec.md](docs/spec.md): why a Function URL
+instead of API Gateway, why single-table DynamoDB, why one-shot schedules instead of a cron
+sweep, and the full extraction pipeline.
+
+## Repository layout
+
+```
+api/     Lambda code, one module per area, handler.py routes
+infra/   AWS CDK stack (Python), one stack
+web/     Next.js 15 static-export PWA
+data/    drug ETL, synthetic golden document set
+scripts/ demo seeder, web deploy
+docs/    spec, API contract, handoff, demo script, submission answers
+tests/   410 tests, moto-backed, no cloud calls
+```
 
 ## Docs
 
 - [System design and specification](docs/spec.md)
-- [Implementation plan](docs/superpowers/plans/2026-09-18-aftercare.md)
 - [API contract](docs/api/openapi.yaml)
+- [Frontend spec: screens, calls, error table, UI rules](docs/frontend-handoff.md)
+- [Handoff: current state and what is left](docs/handoff-next.md)
+- [Three-minute demo script](docs/demo-script.md)
+- [Submission answers](docs/submission.md)
 
-## Stack
+## Running it
 
-Next.js 15 static-export PWA on Amplify Hosting → Lambda Function URL (Python 3.12) →
-Textract (words + boxes) → Bedrock Mistral Large 3, in-region (structuring with source citations)
-→ DynamoDB → EventBridge Scheduler → Web Push / WhatsApp (AWS End User Messaging
-Social) / SES. Amazon Translate and Polly for language and voice. All storage in
-`ap-south-1`.
-
-## Layout
-
-```
-infra/   CDK (Python)      one stack, ap-south-1
-api/     Lambda handlers   Python 3.12
-web/     Next.js 15 PWA
-data/    drug ETL, synthetic golden document set
-docs/    spec, plan, openapi.yaml
-```
-
-## Running the tests
+Frontend, anywhere including a Mac, against the deployed backend:
 
 ```bash
-pip install -e ".[dev]"
-python -m pytest -v
+cd web
+cp env.example .env.local
+npm install
+npm run dev
 ```
 
-The extraction accuracy gate needs AWS credentials and uploaded photos:
+Tests, no AWS credentials needed:
+
+```bash
+.venv/Scripts/python -m pytest -q -m "not golden"
+```
+
+The extraction accuracy gate needs credentials and the uploaded golden photos:
 
 ```bash
 GOLDEN_S3_PREFIX=circles/ci_demo/golden python -m pytest -m golden -v -s
 ```
 
-## Deploy
+## Deploying
 
-Prerequisites: AWS CLI v2 configured for the target account/region, Node (for
-`npx aws-cdk@2`), and a `.venv` with the `dev` extra installed
-(`.venv/Scripts/python -m pip install -e ".[dev]"`, which pulls in
-`aws-cdk-lib` and `constructs`).
+Backend (needs AWS credentials, PowerShell):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File infra/build.ps1   # vendors Lambda deps into build/api
-npx aws-cdk@2 deploy --require-approval never               # deploys the "Aftercare" stack
-curl "https://ctj5ower7vmwubklgwntkqdwsi0aemrx.lambda-url.ap-south-1.on.aws/health"
+.\infra\build.ps1                      # vendors Linux wheels into build/api
+npx -y aws-cdk@2 deploy Aftercare
 ```
 
-Current `ApiUrl`: `https://ctj5ower7vmwubklgwntkqdwsi0aemrx.lambda-url.ap-south-1.on.aws/`
+Frontend to Amplify Hosting:
+
+```powershell
+.\scripts\deploy_web.ps1
+```
+
+Seed the demo circle and print a one-time caregiver invite link:
+
+```powershell
+.venv\Scripts\python -m scripts.seed_demo --language en --web-origin https://main.d2nozesb14q5me.amplifyapp.com
+```
+
+## AWS services used
+
+Lambda (Function URL), DynamoDB, S3, Cognito, Textract, Bedrock, Polly, Translate,
+EventBridge Scheduler, SES, Secrets Manager, SSM Parameter Store, Amplify Hosting,
+CloudWatch Logs, IAM, CloudFormation via CDK.
+
+Open source AWS stack: AWS CDK (Python), boto3, the Amplify JS library, AWS CLI v2, and moto
+for testing against fake AWS services.
+
+## Known limits
+
+- Box Check can mismatch a salt against its elemental name (calcium carbonate versus
+  elemental calcium).
+- Uploads accept JPEG and PNG, not PDF.
+- No "list my circles" endpoint: an owner who clears browser data loses the link to the circle.
+- Polly has no Kannada voice, so Kannada families hear Hindi audio, labelled as such.
+- Textract does not read Indic scripts, so only the Latin-script parts of a bilingual page are
+  read.
+- The account is in the SES sandbox, so emails only reach verified addresses.
+- WhatsApp escalation is implemented but switched off.
 
 ## Data and attribution
 
 - Brand → molecule mapping: *A-Z Medicine Dataset of India*, CC BY-SA 4.0
   ([Kaggle](https://www.kaggle.com/datasets/shudhanshusingh/az-medicine-dataset-of-india)).
-- Test documents are **synthetic**. They are generated from the blank NABH E-Mitra
-  discharge summary template and filled with invented patients. No real patient data
-  exists anywhere in this repository.
+- Test documents are **synthetic**, generated from the blank NABH E-Mitra discharge summary
+  template and filled with invented patients. No real patient data exists anywhere in this
+  repository.
 
-## Safety
+## Disclaimer
 
-AfterCare never changes a dose, never suggests a substitute, and never invents a
-warning the document does not contain. Anything it cannot read is shown as
-"ask doctor". See [spec §7](docs/spec.md#7-safety-rules-non-negotiable) for the rules
-and the tests that enforce them.
+AfterCare is an independent prototype, not a hospital, pharmacy or government service. It does
+not give medical advice. For anything medical, contact a doctor or the nearest hospital.
