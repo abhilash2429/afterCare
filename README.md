@@ -24,9 +24,23 @@ Built for **First Commit** (WeMakeDevs x AWS Bharat Builds Tour, 17–20 Sep 202
   vernacular, pictorial formats
   ([doi:10.4103/ijp.ijp_359_24](https://doi.org/10.4103/ijp.ijp_359_24)).
 
-Every existing product turns clinical documents into structure *for the doctor*.
-This one is for the person holding the pill box: an elderly spouse, a domestic helper,
-a relative who cannot read clinical English.
+Every existing product turns clinical documents into structure *for the doctor*. We built
+this one for the person holding the pill box: an elderly spouse, a domestic helper, a
+relative who cannot read clinical English.
+
+## Screenshots
+
+All taken from the live site, on real data.
+
+| Today's medicines | The week |
+|---|---|
+| ![Medicine schedule](docs/screenshots/schedule.png) | ![Family view](docs/screenshots/family.png) |
+| One column per time of day, one **Given** tap per slot, and a button that reads the day aloud. "Not written, ask your doctor" is what a blank on the paper looks like. | Adherence over seven days, including the dose that was missed. The family sees everything and can change nothing. |
+
+| Fridge sheet | Warning signs |
+|---|---|
+| ![Fridge sheet](docs/screenshots/fridge-sheet.png) | ![Red flags](docs/screenshots/red-flags.png) |
+| A printable page for a household that does not use a phone. | The warning the discharge summary actually contains, shown word for word. |
 
 ## What it does
 
@@ -47,22 +61,22 @@ invite link is the whole login.
 
 ## Safety model
 
-Three rules, enforced in code and covered by tests:
+We built the product around three rules, enforced in code and covered by tests:
 
 1. **Never change a dose.** Values are re-displayed, never adjusted or substituted.
 2. **Never fill a blank.** If the page does not state a strength or a duration, the app
    shows "not written, ask your doctor" and leaves it empty.
 3. **Never say a strip is safe.** Box Check may say matches, look again, or do not take.
 
-How that is enforced: Textract returns every word with its bounding box. The model may only
+How we enforce them: Textract returns every word with its bounding box. The model may only
 produce values whose tokens appear in those words, and each medicine line carries the block
-IDs it came from. A value the page does not back up is rejected or flagged. Anything flagged
-is amber, and an amber line cannot start a schedule until a human confirms it. Confirmations
-and edits are written to an audit record with before and after.
+IDs it came from. We reject or flag any value the page does not back up. Anything flagged
+is amber, and an amber line cannot start a schedule until a human confirms it. We write every
+confirmation and edit to an audit record with before and after.
 
-Measured on a ten-case golden set of synthetic discharge summaries: **91%** accuracy on
-medicine names, **83%** on strengths, and every remaining error was on a line already flagged
-for human confirmation.
+We measured extraction against a ten-case golden set of synthetic discharge summaries:
+**91%** accuracy on medicine names, **83%** on strengths. Every remaining error was on a line
+already flagged for human confirmation, which is the outcome the design is for.
 
 ## Architecture
 
@@ -84,10 +98,10 @@ Lambda Function URL  --  single Python 3.12 function, own router
         Reminder Lambda  -->  Web Push + SES escalation to the family
 ```
 
-Everything runs in `ap-south-1`. Secrets live in Secrets Manager (caregiver session key) and
-SSM Parameter Store SecureString (Web Push signing key).
+Everything runs in `ap-south-1`. We keep the caregiver session key in Secrets Manager and the
+Web Push signing key in SSM Parameter Store as a SecureString.
 
-Design decisions and their reasons are in [docs/spec.md](docs/spec.md): why a Function URL
+We wrote up the decisions and our reasons in [docs/spec.md](docs/spec.md): why a Function URL
 instead of API Gateway, why single-table DynamoDB, why one-shot schedules instead of a cron
 sweep, and the full extraction pipeline.
 
@@ -166,6 +180,8 @@ Open source AWS stack: AWS CDK (Python), boto3, the Amplify JS library, AWS CLI 
 for testing against fake AWS services.
 
 ## Known limits
+
+We would rather state these than have you find them:
 
 - Box Check can mismatch a salt against its elemental name (calcium carbonate versus
   elemental calcium).
