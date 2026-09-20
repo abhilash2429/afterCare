@@ -64,7 +64,7 @@ pick it up. Only server-built invite links use it, and the app builds its own li
 address it runs on, so nothing is broken until then.
 
 ```powershell
-.\infrauild.ps1; npx -y aws-cdk@2 deploy Aftercare
+.\infra\build.ps1; npx -y aws-cdk@2 deploy Aftercare
 ```
 
 ## Running things
